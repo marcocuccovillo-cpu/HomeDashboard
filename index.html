@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1c1915">
 <title>Cucina</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cucina">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -64,6 +71,11 @@
   #ingranaggio { width: 5vh; height: 5vh; border: 0 !important; background: transparent; color: var(--muted);
                  padding: 0 !important; flex: none; }
   #ingranaggio svg { width: 100%; height: 100%; }
+  #barra > #installa { border-left: 0; padding: 1vh 1.4vw; margin-left: auto; font-size: 1.9vh; white-space: nowrap; flex: none; }
+  #barra > #installa + #ingranaggio { margin-left: 0; }
+  #barra > #ingranaggio { margin-left: auto; }
+  .passi { font-size: 2.3vh; line-height: 1.7; margin: 0; padding-left: 1.4em; }
+  .stato { font-size: 2vh; } .stato.ok { color: #4f8a3c; } .stato.no { color: var(--accent); }
 
   /* --- griglia turni --- */
   #card-turni { grid-column: 1; grid-row: 2; }
@@ -202,6 +214,7 @@
     </div>
     <div id="ore"></div>
     <div id="giorni"></div>
+    <button id="installa" class="btn-pieno" hidden>Installa app</button>
     <button id="ingranaggio" aria-label="Impostazioni">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
@@ -290,6 +303,19 @@
   </form>
 </div>
 
+<!-- istruzioni installazione su iPad/iPhone -->
+<div id="ed-ios" class="livello scuro modale">
+  <div class="finestra">
+    <h3>Installa su iPad</h3>
+    <ol class="passi">
+      <li>Tocca il tasto <b>Condividi</b> di Safari (il quadrato con la freccia in su)</li>
+      <li>Scegli <b>Aggiungi alla schermata Home</b></li>
+      <li>Apri <b>Cucina</b> dall'icona nella Home</li>
+    </ol>
+    <div class="riga fine"><button type="button" class="btn-pieno annulla">Ho capito</button></div>
+  </div>
+</div>
+
 <!-- impostazioni -->
 <div id="impostazioni" class="livello scuro pannello">
   <div class="dentro">
@@ -307,6 +333,13 @@
       <div class="seg" id="seg-corrente"><button data-v="A">A</button><button data-v="B">B</button></div>
     </div>
     <div class="nota-txt">I turni si ripetono ogni due settimane (A e B si alternano). Per cambiarli tocca direttamente le caselle della griglia.</div>
+
+    <h3>Schermo</h3>
+    <div class="riga">
+      <label>Tieni lo schermo sempre acceso</label>
+      <div class="seg" id="seg-schermo"><button data-v="si">Sì</button><button data-v="no">No</button></div>
+      <span class="stato" id="stato-schermo"></span>
+    </div>
 
     <h3>Foto a rotazione</h3>
     <div class="riga">
@@ -351,7 +384,8 @@ cfg.nomi = cfg.nomi || ["Marco", "Lei"];
 cfg.fotoAttesa = cfg.fotoAttesa || 5; cfg.fotoOgni = cfg.fotoOgni || 12;
 cfg.ancora = cfg.ancora || null;              // { lunedi: "YYYY-MM-DD", sett: "A" }
 cfg.turni = cfg.turni || { A: vuotaSett(), B: vuotaSett() };
-cfg.eccezioni = cfg.eccezioni || {};          // { "YYYY-MM-DD|0": "9–13" } solo per quel giorno
+cfg.eccezioni = cfg.eccezioni || {};
+if (cfg.schermoAcceso == null) cfg.schermoAcceso = true;          // { "YYYY-MM-DD|0": "9–13" } solo per quel giorno
 function salvaCfg() { salva("cucina_cfg", cfg); }
 
 // ================= orologio =================
@@ -763,6 +797,7 @@ function aggiornaImpostazioni() {
   $("nome0").value = cfg.nomi[0]; $("nome1").value = cfg.nomi[1];
   $("foto-attesa").value = cfg.fotoAttesa; $("foto-ogni").value = cfg.fotoOgni;
   seg("seg-corrente", quale(new Date()));
+  seg("seg-schermo", cfg.schermoAcceso ? "si" : "no"); statoSchermo();
 }
 $("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi(); apri("impostazioni"); };
 function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni(); }
@@ -776,13 +811,60 @@ $("seg-corrente").onclick = function (e) {
   aggiornaImpostazioni(); disegnaTurni();
 };
 
+$("seg-schermo").onclick = function (e) {
+  var v = e.target.getAttribute("data-v"); if (!v) return;
+  cfg.schermoAcceso = v === "si"; salvaCfg(); seg("seg-schermo", v);
+  if (cfg.schermoAcceso) tieniAcceso(); else if (blocco) blocco.release();
+  statoSchermo();
+};
+
+// ================= schermo sempre acceso (Screen Wake Lock) =================
+var blocco = null, erroreBlocco = "";
+function statoSchermo() {
+  var s = $("stato-schermo");
+  if (!cfg.schermoAcceso) { s.textContent = ""; return; }
+  if (!("wakeLock" in navigator)) {
+    s.className = "stato no";
+    s.textContent = "Questo browser non lo permette: imposta lo spegnimento schermo su \"Mai\" nelle impostazioni del tablet.";
+  } else if (blocco) { s.className = "stato ok"; s.textContent = "Attivo ✓"; }
+  else { s.className = "stato no"; s.textContent = "Non ancora attivo: tocca lo schermo una volta." + (erroreBlocco ? " (" + erroreBlocco + ")" : ""); }
+}
+function tieniAcceso() {
+  if (!cfg.schermoAcceso || blocco || !("wakeLock" in navigator) || document.visibilityState !== "visible") return;
+  navigator.wakeLock.request("screen").then(function (b) {
+    blocco = b; erroreBlocco = "";
+    b.addEventListener("release", function () { blocco = null; statoSchermo(); });
+    statoSchermo();
+  }).catch(function (e) { erroreBlocco = e && e.name || ""; statoSchermo(); });
+}
+document.addEventListener("visibilitychange", tieniAcceso);
+document.addEventListener("click", tieniAcceso, true);   // alcuni browser lo concedono solo dopo un tocco
+
+// ================= installazione come app (PWA) =================
+var richiestaInstalla = null;
+function installata() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true;
+}
+var suIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if (suIOS && !installata()) $("installa").hidden = false;
+window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); richiestaInstalla = e; $("installa").hidden = false; });
+window.addEventListener("appinstalled", function () { richiestaInstalla = null; $("installa").hidden = true; });
+$("installa").onclick = function () {
+  if (richiestaInstalla) {
+    richiestaInstalla.prompt();
+    richiestaInstalla.userChoice.then(function (r) { if (r.outcome === "accepted") $("installa").hidden = true; richiestaInstalla = null; });
+  } else if (suIOS) apri("ed-ios");
+};
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+
 // ================= avvio =================
-pulisciEccezioni(); salvaCfg();
+pulisciEccezioni(); salvaCfg(); tieniAcceso();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);
 setInterval(controllaInattivita, 5000);
+setInterval(tieniAcceso, 60 * 1000);
 setInterval(function () { if (!document.querySelector(".scuro.on")) disegnaTurni(); }, 60 * 1000);
 // ricarica completa ogni notte alle 4 (evita rallentamenti dopo giorni accesa)
 setInterval(function () { var d = new Date(); if (d.getHours() === 4 && d.getMinutes() === 0 && !timers.length) location.reload(); }, 60000);
