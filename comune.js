@@ -90,7 +90,11 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
   if (cfg.ancora && !cfg.ancoraAuto) f.ancora = cfg.ancora;
   ["A", "B"].forEach(function (s) { cfg.turni[s].forEach(function (g, gi) { g.forEach(function (v, p) { f["turni." + s + "." + gi + "." + p] = v || ""; }); }); });
   Object.keys(cfg.eccezioni).forEach(function (k) { f["ecc." + k] = cfg.eccezioni[k]; });
-  note.forEach(function (n, i) { f["nota." + n.id] = { testo: n.testo, colore: n.colore, pos: i }; });
+  note.forEach(function (n, i) {
+    var v = { testo: n.testo, colore: n.colore, pos: i };
+    if (typeof n.x === "number") { v.x = n.x; v.y = n.y; }   // dove è attaccato sul tablet
+    f["nota." + n.id] = v;
+  });
   spesa.forEach(function (v, i) { f["spesa." + v.id] = { testo: v.testo, fatto: !!v.fatto, pos: i }; });
   return f;
 }
@@ -147,11 +151,11 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   Object.keys(reg).forEach(function (k) {
     var e = val(k); if (!e) return;
     if (k.indexOf("ecc.") === 0) cfg.eccezioni[k.slice(4)] = e.v;
-    else if (k.indexOf("nota.") === 0) nn.push({ id: +k.slice(5), testo: e.v.testo, colore: e.v.colore, pos: e.v.pos });
+    else if (k.indexOf("nota.") === 0) nn.push({ id: +k.slice(5), testo: e.v.testo, colore: e.v.colore, pos: e.v.pos, x: e.v.x, y: e.v.y });
     else if (k.indexOf("spesa.") === 0) ss.push({ id: +k.slice(6), testo: e.v.testo, fatto: e.v.fatto, pos: e.v.pos });
   });
   function ordina(a, b) { return a.pos - b.pos || a.id - b.id; }
-  note = nn.sort(ordina).map(function (n) { return { id: n.id, testo: n.testo, colore: n.colore }; });
+  note = nn.sort(ordina).map(function (n) { var o = { id: n.id, testo: n.testo, colore: n.colore }; if (typeof n.x === "number") { o.x = n.x; o.y = n.y; } return o; });
   spesa = ss.sort(ordina).map(function (v) { return { id: v.id, testo: v.testo, fatto: v.fatto }; });
   regPronto = false;   // salvataggi senza registrare: sono già nel registro
   salvaCfg(); salva("cucina_note", note); salva("cucina_spesa", spesa);
