@@ -26,6 +26,7 @@
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; }
   body { background: var(--bg); color: var(--ink); font: 16px/1.4 "Roboto", "Helvetica Neue", Arial, sans-serif;
          padding: env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom)); }
@@ -67,6 +68,28 @@
   .cella.riposo span { color: var(--muted); font-style: italic; font-size: 14px; }
   .cella.eccezione span { color: var(--accent); font-weight: 500; }
   .cella:active { background: var(--accent-soft); }
+
+  .seg.vista { margin: 0 0 14px; }
+  .seg.vista button { padding: 10px 2px; font-size: 14px; }
+  .riga-sett { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card);
+               border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; margin-bottom: 8px; }
+  .riga-sett .g { width: 46px; font-weight: 500; }
+  .riga-sett .v { flex: 1; white-space: pre-line; }
+  .riga-sett .v.riposo { color: var(--muted); font-style: italic; }
+  .riga-sett::after { content: "›"; color: var(--muted); font-size: 22px; line-height: 1; }
+  /* editor orari */
+  .fascia { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .fascia input[type=time] { flex: 1; min-width: 0; padding: 11px 10px; border-radius: 12px; border: 1px solid var(--line);
+                             background: var(--bg); color: var(--ink); font-size: 18px; }
+  .fascia .x { border: 0; background: none; color: var(--muted); font-size: 24px; width: 36px; }
+  .fascia span { color: var(--muted); }
+  .mini { border: 1px dashed var(--done); background: none; border-radius: 12px; padding: 10px 14px; font-size: 15px; color: var(--muted); }
+  .riposo-box { background: var(--bg); border-radius: 12px; padding: 14px; text-align: center; color: var(--muted); font-style: italic; margin-bottom: 8px; }
+  .etichetta { font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+  .giorni-sel { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .giorni-sel button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 0; font-size: 13.5px; }
+  .giorni-sel button.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .giorni-sel button:disabled { opacity: 1; }
 
   /* --- promemoria --- */
   #note { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -130,7 +153,7 @@
   .colori button.sel { outline: 3px solid var(--accent); outline-offset: 2px; }
   .campo { margin-bottom: 14px; }
   .campo label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-  .riga2 { display: flex; gap: 8px; }
+  .riga2 { display: flex; gap: 8px; flex-wrap: wrap; }
   .nota-txt { font-size: 13px; color: var(--muted); }
 </style>
 </head>
@@ -151,12 +174,20 @@
   </div>
 
   <section class="scheda" id="s-turni">
-    <div class="titolo"><h2>Turni</h2><button class="link" id="btn-nomi">Nomi</button></div>
+    <div class="titolo"><h2>Turni</h2><button class="link" id="btn-nomi">Nomi e settimane</button></div>
+    <div class="seg vista" id="vista"><button type="button" data-v="giorni">Prossimi giorni</button><button type="button" data-v="A">Settimana A</button><button type="button" data-v="B">Settimana B</button></div>
     <div id="giorni"></div>
+    <div id="sett-tipo" hidden>
+      <div class="seg" id="persona"><button type="button" data-v="0"></button><button type="button" data-v="1"></button></div>
+      <p class="spiega" id="st-spiega" style="margin:8px 0 12px"></p>
+      <div id="st-giorni"></div>
+    </div>
   </section>
 
   <section class="scheda" id="s-note">
     <div class="titolo"><h2>Promemoria</h2></div>
+    <form class="aggiungi" id="form-nota"><input id="in-nota" placeholder="Scrivi un promemoria…" enterkeyhint="send" autocomplete="off"><button aria-label="Aggiungi">+</button></form>
+    <p class="spiega" style="margin:0 0 14px">Tocca un bigliettino per cambiarlo, colorarlo o toglierlo.</p>
     <div id="note"></div>
   </section>
 
@@ -186,9 +217,20 @@
 <div class="velo" id="ed-turno">
   <form class="foglio">
     <h3 id="et-titolo"></h3>
-    <input type="text" id="et-valore" placeholder="Riposo" autocomplete="off" enterkeyhint="done">
     <div class="chips" id="et-chips"></div>
-    <div class="seg" id="et-quando"><button type="button" data-v="sempre">Ogni 2 settimane</button><button type="button" data-v="giorno">Solo questo giorno</button></div>
+    <div id="et-fasce"></div>
+    <div class="riga2">
+      <button type="button" class="mini" id="et-aggiungi">+ Aggiungi orario</button>
+      <button type="button" class="mini" id="et-riposo">Riposo</button>
+      <button type="button" class="mini" id="et-testo-btn">Scrivi a mano</button>
+    </div>
+    <input type="text" id="et-testo" placeholder="es. 9–17" autocomplete="off" hidden style="margin-top:8px">
+    <div id="et-quando-box">
+      <div class="etichetta">Vale per</div>
+      <div class="seg" id="et-quando"><button type="button" data-v="sempre">Ogni 2 settimane</button><button type="button" data-v="giorno">Solo questa data</button></div>
+    </div>
+    <div class="etichetta" id="et-copia-label">Uguale anche per questi giorni</div>
+    <div class="giorni-sel" id="et-copia"></div>
     <p class="spiega" id="et-spiega"></p>
     <div class="azioni">
       <button type="button" class="btn sx" id="et-ripristina">Turno abituale</button>
@@ -265,8 +307,21 @@ function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classLi
 // il controllo "c'è un foglio aperto" di comune.js cerca .scuro.on: lo aggiungo ai fogli
 [].forEach.call(document.querySelectorAll(".velo"), function (v) { v.classList.add("scuro"); });
 
-// ================= turni: elenco per giorno =================
+// ================= turni =================
+var vista = leggi("telefono_vista", "giorni"), personaSel = 0;
+function cambiaVista(v) {
+  vista = v; salva("telefono_vista", v); seg("vista", v);
+  $("giorni").hidden = v !== "giorni"; $("sett-tipo").hidden = v === "giorni";
+  disegnaTurni();
+}
+$("vista").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) cambiaVista(v); };
+$("persona").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { personaSel = +v; disegnaTurni(); } };
+function testoTurno(v) { return v ? v.replace(/\s*\/\s*/g, "\n") : "Riposo"; }
 function disegnaTurni() {
+  seg("vista", vista);
+  if (vista === "giorni") disegnaGiorni(); else disegnaSettimanaTipo(vista);
+}
+function disegnaGiorni() {   // oggi e prossima settimana, giorno per giorno
   var box = $("giorni"), lun = lunedi(new Date()), oggi = iso(new Date());
   box.innerHTML = "";
   [0, 1].forEach(function (w) {
@@ -289,43 +344,127 @@ function cellaTurno(r, d, p) {   // funzione a parte: ogni casella tiene la prop
   var v = turno(d, p), c = el("button", "cella" + (v ? "" : " riposo") + (haEccezione(d, p) ? " eccezione" : ""));
   c.type = "button";
   var n = el("small"); n.textContent = cfg.nomi[p]; c.appendChild(n);
-  var s = el("span"); s.textContent = v ? v.replace(/\s*\/\s*/g, "\n") : "Riposo"; c.appendChild(s);
-  c.onclick = function () { modificaTurno(d, p); };
+  var s = el("span"); s.textContent = testoTurno(v); c.appendChild(s);
+  c.onclick = function () { modificaTurno({ modo: "data", d: d, p: p }); };
   r.appendChild(c);
 }
-var et = { d: null, p: 0, quando: "sempre" };
-function spiegazione() {
-  var g = GIORNI_LUN_LUNGHI[(et.d.getDay() + 6) % 7];
-  $("et-spiega").textContent = et.quando === "sempre"
-    ? "Cambia il " + g + " di tutte le settimane " + quale(et.d) + " (una sì e una no)."
-    : "Cambia solo " + g + " " + et.d.getDate() + " " + MESI[et.d.getMonth()] + ".";
+function disegnaSettimanaTipo(lettera) {   // la settimana A o B "tipo", per una persona
+  var p = personaSel, b = $("persona").children;
+  b[0].textContent = cfg.nomi[0]; b[1].textContent = cfg.nomi[1]; seg("persona", String(p));
+  var lun = lunedi(new Date()), questa = quale(lun) === lettera, l = questa ? lun : piuGiorni(lun, 7);
+  $("st-spiega").textContent = "La settimana " + lettera + " è " + (questa ? "questa" : "la prossima") + " (" + l.getDate() + "–" + piuGiorni(l, 6).getDate() + " " + MESI[piuGiorni(l, 6).getMonth()] + ") e si ripete ogni due settimane.";
+  var box = $("st-giorni"); box.innerHTML = "";
+  for (var g = 0; g < 7; g++) (function (g) {
+    var v = cfg.turni[lettera][g][p], r = el("button", "riga-sett"); r.type = "button";
+    var a = el("span", "g"); a.textContent = GIORNI_LUN[g];
+    var c = el("span", "v" + (v ? "" : " riposo")); c.textContent = testoTurno(v);
+    r.appendChild(a); r.appendChild(c);
+    r.onclick = function () { modificaTurno({ modo: "sett", lettera: lettera, g: g, p: p }); };
+    box.appendChild(r);
+  })(g);
 }
-function modificaTurno(d, p) {
-  et.d = d; et.p = p; et.quando = haEccezione(d, p) ? "giorno" : "sempre";
-  $("et-titolo").textContent = cfg.nomi[p] + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
-  $("et-valore").value = turno(d, p);
-  $("et-ripristina").style.visibility = haEccezione(d, p) ? "visible" : "hidden";
-  seg("et-quando", et.quando); spiegazione();
+
+// --- editor orari: fasce con l'orologio del telefono, copia su più giorni ---
+var ORA_RE = /(\d{1,2})(?:[:.](\d{2}))?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?/g;
+function hhmm(h, m) { return (h.length < 2 ? "0" : "") + h + ":" + (m || "00"); }
+function leggiFasce(v) {   // "8:30-14.30 / 18:30 - 22:30" → [["08:30","14:30"],["18:30","22:30"]]
+  var f = [], m; ORA_RE.lastIndex = 0;
+  while ((m = ORA_RE.exec(v || ""))) f.push([hhmm(m[1], m[2]), hhmm(m[3], m[4])]);
+  return f;
+}
+function scriviFasce(f) {
+  function corta(t) { return t.replace(/^0/, ""); }
+  return f.filter(function (x) { return x[0] && x[1]; }).map(function (x) { return corta(x[0]) + "–" + corta(x[1]); }).join(" / ");
+}
+var et = null;
+function disegnaFasce() {
+  var box = $("et-fasce"); box.innerHTML = "";
+  $("et-testo").hidden = !et.aMano; $("et-testo-btn").hidden = et.aMano;
+  $("et-aggiungi").hidden = et.aMano || et.fasce.length >= 3;
+  if (et.aMano) return;
+  if (!et.fasce.length) { var r = el("div", "riposo-box"); r.textContent = "Riposo"; box.appendChild(r); }
+  et.fasce.forEach(function (x, i) {
+    var r = el("div", "fascia");
+    var a = el("input"); a.type = "time"; a.step = 300; a.value = x[0]; a.oninput = function () { x[0] = a.value; };
+    var t = el("span"); t.textContent = "→";
+    var b = el("input"); b.type = "time"; b.step = 300; b.value = x[1]; b.oninput = function () { x[1] = b.value; };
+    var del = el("button", "x"); del.type = "button"; del.textContent = "×"; del.setAttribute("aria-label", "Togli");
+    del.onclick = function () { et.fasce.splice(i, 1); disegnaFasce(); };
+    r.appendChild(a); r.appendChild(t); r.appendChild(b); r.appendChild(del); box.appendChild(r);
+  });
+}
+function impostaValore(v) {
+  et.fasce = leggiFasce(v); et.aMano = !!v && !et.fasce.length; $("et-testo").value = et.aMano ? v : "";
+  disegnaFasce();
+}
+function giornoDi() { return et.modo === "sett" ? et.g : (et.d.getDay() + 6) % 7; }
+function letteraDi() { return et.modo === "sett" ? et.lettera : quale(et.d); }
+function spiegaEditor() {
+  var copie = et.copia.filter(function (x, g) { return x && g !== giornoDi(); }).length;
+  var dove = et.modo === "data" && et.quando === "giorno" ? "solo in queste date" : "in tutte le settimane " + letteraDi();
+  $("et-spiega").textContent = "Vale " + dove + (copie ? ", per " + (copie + 1) + " giorni." : ".");
+  $("et-copia-label").textContent = et.modo === "data" && et.quando === "giorno" ? "Uguale anche per questi giorni della stessa settimana" : "Uguale anche per questi giorni (settimana " + letteraDi() + ")";
+}
+function disegnaCopia() {
+  var box = $("et-copia"); box.innerHTML = "";
+  for (var g = 0; g < 7; g++) (function (g) {
+    var b = el("button", et.copia[g] ? "sel" : ""); b.type = "button"; b.textContent = GIORNI_LUN[g].slice(0, 2);
+    if (g === giornoDi()) b.disabled = true;
+    b.onclick = function () { et.copia[g] = !et.copia[g]; b.classList.toggle("sel", et.copia[g]); spiegaEditor(); };
+    box.appendChild(b);
+  })(g);
+}
+function modificaTurno(o) {
+  et = o; et.copia = [false, false, false, false, false, false, false]; et.copia[giornoDi()] = true;
+  var attuale;
+  if (o.modo === "sett") {
+    attuale = cfg.turni[o.lettera][o.g][o.p];
+    $("et-titolo").textContent = cfg.nomi[o.p] + " · " + GIORNI_LUN_LUNGHI[o.g] + " (settimana " + o.lettera + ")";
+    et.quando = "sempre";
+  } else {
+    attuale = turno(o.d, o.p);
+    $("et-titolo").textContent = cfg.nomi[o.p] + " · " + GIORNI[o.d.getDay()] + " " + o.d.getDate() + " " + MESI[o.d.getMonth()];
+    et.quando = haEccezione(o.d, o.p) ? "giorno" : "sempre";
+  }
+  $("et-quando-box").hidden = o.modo === "sett"; seg("et-quando", et.quando);
+  $("et-ripristina").style.visibility = o.modo === "data" && haEccezione(o.d, o.p) ? "visible" : "hidden";
+  // orari già usati: un tocco e sono pronti
   var visti = {}, lista = [];
-  ["A", "B"].forEach(function (s) { cfg.turni[s].forEach(function (g) { g.forEach(function (v) { if (v && !visti[v]) { visti[v] = 1; lista.push(v); } }); }); });
-  Object.keys(cfg.eccezioni).forEach(function (k) { var v = cfg.eccezioni[k]; if (v && !visti[v]) { visti[v] = 1; lista.push(v); } });
+  function aggiungi(v) { var n = scriviFasce(leggiFasce(v)) || v; if (n && !visti[n]) { visti[n] = 1; lista.push(n); } }
+  ["A", "B"].forEach(function (s) { cfg.turni[s].forEach(function (g) { g.forEach(aggiungi); }); });
+  Object.keys(cfg.eccezioni).forEach(function (k) { aggiungi(cfg.eccezioni[k]); });
   var ch = $("et-chips"); ch.innerHTML = "";
-  ["Riposo"].concat(lista.slice(0, 9)).forEach(function (v) {
+  lista.slice(0, 8).forEach(function (v) {
     var b = el("button"); b.type = "button"; b.textContent = v;
-    b.onclick = function () { $("et-valore").value = v === "Riposo" ? "" : v; salvaTurno(); };
+    b.onclick = function () { impostaValore(v); };
     ch.appendChild(b);
   });
+  ch.hidden = !lista.length;
+  impostaValore(attuale); disegnaCopia(); spiegaEditor();
   apri("ed-turno");
 }
+$("et-aggiungi").onclick = function () {
+  var ult = et.fasce[et.fasce.length - 1];
+  et.fasce.push(ult ? [ult[1], ""] : ["09:00", "17:00"]); disegnaFasce();
+};
+$("et-riposo").onclick = function () { et.aMano = false; et.fasce = []; disegnaFasce(); };
+$("et-testo-btn").onclick = function () { et.aMano = true; $("et-testo").value = scriviFasce(et.fasce); disegnaFasce(); $("et-testo").focus(); };
+$("et-quando").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { et.quando = v; seg("et-quando", v); spiegaEditor(); } };
 function salvaTurno() {
-  var v = $("et-valore").value.trim(); if (/^riposo$/i.test(v)) v = "";
-  var k = chiaveEcc(et.d, et.p);
-  if (et.quando === "giorno") cfg.eccezioni[k] = v;
-  else { cfg.turni[quale(et.d)][(et.d.getDay() + 6) % 7][et.p] = v; delete cfg.eccezioni[k]; }
+  var v = et.aMano ? $("et-testo").value.trim() : scriviFasce(et.fasce);
+  if (/^riposo$/i.test(v)) v = "";
+  var lettera = letteraDi(), lun = et.modo === "data" ? lunedi(et.d) : null;
+  for (var g = 0; g < 7; g++) {
+    if (!et.copia[g]) continue;
+    if (et.modo === "data" && et.quando === "giorno") cfg.eccezioni[chiaveEcc(piuGiorni(lun, g), et.p)] = v;
+    else {
+      cfg.turni[lettera][g][et.p] = v;
+      if (lun) delete cfg.eccezioni[chiaveEcc(piuGiorni(lun, g), et.p)];
+    }
+  }
   salvaCfg(); disegnaTurni(); chiudi("ed-turno");
 }
 $("ed-turno").querySelector("form").onsubmit = function (e) { e.preventDefault(); salvaTurno(); };
-$("et-quando").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { et.quando = v; seg("et-quando", v); spiegazione(); } };
 $("et-ripristina").onclick = function () { delete cfg.eccezioni[chiaveEcc(et.d, et.p)]; salvaCfg(); disegnaTurni(); chiudi("ed-turno"); };
 
 // nomi e settimana A/B
@@ -357,6 +496,12 @@ function disegnaNote() {
   nuova.onclick = function () { modificaNota(null); };
   b.appendChild(nuova);
 }
+$("form-nota").onsubmit = function (e) {
+  e.preventDefault();
+  var t = $("in-nota").value.trim(); if (!t) return;
+  note.push({ id: nuovoId(), testo: t, colore: COLORI[note.length % COLORI.length] });
+  salva("cucina_note", note); disegnaNote(); $("in-nota").value = "";
+};
 var en = { nota: null, colore: "giallo" };
 COLORI.forEach(function (c) {
   var b = el("button"); b.type = "button"; b.setAttribute("data-v", c); b.setAttribute("aria-label", c); b.style.background = COLORI_HEX[c];
@@ -452,6 +597,7 @@ $("imp-scollega").onclick = function () { if (confirm("Scollegare questo telefon
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); disegnaSpesa(); }
 mostraScheda(scheda);
+cambiaVista(vista);
 ridisegna();
 avviaSync();
 setInterval(function () { if (!document.querySelector(".velo.on")) disegnaTurni(); }, 60 * 1000);

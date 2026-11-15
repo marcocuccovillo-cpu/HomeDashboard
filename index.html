@@ -30,6 +30,7 @@
     --sughero: #191612;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--bg); color: var(--ink);
@@ -157,6 +158,15 @@
   li.fatto .box { background: var(--done); border-color: var(--done); }
   .vuoto { color: var(--muted); font-size: 2.1vh; padding: 10px 4px; border: 0; }
 
+  /* --- carosello foto --- */
+  #card-foto { padding: 0; overflow: hidden; }
+  #carosello { position: relative; flex: 1; min-height: 0; background: var(--line); cursor: pointer; }
+  #carosello img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s; }
+  #carosello img.vis { opacity: 1; }
+  #car-vuoto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+               color: var(--muted); font-size: 2.2vh; line-height: 1.5; padding: 2vw; }
+  body.notte #carosello img { filter: brightness(.7); }
+
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
   .livello.on { display: block; }
@@ -272,10 +282,11 @@
       <div class="preset" id="preset"></div>
       <div id="timer-lista"></div>
     </section>
-    <section class="card riempi" data-lista="spesa">
-      <h2>Spesa <button class="btn-piccolo pulisci">Togli spuntati</button></h2>
-      <form class="aggiungi"><input placeholder="Aggiungi…" enterkeyhint="done"><button>+</button></form>
-      <ul></ul>
+    <section class="card riempi" id="card-foto">
+      <div id="carosello">
+        <img id="carA" alt=""><img id="carB" alt="">
+        <div id="car-vuoto">Nessuna foto per ora.<br>Aggiungile dal telefono (scheda Foto) o da ⚙.</div>
+      </div>
     </section>
   </div>
 </div>
@@ -829,29 +840,6 @@ $("allarme").onclick = function () {
   $("allarme").classList.remove("on"); clearInterval(beepInt); allarmeAttivo = null; toccato();
 };
 
-// ================= lista spesa =================
-var cardSpesa = document.querySelector('[data-lista="spesa"]');
-function disegnaSpesa() {
-  var ul = cardSpesa.querySelector("ul"); ul.innerHTML = "";
-  if (!spesa.length) { ul.innerHTML = '<li class="vuoto">Niente per ora</li>'; return; }
-  spesa.forEach(function (v) {
-    var li = el("li", v.fatto ? "fatto" : "");
-    li.innerHTML = '<span class="box"></span><span></span>';
-    li.lastChild.textContent = v.testo;
-    li.onclick = function () { v.fatto = !v.fatto; salva("cucina_spesa", spesa); disegnaSpesa(); };
-    ul.appendChild(li);
-  });
-}
-cardSpesa.querySelector("form").onsubmit = function (e) {
-  e.preventDefault();
-  var input = cardSpesa.querySelector("input"), t = input.value.trim();
-  if (t) { spesa.push({ id: nuovoId(), testo: t, fatto: false }); salva("cucina_spesa", spesa); disegnaSpesa(); }
-  input.value = ""; input.blur();
-};
-cardSpesa.querySelector(".pulisci").onclick = function () {
-  spesa = spesa.filter(function (v) { return !v.fatto; }); salva("cucina_spesa", spesa); disegnaSpesa();
-};
-
 function mostraStatoSync() {
   var collegato = !!token, s = $("sync-stato"), p = $("sync-punto");
   $("sync-scollegato").hidden = collegato; $("sync-collegato").hidden = !collegato;
@@ -898,7 +886,9 @@ function req(r) { return new Promise(function (ok, ko) { r.onsuccess = function 
 var fotoChiavi = [];
 function caricaChiavi() {
   return store("readonly").then(function (s) { return req(s.getAllKeys()); }).then(function (k) {
+    var primeFoto = !fotoChiavi.length && k.length;
     fotoChiavi = k;
+    if (primeFoto || !k.length) carosello();
     var dalTel = k.filter(function (x) { return typeof x === "string"; }).length;
     $("foto-conta").textContent = k.length + " foto" + (dalTel ? " (" + dalTel + " condivise)" : "");
   }).catch(function () { fotoChiavi = []; });
@@ -962,6 +952,26 @@ function mostraProssima() {
     img.src = fotoUrl[fotoLato];
   });
 }
+// carosello nel riquadro a destra: stesse foto dello slideshow a schermo intero
+var car = { idx: Math.floor(Math.random() * 1000), lato: 0, url: [null, null], timer: null };
+function carosello() {
+  var vuoto = !fotoChiavi.length;
+  $("car-vuoto").hidden = !vuoto;
+  if (vuoto) { $("carA").classList.remove("vis"); $("carB").classList.remove("vis"); return; }
+  if (fotoTimer) return;   // a schermo intero ci pensa lo slideshow
+  var k = fotoChiavi[car.idx++ % fotoChiavi.length];
+  store("readonly").then(function (s) { return req(s.get(k)); }).then(function (blob) {
+    if (!blob) return;
+    car.lato = 1 - car.lato;
+    var img = car.lato ? $("carB") : $("carA"), altra = car.lato ? $("carA") : $("carB");
+    if (car.url[car.lato]) URL.revokeObjectURL(car.url[car.lato]);
+    car.url[car.lato] = URL.createObjectURL(blob);
+    img.onload = function () { img.classList.add("vis"); altra.classList.remove("vis"); };
+    img.src = car.url[car.lato];
+  });
+}
+function avviaCarosello() { clearInterval(car.timer); car.timer = setInterval(carosello, Math.max(3, cfg.fotoOgni) * 1000); }
+$("carosello").onclick = function () { if (fotoChiavi.length) apriFoto(); };
 function apriFoto() {
   fotoIdx = Math.floor(Math.random() * fotoChiavi.length);
   $("foto").classList.add("on"); mostraProssima();
@@ -988,7 +998,7 @@ function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); sa
 $("nome0").oninput = function () { cambiaNome(0, this.value); };
 $("nome1").oninput = function () { cambiaNome(1, this.value); };
 $("foto-attesa").onchange = function () { cfg.fotoAttesa = Math.max(1, +this.value || 5); salvaCfg(); };
-$("foto-ogni").onchange = function () { cfg.fotoOgni = Math.max(3, +this.value || 12); salvaCfg(); };
+$("foto-ogni").onchange = function () { cfg.fotoOgni = Math.max(3, +this.value || 12); salvaCfg(); avviaCarosello(); };
 $("seg-corrente").onclick = function (e) {
   var v = e.target.getAttribute("data-v"); if (!v) return;
   cfg.ancora = { lunedi: iso(lunedi(new Date())), sett: v }; cfg.ancoraAuto = false; salvaCfg();
@@ -1042,12 +1052,12 @@ $("installa").onclick = function () {
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
 
 // ================= avvio =================
-function ridisegna() { disegnaTurni(); disegnaNote(); disegnaSpesa(); }
+function ridisegna() { disegnaTurni(); disegnaNote(); }
 function occupato() { return !!presa; }
-tieniAcceso();
-orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaSpesa(); disegnaTimer(); caricaChiavi();
+tieniAcceso(); avviaCarosello();
+orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
-sincronizzaFoto(); setInterval(sincronizzaFoto, 5 * 60 * 1000);
+sincronizzaFoto(); setInterval(sincronizzaFoto, 60 * 1000);
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);

@@ -249,7 +249,7 @@ function avviaSync() {   // da chiamare dopo aver disegnato la pagina
   avviaRegistro();
   pulisciEccezioni(); salvaCfg();
   mostraStato(); sincronizza();
-  setInterval(function () { if (document.visibilityState === "visible") sincronizza(); }, 30 * 1000);
+  setInterval(function () { if (document.visibilityState === "visible") sincronizza(); }, 10 * 1000);   // ogni 10 secondi
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") sincronizza(); });
   setInterval(function () { if (daApplicare && puoApplicare()) applica(); }, 1000);
 }
