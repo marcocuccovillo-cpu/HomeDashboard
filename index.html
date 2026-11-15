@@ -5,109 +5,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1c1915">
 <title>Cucina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f4efe6; --card: #fffaf2; --ink: #2b261f; --muted: #8a7f70;
     --accent: #c4622d; --accent-soft: #f3dfd0; --line: #e6dccb; --done: #b9ad9b;
+    --sughero: #ece3d3;
   }
   body.notte {
     --bg: #14120f; --card: #1d1a16; --ink: #d9cfbf; --muted: #7d7365;
     --accent: #d07a45; --accent-soft: #3a2a1f; --line: #2c2721; --done: #554d42;
+    --sughero: #191612;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--bg); color: var(--ink);
     font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
-    overflow: hidden; user-select: none; transition: background .6s, color .6s;
+    overflow: hidden; -webkit-user-select: none; user-select: none; transition: background .6s, color .6s;
   }
+  input, textarea { -webkit-user-select: text; user-select: text; font-family: inherit; }
   button { font-family: inherit; cursor: pointer; }
+
   #griglia {
-    height: 100%; display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; padding: 18px;
+    height: 100%; display: grid; gap: 14px; padding: 14px;
+    grid-template-columns: 1.5fr 1fr; grid-template-rows: auto auto minmax(0, 1fr);
   }
-  .col { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
-    padding: 18px 20px; display: flex; flex-direction: column; min-height: 0; position: relative;
+    background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+    padding: 1.8vh 1.6vw; display: flex; flex-direction: column; min-height: 0; position: relative;
   }
   .riempi { flex: 1; }
-  h2 { margin: 0 0 10px; font-size: 3vh; font-weight: 500; display: flex;
+  h2 { margin: 0 0 1.2vh; font-size: 2.7vh; font-weight: 500; display: flex; gap: 10px;
        justify-content: space-between; align-items: center; }
-  h2 small { font-size: 2vh; color: var(--muted); font-weight: 400; }
-  .btn-piccolo { font-size: 1.9vh; padding: 5px 11px; border-radius: 10px; background: transparent;
-                 color: var(--muted); border: 1px solid var(--line); }
+  h2 small { font-size: 1.8vh; color: var(--muted); font-weight: 400; flex: 1; }
+  .btn-piccolo { font-size: 1.8vh; padding: 5px 11px; border-radius: 10px; background: transparent;
+                 color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+  .btn-pieno { border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: 2.2vh; padding: 1.2vh 2.2vw; }
 
-  /* --- ora e meteo --- */
-  #ingranaggio { position: absolute; top: 14px; right: 14px; width: 5vh; height: 5vh; border: 0;
-                 background: transparent; color: var(--muted); padding: 0; opacity: .7; }
+  /* --- barra ora + meteo --- */
+  #barra { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 2.2vw; padding: 1.2vh 1.6vw; }
+  #barra > * + * { border-left: 1px solid var(--line); padding-left: 2.2vw; }
+  #ora { font-size: 8vh; font-weight: 300; line-height: 1; letter-spacing: -1px; }
+  #data { font-size: 2.1vh; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+  .meteo-ora { display: flex; align-items: center; gap: 10px; }
+  .meteo-ora svg { width: 6.5vh; height: 6.5vh; display: block; }
+  #temp { font-size: 5.5vh; font-weight: 300; line-height: 1; }
+  #descr { font-size: 1.8vh; color: var(--muted); white-space: nowrap; }
+  #ore, #giorni { display: flex; justify-content: space-between; flex: 1; gap: 4px; }
+  #giorni { flex: .75; }
+  .ora-h, .giorno { text-align: center; font-size: 1.7vh; color: var(--muted); flex: 1; line-height: 1.25; }
+  .ora-h svg, .giorno svg { width: 3.4vh; height: 3.4vh; display: block; margin: 2px auto; }
+  .ora-h b, .giorno b { color: var(--ink); font-weight: 500; }
+  .ora-h .pp { display: block; color: var(--accent); min-height: 1.9vh; }
+  #ingranaggio { width: 5vh; height: 5vh; border: 0 !important; background: transparent; color: var(--muted);
+                 padding: 0 !important; flex: none; }
   #ingranaggio svg { width: 100%; height: 100%; }
-  #ora { font-size: 14vh; font-weight: 300; line-height: 1; letter-spacing: -2px; }
-  #data { font-size: 3.2vh; color: var(--muted); margin-top: 6px; }
-  .ore { display: flex; justify-content: space-between; margin-top: auto; padding: 12px 0;
-         border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .ora-h { text-align: center; font-size: 2.1vh; color: var(--muted); flex: 1; }
-  .ora-h svg { width: 4.4vh; height: 4.4vh; display: block; margin: 4px auto; }
-  .ora-h b { color: var(--ink); font-weight: 500; font-size: 2.4vh; }
-  .ora-h .pp { display: block; font-size: 1.8vh; color: var(--accent); min-height: 2.2vh; }
-  .meteo-ora { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
-  .meteo-ora svg { width: 10vh; height: 10vh; }
-  #temp { font-size: 8.5vh; font-weight: 300; }
-  #descr { font-size: 2.6vh; color: var(--muted); }
-  .giorni { display: flex; justify-content: space-between; margin-top: 14px;
-            border-top: 1px solid var(--line); padding-top: 12px; }
-  .giorno { text-align: center; font-size: 2.2vh; color: var(--muted); flex: 1; }
-  .giorno svg { width: 5vh; height: 5vh; display: block; margin: 5px auto; }
-  .giorno b { color: var(--ink); font-weight: 500; }
 
-  /* --- turni --- */
-  .turni { width: 100%; border-collapse: collapse; font-size: 2.5vh; }
-  .turni th { font-weight: 400; color: var(--muted); font-size: 2vh; text-align: left; padding: 0 6px 6px; }
-  .turni td { padding: 9px 6px; border-top: 1px solid var(--line); }
-  .turni td:first-child { font-weight: 500; width: 30%; }
-  .riposo { color: var(--muted); font-style: italic; }
+  /* --- griglia turni --- */
+  #card-turni { grid-column: 1; grid-row: 2; }
+  .tturni { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 2.1vh; }
+  .tturni col.c-nome { width: 15%; }
+  .tturni th { font-weight: 400; color: var(--muted); font-size: 1.75vh; padding: .5vh .2vw; text-align: center; white-space: nowrap; }
+  .tturni th b { color: var(--ink); font-weight: 500; }
+  .tturni tr.sett th:first-child { text-align: left; color: var(--accent); font-weight: 500; }
+  .tturni tr.sett.seconda th { padding-top: 1.6vh; }
+  .tturni td { padding: .9vh .2vw; text-align: center; border-top: 1px solid var(--line);
+               white-space: pre-line; line-height: 1.2; cursor: pointer; height: 5.2vh; }
+  .tturni td.nome { text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tturni .oggi { background: var(--accent-soft); }
+  .tturni th.oggi { border-radius: 8px 8px 0 0; color: var(--ink); }
+  .tturni .passato { opacity: .4; }
+  .tturni td.riposo { color: var(--muted); font-style: italic; font-size: 1.8vh; }
+  .tturni td.eccezione { color: var(--accent); font-weight: 500; }
+  .tturni td:active { background: var(--line); }
 
-  /* --- timer --- */
+  /* --- bacheca promemoria (sticky notes) --- */
+  #card-note { grid-column: 1; grid-row: 3; background: var(--sughero); }
+  #bacheca { flex: 1; overflow-y: auto; display: grid; gap: 2.2vh 1.6vw; padding: .8vh .6vw 1.4vh;
+             grid-template-columns: repeat(auto-fill, minmax(19vh, 1fr)); grid-auto-rows: 17vh; align-content: start; }
+  .nota { position: relative; padding: 2.2vh 1.4vh 1.2vh; color: #3b3224; border: 0; text-align: left;
+          font-family: "Caveat", "Segoe Print", "Comic Sans MS", cursive; font-weight: 500; font-size: 3.1vh; line-height: 1.05;
+          box-shadow: 0 6px 10px -4px rgba(60,40,10,.35), 0 1px 2px rgba(0,0,0,.08);
+          transform: rotate(var(--r, 0deg)); transition: transform .15s; overflow: hidden;
+          word-break: break-word; white-space: pre-wrap; display: block; }
+  .nota::before { content: ""; position: absolute; top: -.6vh; left: 50%; width: 38%; height: 2.4vh;
+                  transform: translateX(-50%) rotate(-2deg); background: rgba(255,255,255,.45);
+                  box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .nota:active { transform: rotate(0) scale(1.04); }
+  .nota.m { font-size: 2.6vh; } .nota.s { font-size: 2.15vh; }
+  body.notte .nota { filter: brightness(.62) saturate(.8); }
+  .nota.nuova { background: transparent; border: 2px dashed var(--done); box-shadow: none; color: var(--muted);
+                font-size: 6vh; text-align: center; display: flex; align-items: center; justify-content: center; filter: none; }
+  .nota.nuova::before { display: none; }
+  .giallo { background: #fbe38b; } .rosa { background: #f7c4cf; } .verde { background: #c9e5ad; }
+  .azzurro { background: #bcdcf0; } .arancio { background: #fbcd9c; } .lilla { background: #d9cbf0; }
+
+  /* --- colonna destra: timer + spesa --- */
+  #col-destra { grid-column: 2; grid-row: 2 / 4; }
   .preset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .preset button { font-size: 2.4vh; padding: 1.3vh 0; border-radius: 12px; border: 1px solid var(--line);
+  .preset button { font-size: 2.2vh; padding: 1.2vh 0; border-radius: 12px; border: 1px solid var(--line);
                    background: var(--bg); color: var(--ink); }
   .preset button:active { background: var(--accent-soft); }
-  #timer-lista { margin-top: 10px; overflow-y: auto; flex: 1; }
-  .timer { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px;
-           background: var(--accent-soft); margin-bottom: 8px; }
-  .timer .t { font-size: 4.2vh; font-variant-numeric: tabular-nums; font-weight: 400; }
-  .timer .n { color: var(--muted); font-size: 2vh; flex: 1; }
+  #timer-lista { margin-top: 8px; max-height: 22vh; overflow-y: auto; }
+  .timer { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px;
+           background: var(--accent-soft); margin-bottom: 6px; }
+  .timer .t { font-size: 3.8vh; font-variant-numeric: tabular-nums; }
+  .timer .n { color: var(--muted); font-size: 1.9vh; flex: 1; }
   .timer button { border: 0; background: transparent; color: var(--muted); font-size: 3.4vh; padding: 0 4px; }
 
-  /* --- liste --- */
   .aggiungi { display: flex; gap: 8px; margin-bottom: 6px; }
   .aggiungi input {
-    flex: 1; min-width: 0; font-size: 2.4vh; padding: 10px 12px; border-radius: 12px;
+    flex: 1; min-width: 0; font-size: 2.3vh; padding: 1.1vh 12px; border-radius: 12px;
     border: 1px solid var(--line); background: var(--bg); color: var(--ink); outline: none;
   }
-  .aggiungi button { border: 0; border-radius: 12px; background: var(--accent); color: #fff;
-                     font-size: 3vh; width: 6vh; }
+  .aggiungi button { border: 0; border-radius: 12px; background: var(--accent); color: #fff; font-size: 3vh; width: 6vh; }
   ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
-  li { display: flex; align-items: center; gap: 12px; padding: 9px 4px;
-       border-bottom: 1px solid var(--line); font-size: 2.5vh; }
+  li { display: flex; align-items: center; gap: 12px; padding: 1vh 4px; border-bottom: 1px solid var(--line); font-size: 2.4vh; }
   li .box { width: 3vh; height: 3vh; border: 2px solid var(--muted); border-radius: 8px; flex: none; }
   li.fatto { color: var(--done); text-decoration: line-through; }
   li.fatto .box { background: var(--done); border-color: var(--done); }
-  .vuoto { color: var(--muted); font-size: 2.2vh; padding: 10px 4px; border: 0; }
+  .vuoto { color: var(--muted); font-size: 2.1vh; padding: 10px 4px; border: 0; }
 
-  /* --- livelli sopra (foto, allarme, impostazioni, settimana) --- */
+  /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
   .livello.on { display: block; }
-
   #foto { background: #000; z-index: 20; }
-  #foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-              opacity: 0; transition: opacity 1.5s; }
+  #foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.5s; }
   #foto img.vis { opacity: 1; }
-  #foto-info { position: absolute; left: 28px; bottom: 22px; color: #fff;
-               text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  #foto-info { position: absolute; left: 28px; bottom: 22px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
   #foto-ora { font-size: 11vh; font-weight: 300; line-height: 1; }
   #foto-timer { font-size: 3vh; margin-top: 6px; }
 
-  #allarme { background: var(--accent); color: #fff; z-index: 30; text-align: center;
+  #allarme { background: var(--accent); color: #fff; z-index: 40; text-align: center;
              display: none; flex-direction: column; justify-content: center; align-items: center;
              animation: pulsa 1s infinite alternate; }
   #allarme.on { display: flex; }
@@ -115,72 +148,86 @@
   #allarme .sotto { font-size: 3.4vh; margin-top: 10px; opacity: .9; }
   @keyframes pulsa { from { filter: brightness(1); } to { filter: brightness(1.25); } }
 
-  .pannello { background: rgba(0,0,0,.45); z-index: 25; }
+  .scuro { background: rgba(0,0,0,.45); z-index: 25; }
   .pannello .dentro { position: absolute; inset: 4vh 6vw; background: var(--card); border-radius: 22px;
-                      padding: 22px 26px; overflow-y: auto; user-select: text; }
-  .pannello h3 { margin: 18px 0 10px; font-size: 2.6vh; font-weight: 500; color: var(--accent); }
-  .pannello h3:first-of-type { margin-top: 0; }
+                      padding: 22px 26px; overflow-y: auto; }
+  .finestra { position: absolute; top: 7vh; left: 50%; transform: translateX(-50%); width: min(620px, 92vw);
+              background: var(--card); border-radius: 20px; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .scuro h3 { margin: 16px 0 10px; font-size: 2.6vh; font-weight: 500; color: var(--accent); }
+  .scuro h3:first-of-type { margin-top: 0; }
   .chiudi { position: absolute; top: 16px; right: 18px; }
-  .riga { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-  .pannello label { font-size: 2.2vh; color: var(--muted); }
-  .pannello input[type=text], .pannello input[type=number] {
-    font-size: 2.3vh; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line);
+  .riga { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .riga.fine { justify-content: flex-end; margin: 16px 0 0; }
+  .riga.fine .sx { margin-right: auto; }
+  .scuro label { font-size: 2.1vh; color: var(--muted); }
+  .scuro input[type=text], .scuro input[type=number], .scuro textarea {
+    font-size: 2.5vh; padding: 1.1vh 12px; border-radius: 10px; border: 1px solid var(--line);
     background: var(--bg); color: var(--ink); outline: none; min-width: 0;
   }
+  .largo { width: 100%; }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .seg button { border: 0; background: transparent; color: var(--ink); font-size: 2.2vh; padding: 8px 18px; }
+  .seg button { border: 0; background: transparent; color: var(--ink); font-size: 2.1vh; padding: 1vh 16px; }
   .seg button.sel { background: var(--accent); color: #fff; }
-  .tab-turni { width: 100%; border-collapse: collapse; }
-  .tab-turni th { text-align: left; font-weight: 400; color: var(--muted); font-size: 2vh; padding: 4px; }
-  .tab-turni td { padding: 4px; font-size: 2.3vh; }
-  .tab-turni td:first-child { width: 14%; color: var(--muted); }
-  .tab-turni input { width: 100%; }
-  .tab-turni tr.oggi td { background: var(--accent-soft); }
-  .tab-turni tr.oggi td:first-child { border-radius: 8px 0 0 8px; color: var(--ink); }
-  .tab-turni tr.oggi td:last-child { border-radius: 0 8px 8px 0; }
-  .nota { font-size: 1.9vh; color: var(--muted); margin: 4px 0 8px; }
-  .btn-pieno { border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: 2.2vh; padding: 9px 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .chips button { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 20px;
+                  font-size: 2.1vh; padding: .8vh 14px; }
+  .nota-txt { font-size: 1.85vh; color: var(--muted); margin: 4px 0 8px; line-height: 1.4; }
+  .btn-rosso { color: #b4412f; border-color: #e5b7ad; }
+  .scuro #en-testo.giallo { background: #fbe38b; } .scuro #en-testo.rosa { background: #f7c4cf; } .scuro #en-testo.verde { background: #c9e5ad; }
+  .scuro #en-testo.azzurro { background: #bcdcf0; } .scuro #en-testo.arancio { background: #fbcd9c; } .scuro #en-testo.lilla { background: #d9cbf0; }
+  #ed-nota textarea { width: 100%; height: 22vh; resize: none; font-family: "Caveat", cursive; font-size: 3.6vh; line-height: 1.1;
+                      color: #3b3224; border: 0; }
+  .colori { display: flex; gap: 12px; margin-top: 12px; }
+  .colori button { width: 5vh; height: 5vh; border-radius: 50%; border: 2px solid rgba(0,0,0,.08); }
+  .colori button.sel { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  @media (orientation: portrait) {
+    body { overflow: auto; }
+    #griglia { height: auto; grid-template-columns: 1fr; grid-template-rows: none; }
+    #barra { flex-wrap: wrap; } #ore { display: none; }
+    #card-turni, #card-note, #col-destra { grid-column: 1; grid-row: auto; }
+    #card-note { min-height: 45vh; } #col-destra .riempi { min-height: 40vh; }
+    .tturni col.c-nome { width: 19%; } .tturni { font-size: 1.6vh; }
+  }
 </style>
 </head>
 <body>
 <div id="griglia">
-  <!-- colonna 1: ora + meteo -->
-  <section class="card">
-    <button id="ingranaggio" aria-label="Impostazioni">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-    </button>
-    <div id="ora">--:--</div>
-    <div id="data"></div>
-    <div class="ore" id="ore"></div>
+  <!-- barra in alto: ora + meteo -->
+  <section class="card" id="barra">
+    <div><div id="ora">--:--</div><div id="data"></div></div>
     <div class="meteo-ora">
       <div id="icona"></div>
       <div><div id="temp">--°</div><div id="descr">Carico il meteo…</div></div>
     </div>
-    <div class="giorni" id="giorni"></div>
+    <div id="ore"></div>
+    <div id="giorni"></div>
+    <button id="ingranaggio" aria-label="Impostazioni">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
   </section>
 
-  <!-- colonna 2: turni + timer -->
-  <div class="col">
-    <section class="card" id="card-turni">
-      <h2>Turni <small id="sett-label"></small></h2>
-      <table class="turni"><thead><tr><th></th><th>Oggi</th><th>Domani</th></tr></thead><tbody id="turni-corpo"></tbody></table>
-    </section>
-    <section class="card riempi">
-      <h2>Timer <small id="timer-custom-wrap"></small></h2>
+  <!-- turni -->
+  <section class="card" id="card-turni">
+    <h2>Turni <small>tocca una casella o un nome per modificarlo</small></h2>
+    <table class="tturni" id="tab-turni"></table>
+  </section>
+
+  <!-- promemoria -->
+  <section class="card" id="card-note">
+    <h2>Promemoria</h2>
+    <div id="bacheca"></div>
+  </section>
+
+  <!-- timer + spesa -->
+  <div class="col" id="col-destra">
+    <section class="card">
+      <h2>Timer <button class="btn-piccolo" id="timer-altro">Altro…</button></h2>
       <div class="preset" id="preset"></div>
       <div id="timer-lista"></div>
     </section>
-  </div>
-
-  <!-- colonna 3: spesa + promemoria -->
-  <div class="col">
     <section class="card riempi" data-lista="spesa">
       <h2>Spesa <button class="btn-piccolo pulisci">Togli spuntati</button></h2>
-      <form class="aggiungi"><input placeholder="Aggiungi…" enterkeyhint="done"><button>+</button></form>
-      <ul></ul>
-    </section>
-    <section class="card riempi" data-lista="promemoria">
-      <h2>Promemoria <button class="btn-piccolo pulisci">Togli spuntati</button></h2>
       <form class="aggiungi"><input placeholder="Aggiungi…" enterkeyhint="done"><button>+</button></form>
       <ul></ul>
     </section>
@@ -200,19 +247,51 @@
   <div class="sotto">Tocca per fermare</div>
 </div>
 
-<!-- settimana intera -->
-<div id="settimana" class="livello pannello">
-  <div class="dentro">
-    <button class="btn-piccolo chiudi">Chiudi</button>
-    <h3 id="settimana-titolo">Questa settimana</h3>
-    <table class="tab-turni" id="settimana-tab"></table>
-    <h3 id="prossima-titolo">Prossima settimana</h3>
-    <table class="tab-turni" id="prossima-tab"></table>
-  </div>
+<!-- modifica turno -->
+<div id="ed-turno" class="livello scuro modale">
+  <form class="finestra">
+    <h3 id="et-titolo"></h3>
+    <input type="text" id="et-valore" class="largo" placeholder="Riposo" autocomplete="off" enterkeyhint="done">
+    <div class="chips" id="et-chips"></div>
+    <div class="riga">
+      <div class="seg" id="et-quando"><button type="button" data-v="sempre">Ogni 2 settimane</button><button type="button" data-v="giorno">Solo questo giorno</button></div>
+    </div>
+    <div class="nota-txt" id="et-spiega"></div>
+    <div class="riga fine">
+      <button type="button" class="btn-piccolo sx" id="et-ripristina">Torna al turno abituale</button>
+      <button type="button" class="btn-piccolo annulla">Annulla</button>
+      <button class="btn-pieno">Salva</button>
+    </div>
+  </form>
+</div>
+
+<!-- domanda semplice (nome, minuti) -->
+<div id="ed-chiedi" class="livello scuro modale">
+  <form class="finestra">
+    <h3 id="ec-titolo"></h3>
+    <input type="text" id="ec-valore" class="largo" autocomplete="off" enterkeyhint="done">
+    <div class="riga fine">
+      <button type="button" class="btn-piccolo annulla">Annulla</button>
+      <button class="btn-pieno">OK</button>
+    </div>
+  </form>
+</div>
+
+<!-- modifica bigliettino -->
+<div id="ed-nota" class="livello scuro modale">
+  <form class="finestra">
+    <textarea id="en-testo" placeholder="Scrivi qui…"></textarea>
+    <div class="colori" id="en-colori"></div>
+    <div class="riga fine">
+      <button type="button" class="btn-piccolo btn-rosso sx" id="en-elimina">Stacca dalla bacheca</button>
+      <button type="button" class="btn-piccolo annulla">Annulla</button>
+      <button class="btn-pieno">Attacca</button>
+    </div>
+  </form>
 </div>
 
 <!-- impostazioni -->
-<div id="impostazioni" class="livello pannello">
+<div id="impostazioni" class="livello scuro pannello">
   <div class="dentro">
     <button class="btn-piccolo chiudi">Chiudi</button>
 
@@ -222,17 +301,12 @@
       <input type="text" id="nome1" placeholder="Persona 2">
     </div>
 
-    <h3>Turni di lavoro (ogni due settimane)</h3>
+    <h3>Turni</h3>
     <div class="riga">
       <label>Questa settimana è la</label>
       <div class="seg" id="seg-corrente"><button data-v="A">A</button><button data-v="B">B</button></div>
     </div>
-    <div class="riga">
-      <label>Modifica settimana</label>
-      <div class="seg" id="seg-modifica"><button data-v="A">A</button><button data-v="B">B</button></div>
-    </div>
-    <div class="nota">Scrivi l'orario così come vuoi vederlo (es. "9–17" o "10–15 / 18–23"). Lascia vuoto per Riposo.</div>
-    <table class="tab-turni" id="tab-modifica"></table>
+    <div class="nota-txt">I turni si ripetono ogni due settimane (A e B si alternano). Per cambiarli tocca direttamente le caselle della griglia.</div>
 
     <h3>Foto a rotazione</h3>
     <div class="riga">
@@ -244,13 +318,13 @@
     </div>
     <div class="riga">
       <label>Partono dopo</label>
-      <input type="number" id="foto-attesa" min="1" max="120" style="width:9vh"> <label>minuti senza toccare lo schermo</label>
+      <input type="number" id="foto-attesa" min="1" max="120" style="width:10vh"> <label>minuti senza toccare lo schermo</label>
     </div>
     <div class="riga">
       <label>Cambia foto ogni</label>
-      <input type="number" id="foto-ogni" min="3" max="600" style="width:9vh"> <label>secondi</label>
+      <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
     </div>
-    <div class="nota">Le foto restano salvate solo su questo tablet. Di notte non partono.</div>
+    <div class="nota-txt">Le foto restano salvate solo su questo tablet. Di notte non partono.</div>
   </div>
 </div>
 
@@ -260,21 +334,24 @@ var LAT = 44.4949, LON = 11.3426;      // Bologna
 var NOTTE_DA = 22, NOTTE_A = 7;        // tema scuro in queste ore
 var GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
 var GIORNI_LUN = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+var GIORNI_LUN_LUNGHI = ["lunedì","martedì","mercoledì","giovedì","venerdì","sabato","domenica"];
 var MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+var COLORI = ["giallo", "rosa", "verde", "azzurro", "arancio", "lilla"];
 
 function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
 function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function $(id) { return document.getElementById(id); }
+function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
 function due(n) { return (n < 10 ? "0" : "") + n; }
 function isNotte() { var h = new Date().getHours(); return h >= NOTTE_DA || h < NOTTE_A; }
 
-var cfg = leggi("cucina_cfg", {
-  nomi: ["Marco", "Lei"],
-  fotoAttesa: 5, fotoOgni: 12,
-  ancora: null,            // { lunedi: "YYYY-MM-DD", sett: "A" }
-  turni: { A: vuotaSett(), B: vuotaSett() }
-});
 function vuotaSett() { var s = []; for (var i = 0; i < 7; i++) s.push(["", ""]); return s; }
+var cfg = leggi("cucina_cfg", {});
+cfg.nomi = cfg.nomi || ["Marco", "Lei"];
+cfg.fotoAttesa = cfg.fotoAttesa || 5; cfg.fotoOgni = cfg.fotoOgni || 12;
+cfg.ancora = cfg.ancora || null;              // { lunedi: "YYYY-MM-DD", sett: "A" }
+cfg.turni = cfg.turni || { A: vuotaSett(), B: vuotaSett() };
+cfg.eccezioni = cfg.eccezioni || {};          // { "YYYY-MM-DD|0": "9–13" } solo per quel giorno
 function salvaCfg() { salva("cucina_cfg", cfg); }
 
 // ================= orologio =================
@@ -329,8 +406,7 @@ function meteo() {
         '<b>' + Math.round(j.daily.temperature_2m_max[i]) + '°</b> ' + Math.round(j.daily.temperature_2m_min[i]) + '°</div>';
     }
     $("giorni").innerHTML = html;
-    // prossime ore (ogni 2 ore, 6 colonne)
-    var adesso = Date.now(), ore = "", n = 0;
+    var adesso = Date.now(), ore = "", n = 0;   // prossime ore, ogni 2 ore
     for (var h = 0; h < j.hourly.time.length && n < 6; h++) {
       var t0 = new Date(j.hourly.time[h]);
       if (t0.getTime() < adesso - 30 * 60000 || t0.getHours() % 2) continue;
@@ -343,63 +419,179 @@ function meteo() {
   }).catch(function () { $("descr").textContent = "Meteo non disponibile"; });
 }
 
+// ================= finestre (modali) =================
+function apri(id) { $(id).classList.add("on"); }
+function chiudi(id) { $(id).classList.remove("on"); if (document.activeElement) document.activeElement.blur(); }
+[].forEach.call(document.querySelectorAll(".scuro"), function (m) {
+  m.onclick = function (e) { if (e.target === m) chiudi(m.id); };
+  [].forEach.call(m.querySelectorAll(".annulla, .chiudi"), function (b) { b.onclick = function () { chiudi(m.id); }; });
+});
+function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === val); }); }
+
+var chiediOk = null;
+function chiedi(titolo, valore, numerico, ok) {
+  $("ec-titolo").textContent = titolo;
+  var inp = $("ec-valore");
+  inp.value = valore; inp.inputMode = numerico ? "decimal" : "text";
+  chiediOk = ok; apri("ed-chiedi");
+  setTimeout(function () { inp.focus(); inp.select(); }, 50);
+}
+$("ed-chiedi").querySelector("form").onsubmit = function (e) {
+  e.preventDefault(); var v = $("ec-valore").value.trim(); chiudi("ed-chiedi"); if (chiediOk) chiediOk(v);
+};
+
 // ================= turni bisettimanali =================
 function lunedi(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
 function iso(d) { return d.getFullYear() + "-" + due(d.getMonth() + 1) + "-" + due(d.getDate()); }
 function daIso(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function piuGiorni(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function quale(d) {   // "A" o "B" per la data d
   if (!cfg.ancora) { cfg.ancora = { lunedi: iso(lunedi(new Date())), sett: "A" }; salvaCfg(); }
   var diff = Math.round((lunedi(d) - daIso(cfg.ancora.lunedi)) / (7 * 864e5));
   var pari = ((diff % 2) + 2) % 2 === 0;
   return pari ? cfg.ancora.sett : (cfg.ancora.sett === "A" ? "B" : "A");
 }
-function turno(d, p) { return cfg.turni[quale(d)][(d.getDay() + 6) % 7][p] || ""; }
-function cella(t) { var td = document.createElement("td"); if (t) td.textContent = t; else { td.textContent = "Riposo"; td.className = "riposo"; } return td; }
-function disegnaTurni() {
-  var oggi = new Date(), dom = new Date(); dom.setDate(dom.getDate() + 1);
-  $("sett-label").textContent = "settimana " + quale(oggi) + " · tocca per vederla";
-  var tb = $("turni-corpo"); tb.innerHTML = "";
-  [0, 1].forEach(function (p) {
-    var tr = document.createElement("tr"), n = document.createElement("td");
-    n.textContent = cfg.nomi[p]; tr.appendChild(n);
-    tr.appendChild(cella(turno(oggi, p))); tr.appendChild(cella(turno(dom, p)));
-    tb.appendChild(tr);
-  });
+function chiaveEcc(d, p) { return iso(d) + "|" + p; }
+function haEccezione(d, p) { return Object.prototype.hasOwnProperty.call(cfg.eccezioni, chiaveEcc(d, p)); }
+function turno(d, p) {
+  if (haEccezione(d, p)) return cfg.eccezioni[chiaveEcc(d, p)];
+  return cfg.turni[quale(d)][(d.getDay() + 6) % 7][p] || "";
 }
-function tabellaSett(tab, lun, modificabile, lettera) {
-  tab.innerHTML = "";
-  var head = document.createElement("tr");
-  head.innerHTML = "<th></th><th></th><th></th>";
-  head.children[1].textContent = cfg.nomi[0]; head.children[2].textContent = cfg.nomi[1];
-  tab.appendChild(head);
-  var oggiIso = iso(new Date());
-  for (var g = 0; g < 7; g++) {
-    var tr = document.createElement("tr"), td0 = document.createElement("td");
-    var giorno = null;
-    if (lun) { giorno = new Date(lun); giorno.setDate(giorno.getDate() + g); }
-    td0.textContent = GIORNI_LUN[g] + (giorno ? " " + giorno.getDate() : "");
-    if (giorno && iso(giorno) === oggiIso) tr.className = "oggi";
-    tr.appendChild(td0);
-    for (var p = 0; p < 2; p++) {
-      if (modificabile) {
-        var td = document.createElement("td"), inp = document.createElement("input");
-        inp.type = "text"; inp.placeholder = "Riposo"; inp.value = cfg.turni[lettera][g][p];
-        (function (g, p) { inp.oninput = function () { cfg.turni[lettera][g][p] = this.value.trim(); salvaCfg(); disegnaTurni(); }; })(g, p);
-        td.appendChild(inp); tr.appendChild(td);
-      } else {
-        tr.appendChild(cella(cfg.turni[lettera][g][p]));
-      }
+function pulisciEccezioni() {   // toglie le eccezioni più vecchie di 2 settimane
+  var limite = iso(piuGiorni(new Date(), -14));
+  Object.keys(cfg.eccezioni).forEach(function (k) { if (k.slice(0, 10) < limite) delete cfg.eccezioni[k]; });
+}
+function disegnaTurni() {
+  var tab = $("tab-turni"), lun = lunedi(new Date()), oggi = iso(new Date());
+  tab.innerHTML = '<colgroup><col class="c-nome"><col><col><col><col><col><col><col></colgroup>';
+  [0, 1].forEach(function (w) {
+    var l = piuGiorni(lun, 7 * w), tr = el("tr", "sett" + (w ? " seconda" : "")), th = el("th");
+    th.textContent = (w ? "Prossima" : "Questa") + " · " + quale(l);
+    tr.appendChild(th);
+    for (var g = 0; g < 7; g++) {
+      var d = piuGiorni(l, g), h = el("th", iso(d) === oggi ? "oggi" : (iso(d) < oggi ? "passato" : ""));
+      h.innerHTML = GIORNI_LUN[g] + " <b>" + d.getDate() + "</b>";
+      tr.appendChild(h);
     }
     tab.appendChild(tr);
-  }
+    [0, 1].forEach(function (p) {
+      var r = el("tr"), n = el("td", "nome");
+      n.textContent = cfg.nomi[p];
+      n.onclick = function () { modificaNome(p); };
+      r.appendChild(n);
+      for (var g = 0; g < 7; g++) {
+        var d = piuGiorni(l, g), t = turno(d, p), c = el("td");
+        var cls = [];
+        if (!t) cls.push("riposo");
+        if (haEccezione(d, p)) cls.push("eccezione");
+        if (iso(d) === oggi) cls.push("oggi"); else if (iso(d) < oggi) cls.push("passato");
+        c.className = cls.join(" ");
+        c.textContent = t ? t.replace(/\s*\/\s*/g, "\n") : "Riposo";
+        (function (d) { c.onclick = function () { modificaTurno(d, p); }; })(d);
+        r.appendChild(c);
+      }
+      tab.appendChild(r);
+    });
+  });
 }
-$("card-turni").onclick = function () {
-  var lun = lunedi(new Date()), pross = new Date(lun); pross.setDate(pross.getDate() + 7);
-  $("settimana-titolo").textContent = "Questa settimana (" + quale(lun) + ")";
-  $("prossima-titolo").textContent = "Prossima settimana (" + quale(pross) + ")";
-  tabellaSett($("settimana-tab"), lun, false, quale(lun));
-  tabellaSett($("prossima-tab"), pross, false, quale(pross));
-  apri("settimana");
+function modificaNome(p) {
+  chiedi("Nome", cfg.nomi[p], false, function (v) {
+    cfg.nomi[p] = v || ("Persona " + (p + 1)); salvaCfg(); disegnaTurni();
+  });
+}
+
+var et = { d: null, p: 0, quando: "sempre" };
+function aggiornaSpiegazione() {
+  var g = GIORNI_LUN_LUNGHI[(et.d.getDay() + 6) % 7], s = quale(et.d);
+  $("et-spiega").textContent = et.quando === "sempre"
+    ? "Cambia il " + g + " di tutte le settimane " + s + " (una settimana sì e una no)."
+    : "Cambia solo " + g + " " + et.d.getDate() + " " + MESI[et.d.getMonth()] + ". Le altre settimane restano come sono.";
+}
+function modificaTurno(d, p) {
+  et.d = d; et.p = p; et.quando = haEccezione(d, p) ? "giorno" : "sempre";
+  $("et-titolo").textContent = cfg.nomi[p] + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
+  $("et-valore").value = turno(d, p);
+  $("et-ripristina").style.display = haEccezione(d, p) ? "" : "none";
+  seg("et-quando", et.quando); aggiornaSpiegazione();
+  // suggerimenti: Riposo + orari già usati
+  var visti = {}, lista = [];
+  ["A", "B"].forEach(function (s) { cfg.turni[s].forEach(function (g) { g.forEach(function (v) { if (v && !visti[v]) { visti[v] = 1; lista.push(v); } }); }); });
+  Object.keys(cfg.eccezioni).forEach(function (k) { var v = cfg.eccezioni[k]; if (v && !visti[v]) { visti[v] = 1; lista.push(v); } });
+  var ch = $("et-chips"); ch.innerHTML = "";
+  ["Riposo"].concat(lista.slice(0, 9)).forEach(function (v) {
+    var b = el("button"); b.type = "button"; b.textContent = v;
+    b.onclick = function () { $("et-valore").value = v === "Riposo" ? "" : v; salvaTurno(); };
+    ch.appendChild(b);
+  });
+  apri("ed-turno");
+}
+function salvaTurno() {
+  var v = $("et-valore").value.trim();
+  if (/^riposo$/i.test(v)) v = "";
+  var k = chiaveEcc(et.d, et.p);
+  if (et.quando === "giorno") cfg.eccezioni[k] = v;
+  else { cfg.turni[quale(et.d)][(et.d.getDay() + 6) % 7][et.p] = v; delete cfg.eccezioni[k]; }
+  salvaCfg(); disegnaTurni(); chiudi("ed-turno");
+}
+$("ed-turno").querySelector("form").onsubmit = function (e) { e.preventDefault(); salvaTurno(); };
+$("et-quando").onclick = function (e) {
+  var v = e.target.getAttribute("data-v"); if (!v) return;
+  et.quando = v; seg("et-quando", v); aggiornaSpiegazione();
+};
+$("et-ripristina").onclick = function () {
+  delete cfg.eccezioni[chiaveEcc(et.d, et.p)]; salvaCfg(); disegnaTurni(); chiudi("ed-turno");
+};
+
+// ================= bacheca promemoria =================
+var note = leggi("cucina_note", null);
+if (!note) {   // recupera i vecchi promemoria a lista
+  note = leggi("cucina_promemoria", []).filter(function (v) { return !v.fatto; }).map(function (v, i) {
+    return { id: Date.now() + i, testo: v.testo, colore: COLORI[i % COLORI.length] };
+  });
+  salva("cucina_note", note);
+}
+function inclinazione(id) { return ((id * 7919) % 9 - 4) * 0.55; }
+function disegnaNote() {
+  var b = $("bacheca"); b.innerHTML = "";
+  note.forEach(function (n) {
+    var d = el("button", "nota " + n.colore + (n.testo.length > 110 ? " s" : n.testo.length > 55 ? " m" : ""));
+    d.type = "button"; d.textContent = n.testo;
+    d.style.setProperty("--r", inclinazione(n.id) + "deg");
+    d.onclick = function () { modificaNota(n); };
+    b.appendChild(d);
+  });
+  var nuova = el("button", "nota nuova"); nuova.type = "button"; nuova.textContent = "+";
+  nuova.setAttribute("aria-label", "Nuovo bigliettino");
+  nuova.onclick = function () { modificaNota(null); };
+  b.appendChild(nuova);
+}
+var en = { nota: null, colore: "giallo" };
+COLORI.forEach(function (c) {
+  var b = el("button", c); b.type = "button"; b.setAttribute("data-v", c); b.setAttribute("aria-label", c);
+  b.onclick = function () { en.colore = c; seg("en-colori", c); $("en-testo").className = c; };
+  $("en-colori").appendChild(b);
+});
+function modificaNota(n) {
+  en.nota = n;
+  en.colore = n ? n.colore : COLORI[note.length % COLORI.length];
+  $("en-testo").value = n ? n.testo : "";
+  $("en-testo").className = en.colore; seg("en-colori", en.colore);
+  $("en-elimina").style.display = n ? "" : "none";
+  apri("ed-nota");
+  setTimeout(function () { $("en-testo").focus(); }, 50);
+}
+$("ed-nota").querySelector("form").onsubmit = function (e) {
+  e.preventDefault();
+  var t = $("en-testo").value.trim();
+  if (en.nota) {
+    if (t) { en.nota.testo = t; en.nota.colore = en.colore; }
+    else note = note.filter(function (x) { return x !== en.nota; });
+  } else if (t) note.push({ id: Date.now(), testo: t, colore: en.colore });
+  salva("cucina_note", note); disegnaNote(); chiudi("ed-nota");
+};
+$("en-elimina").onclick = function () {
+  note = note.filter(function (x) { return x !== en.nota; });
+  salva("cucina_note", note); disegnaNote(); chiudi("ed-nota");
 };
 
 // ================= timer da cucina =================
@@ -407,17 +599,13 @@ var PRESET = [1, 3, 5, 8, 10, 15, 20, 30];
 var timers = leggi("cucina_timers", []);
 var audio = null, allarmeAttivo = null, beepInt = null;
 PRESET.forEach(function (m) {
-  var b = document.createElement("button"); b.textContent = m + " min";
+  var b = el("button"); b.textContent = m + " min";
   b.onclick = function () { avviaTimer(m); }; $("preset").appendChild(b);
 });
-(function () {   // pulsante "altro" per minuti a scelta
-  var b = document.createElement("button"); b.className = "btn-piccolo"; b.textContent = "Altro…";
-  b.onclick = function () {
-    var m = parseFloat(prompt("Quanti minuti?", "12"));
-    if (m > 0) avviaTimer(m);
-  };
-  $("timer-custom-wrap").appendChild(b);
-})();
+$("timer-altro").onclick = function () {
+  sbloccaAudio();
+  chiedi("Quanti minuti?", "12", true, function (v) { var m = parseFloat(v.replace(",", ".")); if (m > 0) avviaTimer(m); });
+};
 function sbloccaAudio() {
   try { if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) {}
 }
@@ -434,7 +622,7 @@ function disegnaTimer() {
   var box = $("timer-lista"), now = Date.now(); box.innerHTML = "";
   timers.sort(function (a, b) { return a.fine - b.fine; });
   timers.forEach(function (t) {
-    var d = document.createElement("div"); d.className = "timer";
+    var d = el("div", "timer");
     d.innerHTML = '<span class="t"></span><span class="n"></span><button aria-label="Annulla">×</button>';
     d.children[0].textContent = fmt(t.fine - now);
     d.children[1].textContent = "timer " + t.min + " min";
@@ -470,7 +658,7 @@ $("allarme").onclick = function () {
   $("allarme").classList.remove("on"); clearInterval(beepInt); allarmeAttivo = null; toccato();
 };
 
-// ================= liste =================
+// ================= lista spesa =================
 [].forEach.call(document.querySelectorAll("[data-lista]"), function (card) {
   var key = "cucina_" + card.getAttribute("data-lista");
   var ul = card.querySelector("ul"), input = card.querySelector("input");
@@ -479,8 +667,7 @@ $("allarme").onclick = function () {
     ul.innerHTML = "";
     if (!voci.length) { ul.innerHTML = '<li class="vuoto">Niente per ora</li>'; return; }
     voci.forEach(function (v, i) {
-      var li = document.createElement("li");
-      if (v.fatto) li.className = "fatto";
+      var li = el("li", v.fatto ? "fatto" : "");
       li.innerHTML = '<span class="box"></span><span></span>';
       li.lastChild.textContent = v.testo;
       li.onclick = function () { voci[i].fatto = !voci[i].fatto; salva(key, voci); disegna(); };
@@ -520,7 +707,7 @@ function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
     var img = new Image(), url = URL.createObjectURL(file);
     img.onload = function () {
       var k = Math.min(1, 1600 / Math.max(img.width, img.height));
-      var c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      var c = el("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url); c.toBlob(ok, "image/jpeg", 0.85);
     };
@@ -565,30 +752,20 @@ function apriFoto() {
 function chiudiFoto() { $("foto").classList.remove("on"); clearInterval(fotoTimer); fotoTimer = null; }
 $("foto").onclick = function () { chiudiFoto(); toccato(); };
 function controllaInattivita() {
-  var aperto = document.querySelector(".pannello.on") || allarmeAttivo || document.activeElement.tagName === "INPUT";
+  var tag = document.activeElement ? document.activeElement.tagName : "";
+  var aperto = document.querySelector(".scuro.on") || allarmeAttivo || tag === "INPUT" || tag === "TEXTAREA";
   if (!fotoTimer && !aperto && fotoChiavi.length && !isNotte() && Date.now() - ultimoTocco > cfg.fotoAttesa * 60000) apriFoto();
   if (fotoTimer && isNotte()) chiudiFoto();
 }
 
-// ================= pannelli =================
-function apri(id) { $(id).classList.add("on"); }
-[].forEach.call(document.querySelectorAll(".pannello"), function (p) {
-  p.querySelector(".chiudi").onclick = function () { p.classList.remove("on"); };
-  p.onclick = function (e) { if (e.target === p) p.classList.remove("on"); };
-});
-var sottoModifica = "A";
-function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === val); }); }
+// ================= impostazioni =================
 function aggiornaImpostazioni() {
   $("nome0").value = cfg.nomi[0]; $("nome1").value = cfg.nomi[1];
   $("foto-attesa").value = cfg.fotoAttesa; $("foto-ogni").value = cfg.fotoOgni;
-  seg("seg-corrente", quale(new Date())); seg("seg-modifica", sottoModifica);
-  tabellaSett($("tab-modifica"), quale(new Date()) === sottoModifica ? lunedi(new Date()) : null, true, sottoModifica);
+  seg("seg-corrente", quale(new Date()));
 }
-$("ingranaggio").onclick = function () { sottoModifica = quale(new Date()); aggiornaImpostazioni(); caricaChiavi(); apri("impostazioni"); };
-function cambiaNome(i, v) {
-  cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni();
-  var th = $("tab-modifica").querySelectorAll("th"); if (th[i + 1]) th[i + 1].textContent = cfg.nomi[i];
-}
+$("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi(); apri("impostazioni"); };
+function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni(); }
 $("nome0").oninput = function () { cambiaNome(0, this.value); };
 $("nome1").oninput = function () { cambiaNome(1, this.value); };
 $("foto-attesa").onchange = function () { cfg.fotoAttesa = Math.max(1, +this.value || 5); salvaCfg(); };
@@ -598,18 +775,15 @@ $("seg-corrente").onclick = function (e) {
   cfg.ancora = { lunedi: iso(lunedi(new Date())), sett: v }; salvaCfg();
   aggiornaImpostazioni(); disegnaTurni();
 };
-$("seg-modifica").onclick = function (e) {
-  var v = e.target.getAttribute("data-v"); if (!v) return;
-  sottoModifica = v; aggiornaImpostazioni();
-};
 
 // ================= avvio =================
-orologio(); meteo(); disegnaTurni(); disegnaTimer(); caricaChiavi();
+pulisciEccezioni(); salvaCfg();
+orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);
 setInterval(controllaInattivita, 5000);
-setInterval(disegnaTurni, 60 * 1000);
+setInterval(function () { if (!document.querySelector(".scuro.on")) disegnaTurni(); }, 60 * 1000);
 // ricarica completa ogni notte alle 4 (evita rallentamenti dopo giorni accesa)
 setInterval(function () { var d = new Date(); if (d.getHours() === 4 && d.getMinutes() === 0 && !timers.length) location.reload(); }, 60000);
 </script>
