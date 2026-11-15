@@ -113,9 +113,14 @@
   .turno-oggi { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; background: var(--card);
                 border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; margin-bottom: 10px; }
   .turno-oggi .chi { width: 84px; font-size: 15px; color: var(--muted); }
-  .turno-oggi .ore { flex: 1; font-size: 26px; line-height: 1.2; white-space: pre-line; }
+  .turno-oggi .ore { display: block; font-size: 26px; line-height: 1.2; white-space: pre-line; }
   .turno-oggi .ore.riposo { color: var(--muted); font-style: italic; font-size: 22px; }
   .turno-oggi.eccezione .ore { color: var(--accent); }
+  .turno-oggi .testi { flex: 1; }
+  .turno-oggi .adesso { display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+  .turno-oggi .adesso::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--done); flex: none; }
+  .turno-oggi .adesso.lavoro { color: var(--ok); } .turno-oggi .adesso.lavoro::before { background: var(--ok); }
+  .turno-oggi .adesso.dopo::before, .turno-oggi .adesso.altro::before { background: var(--accent); }
   #s-oggi .titolo { margin-top: 22px; }
   .vuoto { color: var(--muted); border: 0; }
 
@@ -324,7 +329,7 @@ function cambiaVista(v) {
 }
 $("vista").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) cambiaVista(v); };
 $("persona").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { personaSel = +v; disegnaTurni(); } };
-function testoTurno(v) { return v ? v.replace(/\s*\/\s*/g, "\n") : "Riposo"; }
+function testoTurno(v) { return v ? ordinato(v).replace(/\s*\/\s*/g, "\n") : "Riposo"; }
 function disegnaTurni() {
   seg("vista", vista);
   if (vista === "giorni") disegnaGiorni(); else disegnaSettimanaTipo(vista);
@@ -373,17 +378,6 @@ function disegnaSettimanaTipo(lettera) {   // la settimana A o B "tipo", per una
 }
 
 // --- editor orari: fasce con l'orologio del telefono, copia su più giorni ---
-var ORA_RE = /(\d{1,2})(?:[:.](\d{2}))?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?/g;
-function hhmm(h, m) { return (h.length < 2 ? "0" : "") + h + ":" + (m || "00"); }
-function leggiFasce(v) {   // "8:30-14.30 / 18:30 - 22:30" → [["08:30","14:30"],["18:30","22:30"]]
-  var f = [], m; ORA_RE.lastIndex = 0;
-  while ((m = ORA_RE.exec(v || ""))) f.push([hhmm(m[1], m[2]), hhmm(m[3], m[4])]);
-  return f;
-}
-function scriviFasce(f) {
-  function corta(t) { return t.replace(/^0/, ""); }
-  return f.filter(function (x) { return x[0] && x[1]; }).map(function (x) { return corta(x[0]) + "–" + corta(x[1]); }).join(" / ");
-}
 var et = null;
 function disegnaFasce() {
   var box = $("et-fasce"); box.innerHTML = "";
@@ -500,7 +494,11 @@ function disegnaOggi() {
     var v = turno(d, p), b = el("button", "turno-oggi" + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
     var chi = el("span", "chi"); chi.textContent = cfg.nomi[p];
     var ore = el("span", "ore" + (v ? "" : " riposo")); ore.textContent = v ? scriviFasce(leggiFasce(v)).replace(/ \/ /g, "\n") || v : "Riposo";
-    b.appendChild(chi); b.appendChild(ore);
+    var testi = el("span", "testi"), ad = el("span"), st = statoAdesso(p);
+    var cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");   // "Riposo" c'è già scritto sopra
+    ad.className = "adesso " + st.stato; ad.textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
+    testi.appendChild(ore); testi.appendChild(ad);
+    b.appendChild(chi); b.appendChild(testi);
     b.onclick = function () { modificaTurno({ modo: "data", d: d, p: p }); };
     box.appendChild(b);
   });

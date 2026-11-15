@@ -54,6 +54,53 @@ function pulisciEccezioni() {   // toglie le eccezioni più vecchie di 2 settima
   Object.keys(cfg.eccezioni).forEach(function (k) { if (k.slice(0, 10) < limite) delete cfg.eccezioni[k]; });
 }
 
+// ================= orari dei turni: lettura e "Adesso" =================
+var ORA_RE = /(\d{1,2})(?:[:.](\d{2}))?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?/g;
+function hhmm(h, m) { return (h.length < 2 ? "0" : "") + h + ":" + (m || "00"); }
+function leggiFasce(v) {   // "8:30-14.30 / 18:30 - 22:30" → [["08:30","14:30"],["18:30","22:30"]]
+  var f = [], m; ORA_RE.lastIndex = 0;
+  while ((m = ORA_RE.exec(v || ""))) f.push([hhmm(m[1], m[2]), hhmm(m[3], m[4])]);
+  return f;
+}
+function scriviFasce(f) {
+  function corta(t) { return t.replace(/^0/, ""); }
+  return f.filter(function (x) { return x[0] && x[1]; }).map(function (x) { return corta(x[0]) + "–" + corta(x[1]); }).join(" / ");
+}
+function ordinato(v) {   // "8:30 -14.30\n18:30 - 22:30" → "8:30–14:30 / 18:30–22:30" (se non si legge, resta com'è)
+  return scriviFasce(leggiFasce(v)) || v || "";
+}
+function minuti(t) { var p = t.split(":"); return +p[0] * 60 + +p[1]; }
+function oraDa(m) { m = ((m % 1440) + 1440) % 1440; return Math.floor(m / 60) + ":" + due(m % 60); }
+function fasceGiorno(d, p) {   // fasce del giorno in minuti; un turno che passa la mezzanotte finisce oltre 1440
+  return leggiFasce(turno(d, p)).map(function (f) { var a = minuti(f[0]), b = minuti(f[1]); if (b <= a) b += 1440; return [a, b]; })
+    .sort(function (x, y) { return x[0] - y[0]; });
+}
+// Cosa sta facendo adesso la persona p: { stato: "lavoro" | "dopo" | "riposo" | "altro", cosa: "al lavoro fino alle 14:30" }
+function statoAdesso(p, ora) {
+  ora = ora || new Date();
+  var oggi = new Date(ora.getFullYear(), ora.getMonth(), ora.getDate()), m = ora.getHours() * 60 + ora.getMinutes();
+  var notte = fasceGiorno(piuGiorni(oggi, -1), p).filter(function (f) { return f[1] > 1440 && m < f[1] - 1440; });
+  if (notte.length) return { stato: "lavoro", cosa: "al lavoro fino alle " + oraDa(notte[0][1]) };
+  var v = turno(oggi, p), fo = fasceGiorno(oggi, p);
+  if (v && !fo.length) return { stato: "altro", cosa: "oggi: " + v.replace(/\s*\n\s*/g, " ") };
+  for (var i = 0; i < fo.length; i++) {
+    var f = fo[i];
+    if (m >= f[0] && m < f[1]) {
+      var poi = fo[i + 1];
+      return { stato: "lavoro", cosa: "al lavoro fino alle " + oraDa(f[1]) + (poi ? " · poi dalle " + oraDa(poi[0]) : "") };
+    }
+    if (m < f[0]) return { stato: "dopo", cosa: (i ? "in pausa · riattacca alle " : "attacca alle ") + oraDa(f[0]) };
+  }
+  var pre = fo.length ? "ha finito" : "a riposo";
+  for (var g = 1; g <= 7; g++) {
+    var d = piuGiorni(oggi, g), fd = fasceGiorno(d, p), vd = turno(d, p);
+    if (!vd) continue;
+    var quando = g === 1 ? "domani" : GIORNI[d.getDay()];
+    return { stato: "riposo", cosa: pre + " · " + quando + (fd.length ? " alle " + oraDa(fd[0][0]) : ": " + vd.replace(/\s*\n\s*/g, " ")) };
+  }
+  return { stato: "riposo", cosa: pre };
+}
+
 // ================= promemoria e spesa (dati) =================
 var COLORI_HEX = { giallo: "#fbe38b", rosa: "#f7c4cf", verde: "#c9e5ad", azzurro: "#bcdcf0", arancio: "#fbcd9c", lilla: "#d9cbf0" };
 var note = leggi("cucina_note", null);
