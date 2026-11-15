@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1c1915">
-<title>Cucina</title>
+<title>HomeDashboard</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icone/icona.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Cucina">
+<meta name="apple-mobile-web-app-title" content="HomeDashboard">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
@@ -358,7 +358,7 @@
     <ol class="passi">
       <li>Tocca il tasto <b>Condividi</b> di Safari (il quadrato con la freccia in su)</li>
       <li>Scegli <b>Aggiungi alla schermata Home</b></li>
-      <li>Apri <b>Cucina</b> dall'icona nella Home</li>
+      <li>Apri <b>HomeDashboard</b> dall'icona nella Home</li>
     </ol>
     <div class="riga fine"><button type="button" class="btn-pieno annulla">Ho capito</button></div>
   </div>
@@ -388,7 +388,7 @@
     <div id="sync-scollegato">
       <ol class="passi piccoli">
         <li>Apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">questa pagina di GitHub</a> (va bene anche dal telefono)</li>
-        <li>Nome: <b>Cucina</b> · Scadenza: <b>la più lunga possibile</b></li>
+        <li>Nome: <b>HomeDashboard</b> · Scadenza: <b>la più lunga possibile</b></li>
         <li>Repository access: <b>Only select repositories → HomeDashboard</b></li>
         <li>Permissions: <b>Contents → Read and write</b>, poi <b>Generate token</b></li>
         <li>Copia il codice (inizia con <b>github_pat_</b>) e incollalo qui sotto</li>
@@ -1096,7 +1096,7 @@ $("sync-scollega").onclick = function () {
 $("sync-condividi").onclick = function () {
   var link = location.origin + location.pathname + "#collega=" + encodeURIComponent(token);
   $("sync-link").value = link; $("sync-codice").value = token; $("sync-link-box").hidden = false;
-  if (navigator.share) navigator.share({ title: "Cucina", text: "Collega la dashboard di casa", url: link }).catch(function () {});
+  if (navigator.share) navigator.share({ title: "HomeDashboard", text: "Collega la dashboard di casa", url: link }).catch(function () {});
 };
 [].forEach.call(document.querySelectorAll("[data-copia]"), function (b) {
   b.onclick = function () {

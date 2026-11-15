@@ -1,6 +1,6 @@
 {
-  "name": "Cucina",
-  "short_name": "Cucina",
+  "name": "HomeDashboard",
+  "short_name": "HomeDashboard",
   "description": "Dashboard di casa: ora, meteo, turni, timer, spesa e promemoria.",
   "lang": "it",
   "start_url": "./",
