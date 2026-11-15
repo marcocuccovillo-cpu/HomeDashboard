@@ -108,6 +108,10 @@
                   transform: translateX(-50%) rotate(-2deg); background: rgba(255,255,255,.45);
                   box-shadow: 0 1px 2px rgba(0,0,0,.08); }
   .nota:active { transform: rotate(0) scale(1.04); }
+  #bacheca { position: relative; }
+  .nota { -webkit-touch-callout: none; touch-action: manipulation; }
+  .nota.presa { z-index: 5; transition: none; box-shadow: 0 22px 34px -10px rgba(60,40,10,.5); }
+  #bacheca.trascina .nota:not(.presa) { transition: transform .15s; }
   .nota.m { font-size: 2.6vh; } .nota.s { font-size: 2.15vh; }
   body.notte .nota { filter: brightness(.62) saturate(.8); }
   .nota.nuova { background: transparent; border: 2px dashed var(--done); box-shadow: none; color: var(--muted);
@@ -126,7 +130,9 @@
   .timer { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px;
            background: var(--accent-soft); margin-bottom: 6px; }
   .timer .t { font-size: 3.8vh; font-variant-numeric: tabular-nums; }
-  .timer .n { color: var(--muted); font-size: 1.9vh; flex: 1; }
+  .timer .n { color: var(--muted); font-size: 1.9vh; flex: 1; line-height: 1.2; }
+  .timer .n b { display: block; color: var(--ink); font-weight: 500; font-size: 2.4vh; }
+  .timer .n i { display: block; font-style: normal; color: var(--accent); font-size: 2vh; }
   .timer button { border: 0; background: transparent; color: var(--muted); font-size: 3.4vh; padding: 0 4px; }
 
   .aggiungi { display: flex; gap: 8px; margin-bottom: 6px; }
@@ -228,7 +234,7 @@
 
   <!-- promemoria -->
   <section class="card" id="card-note">
-    <h2>Promemoria</h2>
+    <h2>Promemoria <small>tieni premuto un bigliettino per spostarlo</small></h2>
     <div id="bacheca"></div>
   </section>
 
@@ -255,7 +261,7 @@
 
 <!-- allarme timer -->
 <div id="allarme" class="livello">
-  <div class="grande">Tempo scaduto!</div>
+  <div class="grande" id="allarme-titolo">Tempo scaduto!</div>
   <div class="sotto" id="allarme-nome"></div>
   <div class="sotto">Tocca per fermare</div>
 </div>
@@ -283,9 +289,27 @@
   <form class="finestra">
     <h3 id="ec-titolo"></h3>
     <input type="text" id="ec-valore" class="largo" autocomplete="off" enterkeyhint="done">
+    <div class="chips" id="ec-chips"></div>
     <div class="riga fine">
       <button type="button" class="btn-piccolo annulla">Annulla</button>
       <button class="btn-pieno">OK</button>
+    </div>
+  </form>
+</div>
+
+<!-- nuovo timer -->
+<div id="ed-timer" class="livello scuro modale">
+  <form class="finestra">
+    <h3>Nuovo timer</h3>
+    <div class="riga">
+      <input type="number" id="etm-min" step="any" inputmode="decimal" style="width:13vh">
+      <label>minuti</label>
+      <input type="text" id="etm-nome" placeholder="Nome (facoltativo)" autocomplete="off" enterkeyhint="done" style="flex:1">
+    </div>
+    <div class="chips" id="etm-chips"></div>
+    <div class="riga fine">
+      <button type="button" class="btn-piccolo annulla">Annulla</button>
+      <button class="btn-pieno">Avvia</button>
     </div>
   </form>
 </div>
@@ -463,7 +487,13 @@ function chiudi(id) { $(id).classList.remove("on"); if (document.activeElement) 
 function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === val); }); }
 
 var chiediOk = null;
-function chiedi(titolo, valore, numerico, ok) {
+function chiedi(titolo, valore, numerico, ok, suggerimenti) {
+  var ch = $("ec-chips"); ch.innerHTML = "";
+  (suggerimenti || []).forEach(function (v) {
+    var b = el("button"); b.type = "button"; b.textContent = v;
+    b.onclick = function () { $("ec-valore").value = v; chiudi("ed-chiedi"); if (chiediOk) chiediOk(v); };
+    ch.appendChild(b);
+  });
   $("ec-titolo").textContent = titolo;
   var inp = $("ec-valore");
   inp.value = valore; inp.inputMode = numerico ? "decimal" : "text";
@@ -591,7 +621,10 @@ function disegnaNote() {
     var d = el("button", "nota " + n.colore + (n.testo.length > 110 ? " s" : n.testo.length > 55 ? " m" : ""));
     d.type = "button"; d.textContent = n.testo;
     d.style.setProperty("--r", inclinazione(n.id) + "deg");
-    d.onclick = function () { modificaNota(n); };
+    d.setAttribute("data-id", n.id);
+    d.onclick = function () { if (!ignoraClick) modificaNota(n); };
+    d.oncontextmenu = function (e) { e.preventDefault(); };
+    d.addEventListener("pointerdown", function (e) { iniziaPressione(e, d); });
     b.appendChild(d);
   });
   var nuova = el("button", "nota nuova"); nuova.type = "button"; nuova.textContent = "+";
@@ -599,6 +632,68 @@ function disegnaNote() {
   nuova.onclick = function () { modificaNota(null); };
   b.appendChild(nuova);
 }
+// tieni premuto ~0,4 s e trascina per cambiare posto al bigliettino
+var presa = null, ignoraClick = false;
+function iniziaPressione(e, d) {
+  if (e.button > 0) return;
+  annullaPressione(); ignoraClick = false;
+  presa = { el: d, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, attiva: false };
+  presa.timer = setTimeout(attivaPresa, 400);
+}
+function annullaPressione() { if (presa) clearTimeout(presa.timer); presa = null; }
+function attivaPresa() {
+  var b = $("bacheca"), br = b.getBoundingClientRect();
+  presa.attiva = true;
+  presa.gx = presa.x0 - br.left + b.scrollLeft - presa.el.offsetLeft;
+  presa.gy = presa.y0 - br.top + b.scrollTop - presa.el.offsetTop;
+  presa.el.classList.add("presa"); b.classList.add("trascina");
+  if (navigator.vibrate) try { navigator.vibrate(15); } catch (e) {}
+  posizionaPresa();
+}
+function posizionaPresa() {
+  var b = $("bacheca"), br = b.getBoundingClientRect(), d = presa.el;
+  var tx = presa.x - br.left + b.scrollLeft - presa.gx - d.offsetLeft;
+  var ty = presa.y - br.top + b.scrollTop - presa.gy - d.offsetTop;
+  d.style.transform = "translate(" + tx + "px," + ty + "px) rotate(0deg) scale(1.07)";
+}
+function muoviPresa() {
+  var b = $("bacheca"), br = b.getBoundingClientRect(), d = presa.el;
+  if (presa.y < br.top + 50) b.scrollTop -= 14; else if (presa.y > br.bottom - 50) b.scrollTop += 14;
+  var figli = [].slice.call(b.querySelectorAll(".nota:not(.nuova)"));
+  for (var i = 0; i < figli.length; i++) {
+    var f = figli[i]; if (f === d) continue;
+    var r = f.getBoundingClientRect();
+    if (presa.x > r.left && presa.x < r.right && presa.y > r.top && presa.y < r.bottom) {
+      b.insertBefore(d, figli.indexOf(d) < i ? f.nextSibling : f);
+      break;
+    }
+  }
+  posizionaPresa();
+}
+function lasciaPresa() {
+  var d = presa.el, b = $("bacheca");
+  d.classList.remove("presa"); b.classList.remove("trascina"); d.style.transform = "";
+  var ordine = [].map.call(b.querySelectorAll(".nota:not(.nuova)"), function (x) { return +x.getAttribute("data-id"); });
+  note.sort(function (a, c) { return ordine.indexOf(a.id) - ordine.indexOf(c.id); });
+  salva("cucina_note", note);
+  ignoraClick = true;   // scarta il "clic" del rilascio; si azzera al prossimo tocco
+  presa = null;
+}
+document.addEventListener("pointermove", function (e) {
+  if (!presa || e.pointerId !== presa.id) return;
+  presa.x = e.clientX; presa.y = e.clientY;
+  if (presa.attiva) muoviPresa();
+  else if (Math.abs(presa.x - presa.x0) + Math.abs(presa.y - presa.y0) > 12) annullaPressione();
+});
+["pointerup", "pointercancel"].forEach(function (t) {
+  document.addEventListener(t, function (e) {
+    if (!presa || e.pointerId !== presa.id) return;
+    if (presa.attiva) lasciaPresa(); else annullaPressione();
+  });
+});
+// mentre si trascina, il dito non deve far scorrere la pagina
+document.addEventListener("touchmove", function (e) { if (presa && presa.attiva) e.preventDefault(); }, { passive: false });
+
 var en = { nota: null, colore: "giallo" };
 COLORI.forEach(function (c) {
   var b = el("button", c); b.type = "button"; b.setAttribute("data-v", c); b.setAttribute("aria-label", c);
@@ -636,34 +731,68 @@ PRESET.forEach(function (m) {
   var b = el("button"); b.textContent = m + " min";
   b.onclick = function () { avviaTimer(m); }; $("preset").appendChild(b);
 });
+var nomiTimer = leggi("cucina_nomi_timer", ["Pasta", "Forno", "Uova", "Riso", "Verdure", "Lavatrice"]);
+function ricordaNome(n) {
+  if (!n) return;
+  nomiTimer = [n].concat(nomiTimer.filter(function (x) { return x.toLowerCase() !== n.toLowerCase(); })).slice(0, 8);
+  salva("cucina_nomi_timer", nomiTimer);
+}
 $("timer-altro").onclick = function () {
   sbloccaAudio();
-  chiedi("Quanti minuti?", "12", true, function (v) { var m = parseFloat(v.replace(",", ".")); if (m > 0) avviaTimer(m); });
+  $("etm-min").value = ""; $("etm-nome").value = "";
+  var ch = $("etm-chips"); ch.innerHTML = "";
+  nomiTimer.forEach(function (v) {
+    var b = el("button"); b.type = "button"; b.textContent = v;
+    b.onclick = function () { $("etm-nome").value = v; if (!$("etm-min").value) $("etm-min").focus(); };
+    ch.appendChild(b);
+  });
+  apri("ed-timer");
+  setTimeout(function () { $("etm-min").focus(); }, 50);
 };
+$("ed-timer").querySelector("form").onsubmit = function (e) {
+  e.preventDefault();
+  var m = parseFloat(String($("etm-min").value).replace(",", ".")), n = $("etm-nome").value.trim();
+  if (!(m > 0)) { $("etm-min").focus(); return; }
+  chiudi("ed-timer"); avviaTimer(m, n);
+};
+function rinominaTimer(t) {
+  chiedi("Nome del timer da " + t.min + " min", t.nome || "", false, function (v) {
+    var x = timers.filter(function (y) { return y.id === t.id; })[0]; if (!x) return;
+    x.nome = v; ricordaNome(v); salva("cucina_timers", timers); disegnaTimer(true);
+  }, nomiTimer);
+}
 function sbloccaAudio() {
   try { if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) {}
 }
-function avviaTimer(min) {
-  sbloccaAudio();
-  timers.push({ id: Date.now(), min: min, fine: Date.now() + min * 60000 });
-  salva("cucina_timers", timers); disegnaTimer();
+function avviaTimer(min, nome) {
+  sbloccaAudio(); ricordaNome(nome);
+  timers.push({ id: Date.now(), min: min, nome: nome || "", fine: Date.now() + min * 60000 });
+  salva("cucina_timers", timers); disegnaTimer(true);
 }
 function fmt(ms) {
   var s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
   return (h ? h + ":" + due(m) : m) + ":" + due(s % 60);
 }
-function disegnaTimer() {
-  var box = $("timer-lista"), now = Date.now(); box.innerHTML = "";
+var firmaTimer = "";
+function disegnaTimer(forza) {   // ricostruisce la lista solo se cambia, altrimenti aggiorna i secondi
+  var box = $("timer-lista"), now = Date.now();
   timers.sort(function (a, b) { return a.fine - b.fine; });
-  timers.forEach(function (t) {
-    var d = el("div", "timer");
-    d.innerHTML = '<span class="t"></span><span class="n"></span><button aria-label="Annulla">×</button>';
-    d.children[0].textContent = fmt(t.fine - now);
-    d.children[1].textContent = "timer " + t.min + " min";
-    d.children[2].onclick = function () { timers = timers.filter(function (x) { return x.id !== t.id; }); salva("cucina_timers", timers); disegnaTimer(); };
-    box.appendChild(d);
-  });
-  $("foto-timer").textContent = timers.length ? "⏱ " + fmt(timers[0].fine - now) : "";
+  var firma = timers.map(function (t) { return t.id + ":" + t.nome; }).join("|");
+  if (forza || firma !== firmaTimer) {
+    firmaTimer = firma; box.innerHTML = "";
+    timers.forEach(function (t) {
+      var d = el("div", "timer");
+      d.innerHTML = '<span class="t"></span><span class="n"></span><button aria-label="Annulla">×</button>';
+      var n = d.children[1];
+      if (t.nome) { var b = el("b"); b.textContent = t.nome; n.appendChild(b); n.appendChild(document.createTextNode(t.min + " min")); }
+      else { var i = el("i"); i.textContent = "+ dai un nome"; n.appendChild(i); n.appendChild(document.createTextNode("timer " + t.min + " min")); }
+      n.onclick = function () { rinominaTimer(t); };
+      d.children[2].onclick = function () { timers = timers.filter(function (x) { return x.id !== t.id; }); salva("cucina_timers", timers); disegnaTimer(true); };
+      box.appendChild(d);
+    });
+  }
+  [].forEach.call(box.children, function (d, k) { d.children[0].textContent = fmt(timers[k].fine - now); });
+  $("foto-timer").textContent = timers.length ? "⏱ " + (timers[0].nome ? timers[0].nome + " " : "") + fmt(timers[0].fine - now) : "";
 }
 function beep() {
   if (!audio) return;
@@ -682,7 +811,8 @@ function controllaTimer() {
     allarmeAttivo = scaduti[0];
     timers = timers.filter(function (t) { return t.id !== allarmeAttivo.id; });
     salva("cucina_timers", timers);
-    $("allarme-nome").textContent = "Timer da " + allarmeAttivo.min + " min";
+    $("allarme-titolo").textContent = allarmeAttivo.nome ? allarmeAttivo.nome + "!" : "Tempo scaduto!";
+    $("allarme-nome").textContent = (allarmeAttivo.nome ? "Finito il timer da " : "Timer da ") + allarmeAttivo.min + " min";
     chiudiFoto(); $("allarme").classList.add("on");
     beep(); beepInt = setInterval(beep, 1500);
   }
