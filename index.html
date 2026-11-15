@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#1c1915">
 <title>HomeDashboard</title>
+<script>   // dal telefono si apre la versione per smartphone (per forzare questa: ?completa)
+  if (Math.min(screen.width, screen.height) < 600 && !/[?&]completa/.test(location.search)) location.replace("telefono.html" + location.hash);
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icone/icona.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
@@ -436,7 +439,7 @@
       <label>Cambia foto ogni</label>
       <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
     </div>
-    <div class="nota-txt">Le foto restano salvate solo su questo tablet. Di notte non partono.</div>
+    <div class="nota-txt">Se il tablet è collegato, le foto si possono caricare anche dalla versione per telefono e arrivano qui da sole. Di notte non partono.</div>
   </div>
 </div>
 
@@ -895,34 +898,53 @@ function req(r) { return new Promise(function (ok, ko) { r.onsuccess = function 
 var fotoChiavi = [];
 function caricaChiavi() {
   return store("readonly").then(function (s) { return req(s.getAllKeys()); }).then(function (k) {
-    fotoChiavi = k; $("foto-conta").textContent = k.length + " foto salvate";
+    fotoChiavi = k;
+    var dalTel = k.filter(function (x) { return typeof x === "string"; }).length;
+    $("foto-conta").textContent = k.length + " foto" + (dalTel ? " (" + dalTel + " condivise)" : "");
   }).catch(function () { fotoChiavi = []; });
 }
-function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
-  return new Promise(function (ok) {
-    var img = new Image(), url = URL.createObjectURL(file);
-    img.onload = function () {
-      var k = Math.min(1, 1600 / Math.max(img.width, img.height));
-      var c = el("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url); c.toBlob(ok, "image/jpeg", 0.85);
-    };
-    img.onerror = function () { URL.revokeObjectURL(url); ok(null); };
-    img.src = url;
-  });
-}
-$("foto-input").onchange = function () {
-  var files = [].slice.call(this.files); this.value = "";
+$("foto-input").onchange = function () {   // collegato: le foto vanno anche su GitHub e quindi agli altri dispositivi
+  var files = [].slice.call(this.files), fatti = 0; this.value = "";
   $("foto-conta").textContent = "Salvo " + files.length + " foto…";
   files.reduce(function (p, f) {
     return p.then(function () { return rimpicciolisci(f); }).then(function (b) {
-      if (b) return store("readwrite").then(function (s) { return req(s.add(b)); });
+      if (!b) return;
+      var dove = token ? caricaFotoRemota(b).then(function (x) { return "gh:" + x.name; }) : Promise.resolve(undefined);
+      return dove.then(function (chiave) {
+        return store("readwrite").then(function (s) { return req(chiave ? s.put(b, chiave) : s.add(b)); });
+      }).then(function () { $("foto-conta").textContent = "Salvate " + (++fatti) + " di " + files.length + "…"; });
     });
-  }, Promise.resolve()).then(caricaChiavi);
+  }, Promise.resolve()).catch(function () { alert("Non sono riuscito a caricare tutte le foto. Riprova."); }).then(caricaChiavi);
 };
 $("foto-svuota").onclick = function () {
-  if (confirm("Eliminare tutte le foto dal tablet?")) store("readwrite").then(function (s) { return req(s.clear()); }).then(caricaChiavi);
+  var msg = token ? "Eliminare tutte le foto, anche da GitHub e dagli altri dispositivi?" : "Eliminare tutte le foto dal tablet?";
+  if (!confirm(msg)) return;
+  (token ? listaFotoRemote().then(function (l) { return l.reduce(function (p, x) { return p.then(function () { return eliminaFotoRemota(x); }); }, Promise.resolve()); }) : Promise.resolve())
+    .catch(function () {})
+    .then(function () { return store("readwrite"); }).then(function (s) { return req(s.clear()); }).then(caricaChiavi);
 };
+var fotoSyncInCorso = false;
+function sincronizzaFoto() {   // scarica le foto nuove caricate dal telefono e toglie quelle eliminate
+  if (!token || fotoSyncInCorso) return;
+  fotoSyncInCorso = true;
+  listaFotoRemote().then(function (lista) {
+    return store("readonly").then(function (s) { return req(s.getAllKeys()); }).then(function (chiavi) {
+      var locali = {}, remote = {};
+      chiavi.forEach(function (k) { if (typeof k === "string" && k.indexOf("gh:") === 0) locali[k.slice(3)] = 1; });
+      lista.forEach(function (x) { remote[x.name] = 1; });
+      var nuove = lista.filter(function (x) { return !locali[x.name]; });
+      var vecchie = Object.keys(locali).filter(function (n) { return !remote[n]; });
+      return nuove.reduce(function (p, x) {
+        return p.then(function () { return scaricaFotoRemota(x); }).then(function (b) {
+          return store("readwrite").then(function (s) { return req(s.put(b, "gh:" + x.name)); });
+        });
+      }, Promise.resolve()).then(function () {
+        if (!vecchie.length) return;
+        return store("readwrite").then(function (s) { return Promise.all(vecchie.map(function (n) { return req(s.delete("gh:" + n)); })); });
+      });
+    });
+  }).catch(function () {}).then(function () { fotoSyncInCorso = false; caricaChiavi(); });
+}
 
 var ultimoTocco = Date.now(), fotoIdx = 0, fotoTimer = null, fotoUrl = [null, null], fotoLato = 0;
 function toccato() { ultimoTocco = Date.now(); }
@@ -1025,6 +1047,7 @@ function occupato() { return !!presa; }
 tieniAcceso();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaSpesa(); disegnaTimer(); caricaChiavi();
 avviaSync();
+sincronizzaFoto(); setInterval(sincronizzaFoto, 5 * 60 * 1000);
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);

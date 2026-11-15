@@ -253,3 +253,60 @@ function avviaSync() {   // da chiamare dopo aver disegnato la pagina
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") sincronizza(); });
   setInterval(function () { if (daApplicare && puoApplicare()) applica(); }, 1000);
 }
+
+// ================= foto condivise (cartella foto/ nel ramo "dati") =================
+// Il telefono le carica, il tablet le scarica e le mostra a rotazione.
+function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
+  return new Promise(function (ok) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      var c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); c.toBlob(ok, "image/jpeg", 0.85);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); ok(null); };
+    img.src = url;
+  });
+}
+function blobA64(blob) {
+  return new Promise(function (ok, ko) {
+    var r = new FileReader();
+    r.onload = function () { ok(String(r.result).split(",")[1]); }; r.onerror = function () { ko(r.error); };
+    r.readAsDataURL(blob);
+  });
+}
+function b64ABlob(b64, tipo) {
+  var bin = atob(b64.replace(/\s/g, "")), a = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type: tipo || "image/jpeg" });
+}
+function listaFotoRemote() {   // [{name, sha, path, download_url}]
+  if (!token) return Promise.resolve([]);
+  return gh("GET", "/contents/foto?ref=" + RAMO).then(function (r) {
+    if (r.status === 404) return [];
+    if (!r.ok) throw errore(r);
+    return r.json().then(function (l) { return l.filter(function (x) { return x.type === "file" && /\.jpe?g$/i.test(x.name); }); });
+  });
+}
+function caricaFotoRemota(blob) {   // resolve con {name, sha}
+  var nome = nuovoId() + ".jpg";
+  var ramo = remoto.sha ? Promise.resolve() : sincronizza();   // al primo uso crea il ramo "dati"
+  return ramo.then(function () { return blobA64(blob); }).then(function (b) {
+    return gh("PUT", "/contents/foto/" + nome, { message: "Aggiungi foto", content: b, branch: RAMO });
+  }).then(function (r) {
+    if (!r.ok) throw errore(r);
+    return r.json().then(function (j) { return { name: nome, sha: j.content.sha }; });
+  });
+}
+function scaricaFotoRemota(f) {
+  return gh("GET", "/git/blobs/" + f.sha).then(function (r) {
+    if (!r.ok) throw errore(r);
+    return r.json().then(function (j) { return b64ABlob(j.content); });
+  });
+}
+function eliminaFotoRemota(f) {
+  return gh("DELETE", "/contents/foto/" + f.name, { message: "Togli foto", sha: f.sha, branch: RAMO }).then(function (r) {
+    if (!r.ok && r.status !== 404) throw errore(r);
+  });
+}
