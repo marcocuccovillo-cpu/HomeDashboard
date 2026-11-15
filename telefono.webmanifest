@@ -1,0 +1,33 @@
+{
+  "name": "HomeDashboard",
+  "short_name": "HomeDashboard",
+  "description": "HomeDashboard dal telefono: turni, promemoria e spesa.",
+  "lang": "it",
+  "start_url": "./telefono.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4efe6",
+  "theme_color": "#1c1915",
+  "icons": [
+    {
+      "src": "icone/icona-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone/icona-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone/icona-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "telefono"
+}
