@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1c1915">
+<title>Cucina</title>
+<style>
+  :root {
+    --bg: #f4efe6; --card: #fffaf2; --ink: #2b261f; --muted: #8a7f70;
+    --accent: #c4622d; --accent-soft: #f3dfd0; --line: #e6dccb; --done: #b9ad9b;
+  }
+  body.notte {
+    --bg: #14120f; --card: #1d1a16; --ink: #d9cfbf; --muted: #7d7365;
+    --accent: #d07a45; --accent-soft: #3a2a1f; --line: #2c2721; --done: #554d42;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Roboto", "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden; user-select: none; transition: background .6s, color .6s;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  #griglia {
+    height: 100%; display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; padding: 18px;
+  }
+  .col { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+    padding: 18px 20px; display: flex; flex-direction: column; min-height: 0; position: relative;
+  }
+  .riempi { flex: 1; }
+  h2 { margin: 0 0 10px; font-size: 3vh; font-weight: 500; display: flex;
+       justify-content: space-between; align-items: center; }
+  h2 small { font-size: 2vh; color: var(--muted); font-weight: 400; }
+  .btn-piccolo { font-size: 1.9vh; padding: 5px 11px; border-radius: 10px; background: transparent;
+                 color: var(--muted); border: 1px solid var(--line); }
+
+  /* --- ora e meteo --- */
+  #ingranaggio { position: absolute; top: 14px; right: 14px; width: 5vh; height: 5vh; border: 0;
+                 background: transparent; color: var(--muted); padding: 0; opacity: .7; }
+  #ingranaggio svg { width: 100%; height: 100%; }
+  #ora { font-size: 14vh; font-weight: 300; line-height: 1; letter-spacing: -2px; }
+  #data { font-size: 3.2vh; color: var(--muted); margin-top: 6px; }
+  .ore { display: flex; justify-content: space-between; margin-top: auto; padding: 12px 0;
+         border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .ora-h { text-align: center; font-size: 2.1vh; color: var(--muted); flex: 1; }
+  .ora-h svg { width: 4.4vh; height: 4.4vh; display: block; margin: 4px auto; }
+  .ora-h b { color: var(--ink); font-weight: 500; font-size: 2.4vh; }
+  .ora-h .pp { display: block; font-size: 1.8vh; color: var(--accent); min-height: 2.2vh; }
+  .meteo-ora { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  .meteo-ora svg { width: 10vh; height: 10vh; }
+  #temp { font-size: 8.5vh; font-weight: 300; }
+  #descr { font-size: 2.6vh; color: var(--muted); }
+  .giorni { display: flex; justify-content: space-between; margin-top: 14px;
+            border-top: 1px solid var(--line); padding-top: 12px; }
+  .giorno { text-align: center; font-size: 2.2vh; color: var(--muted); flex: 1; }
+  .giorno svg { width: 5vh; height: 5vh; display: block; margin: 5px auto; }
+  .giorno b { color: var(--ink); font-weight: 500; }
+
+  /* --- turni --- */
+  .turni { width: 100%; border-collapse: collapse; font-size: 2.5vh; }
+  .turni th { font-weight: 400; color: var(--muted); font-size: 2vh; text-align: left; padding: 0 6px 6px; }
+  .turni td { padding: 9px 6px; border-top: 1px solid var(--line); }
+  .turni td:first-child { font-weight: 500; width: 30%; }
+  .riposo { color: var(--muted); font-style: italic; }
+
+  /* --- timer --- */
+  .preset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .preset button { font-size: 2.4vh; padding: 1.3vh 0; border-radius: 12px; border: 1px solid var(--line);
+                   background: var(--bg); color: var(--ink); }
+  .preset button:active { background: var(--accent-soft); }
+  #timer-lista { margin-top: 10px; overflow-y: auto; flex: 1; }
+  .timer { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px;
+           background: var(--accent-soft); margin-bottom: 8px; }
+  .timer .t { font-size: 4.2vh; font-variant-numeric: tabular-nums; font-weight: 400; }
+  .timer .n { color: var(--muted); font-size: 2vh; flex: 1; }
+  .timer button { border: 0; background: transparent; color: var(--muted); font-size: 3.4vh; padding: 0 4px; }
+
+  /* --- liste --- */
+  .aggiungi { display: flex; gap: 8px; margin-bottom: 6px; }
+  .aggiungi input {
+    flex: 1; min-width: 0; font-size: 2.4vh; padding: 10px 12px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); outline: none;
+  }
+  .aggiungi button { border: 0; border-radius: 12px; background: var(--accent); color: #fff;
+                     font-size: 3vh; width: 6vh; }
+  ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+  li { display: flex; align-items: center; gap: 12px; padding: 9px 4px;
+       border-bottom: 1px solid var(--line); font-size: 2.5vh; }
+  li .box { width: 3vh; height: 3vh; border: 2px solid var(--muted); border-radius: 8px; flex: none; }
+  li.fatto { color: var(--done); text-decoration: line-through; }
+  li.fatto .box { background: var(--done); border-color: var(--done); }
+  .vuoto { color: var(--muted); font-size: 2.2vh; padding: 10px 4px; border: 0; }
+
+  /* --- livelli sopra (foto, allarme, impostazioni, settimana) --- */
+  .livello { position: fixed; inset: 0; display: none; z-index: 10; }
+  .livello.on { display: block; }
+
+  #foto { background: #000; z-index: 20; }
+  #foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+              opacity: 0; transition: opacity 1.5s; }
+  #foto img.vis { opacity: 1; }
+  #foto-info { position: absolute; left: 28px; bottom: 22px; color: #fff;
+               text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+  #foto-ora { font-size: 11vh; font-weight: 300; line-height: 1; }
+  #foto-timer { font-size: 3vh; margin-top: 6px; }
+
+  #allarme { background: var(--accent); color: #fff; z-index: 30; text-align: center;
+             display: none; flex-direction: column; justify-content: center; align-items: center;
+             animation: pulsa 1s infinite alternate; }
+  #allarme.on { display: flex; }
+  #allarme .grande { font-size: 12vh; font-weight: 300; }
+  #allarme .sotto { font-size: 3.4vh; margin-top: 10px; opacity: .9; }
+  @keyframes pulsa { from { filter: brightness(1); } to { filter: brightness(1.25); } }
+
+  .pannello { background: rgba(0,0,0,.45); z-index: 25; }
+  .pannello .dentro { position: absolute; inset: 4vh 6vw; background: var(--card); border-radius: 22px;
+                      padding: 22px 26px; overflow-y: auto; user-select: text; }
+  .pannello h3 { margin: 18px 0 10px; font-size: 2.6vh; font-weight: 500; color: var(--accent); }
+  .pannello h3:first-of-type { margin-top: 0; }
+  .chiudi { position: absolute; top: 16px; right: 18px; }
+  .riga { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+  .pannello label { font-size: 2.2vh; color: var(--muted); }
+  .pannello input[type=text], .pannello input[type=number] {
+    font-size: 2.3vh; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); outline: none; min-width: 0;
+  }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--ink); font-size: 2.2vh; padding: 8px 18px; }
+  .seg button.sel { background: var(--accent); color: #fff; }
+  .tab-turni { width: 100%; border-collapse: collapse; }
+  .tab-turni th { text-align: left; font-weight: 400; color: var(--muted); font-size: 2vh; padding: 4px; }
+  .tab-turni td { padding: 4px; font-size: 2.3vh; }
+  .tab-turni td:first-child { width: 14%; color: var(--muted); }
+  .tab-turni input { width: 100%; }
+  .tab-turni tr.oggi td { background: var(--accent-soft); }
+  .tab-turni tr.oggi td:first-child { border-radius: 8px 0 0 8px; color: var(--ink); }
+  .tab-turni tr.oggi td:last-child { border-radius: 0 8px 8px 0; }
+  .nota { font-size: 1.9vh; color: var(--muted); margin: 4px 0 8px; }
+  .btn-pieno { border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-size: 2.2vh; padding: 9px 16px; }
+</style>
+</head>
+<body>
+<div id="griglia">
+  <!-- colonna 1: ora + meteo -->
+  <section class="card">
+    <button id="ingranaggio" aria-label="Impostazioni">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    <div id="ora">--:--</div>
+    <div id="data"></div>
+    <div class="ore" id="ore"></div>
+    <div class="meteo-ora">
+      <div id="icona"></div>
+      <div><div id="temp">--°</div><div id="descr">Carico il meteo…</div></div>
+    </div>
+    <div class="giorni" id="giorni"></div>
+  </section>
+
+  <!-- colonna 2: turni + timer -->
+  <div class="col">
+    <section class="card" id="card-turni">
+      <h2>Turni <small id="sett-label"></small></h2>
+      <table class="turni"><thead><tr><th></th><th>Oggi</th><th>Domani</th></tr></thead><tbody id="turni-corpo"></tbody></table>
+    </section>
+    <section class="card riempi">
+      <h2>Timer <small id="timer-custom-wrap"></small></h2>
+      <div class="preset" id="preset"></div>
+      <div id="timer-lista"></div>
+    </section>
+  </div>
+
+  <!-- colonna 3: spesa + promemoria -->
+  <div class="col">
+    <section class="card riempi" data-lista="spesa">
+      <h2>Spesa <button class="btn-piccolo pulisci">Togli spuntati</button></h2>
+      <form class="aggiungi"><input placeholder="Aggiungi…" enterkeyhint="done"><button>+</button></form>
+      <ul></ul>
+    </section>
+    <section class="card riempi" data-lista="promemoria">
+      <h2>Promemoria <button class="btn-piccolo pulisci">Togli spuntati</button></h2>
+      <form class="aggiungi"><input placeholder="Aggiungi…" enterkeyhint="done"><button>+</button></form>
+      <ul></ul>
+    </section>
+  </div>
+</div>
+
+<!-- foto a rotazione -->
+<div id="foto" class="livello">
+  <img id="fotoA" alt=""><img id="fotoB" alt="">
+  <div id="foto-info"><div id="foto-ora"></div><div id="foto-timer"></div></div>
+</div>
+
+<!-- allarme timer -->
+<div id="allarme" class="livello">
+  <div class="grande">Tempo scaduto!</div>
+  <div class="sotto" id="allarme-nome"></div>
+  <div class="sotto">Tocca per fermare</div>
+</div>
+
+<!-- settimana intera -->
+<div id="settimana" class="livello pannello">
+  <div class="dentro">
+    <button class="btn-piccolo chiudi">Chiudi</button>
+    <h3 id="settimana-titolo">Questa settimana</h3>
+    <table class="tab-turni" id="settimana-tab"></table>
+    <h3 id="prossima-titolo">Prossima settimana</h3>
+    <table class="tab-turni" id="prossima-tab"></table>
+  </div>
+</div>
+
+<!-- impostazioni -->
+<div id="impostazioni" class="livello pannello">
+  <div class="dentro">
+    <button class="btn-piccolo chiudi">Chiudi</button>
+
+    <h3>Nomi</h3>
+    <div class="riga">
+      <input type="text" id="nome0" placeholder="Persona 1">
+      <input type="text" id="nome1" placeholder="Persona 2">
+    </div>
+
+    <h3>Turni di lavoro (ogni due settimane)</h3>
+    <div class="riga">
+      <label>Questa settimana è la</label>
+      <div class="seg" id="seg-corrente"><button data-v="A">A</button><button data-v="B">B</button></div>
+    </div>
+    <div class="riga">
+      <label>Modifica settimana</label>
+      <div class="seg" id="seg-modifica"><button data-v="A">A</button><button data-v="B">B</button></div>
+    </div>
+    <div class="nota">Scrivi l'orario così come vuoi vederlo (es. "9–17" o "10–15 / 18–23"). Lascia vuoto per Riposo.</div>
+    <table class="tab-turni" id="tab-modifica"></table>
+
+    <h3>Foto a rotazione</h3>
+    <div class="riga">
+      <label class="btn-pieno" style="color:#fff">Aggiungi foto
+        <input type="file" id="foto-input" accept="image/*" multiple style="display:none">
+      </label>
+      <button class="btn-piccolo" id="foto-svuota">Elimina tutte</button>
+      <label id="foto-conta"></label>
+    </div>
+    <div class="riga">
+      <label>Partono dopo</label>
+      <input type="number" id="foto-attesa" min="1" max="120" style="width:9vh"> <label>minuti senza toccare lo schermo</label>
+    </div>
+    <div class="riga">
+      <label>Cambia foto ogni</label>
+      <input type="number" id="foto-ogni" min="3" max="600" style="width:9vh"> <label>secondi</label>
+    </div>
+    <div class="nota">Le foto restano salvate solo su questo tablet. Di notte non partono.</div>
+  </div>
+</div>
+
+<script>
+// ================= impostazioni base =================
+var LAT = 44.4949, LON = 11.3426;      // Bologna
+var NOTTE_DA = 22, NOTTE_A = 7;        // tema scuro in queste ore
+var GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
+var GIORNI_LUN = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+var MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+
+function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
+function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function $(id) { return document.getElementById(id); }
+function due(n) { return (n < 10 ? "0" : "") + n; }
+function isNotte() { var h = new Date().getHours(); return h >= NOTTE_DA || h < NOTTE_A; }
+
+var cfg = leggi("cucina_cfg", {
+  nomi: ["Marco", "Lei"],
+  fotoAttesa: 5, fotoOgni: 12,
+  ancora: null,            // { lunedi: "YYYY-MM-DD", sett: "A" }
+  turni: { A: vuotaSett(), B: vuotaSett() }
+});
+function vuotaSett() { var s = []; for (var i = 0; i < 7; i++) s.push(["", ""]); return s; }
+function salvaCfg() { salva("cucina_cfg", cfg); }
+
+// ================= orologio =================
+function orologio() {
+  var d = new Date(), hhmm = due(d.getHours()) + ":" + due(d.getMinutes());
+  $("ora").textContent = hhmm; $("foto-ora").textContent = hhmm;
+  var gg = GIORNI[d.getDay()];
+  $("data").textContent = gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];
+  document.body.classList.toggle("notte", isNotte());
+}
+
+// ================= meteo (Open-Meteo, senza chiave) =================
+function tipo(c) {
+  if (c === 0) return ["sole", "Sereno"];
+  if (c <= 2) return ["poco", "Poco nuvoloso"];
+  if (c === 3) return ["nuvole", "Nuvoloso"];
+  if (c === 45 || c === 48) return ["nebbia", "Nebbia"];
+  if (c >= 51 && c <= 67) return ["pioggia", "Pioggia"];
+  if (c >= 71 && c <= 77) return ["neve", "Neve"];
+  if (c >= 80 && c <= 82) return ["pioggia", "Rovesci"];
+  if (c >= 85 && c <= 86) return ["neve", "Rovesci di neve"];
+  if (c >= 95) return ["temporale", "Temporale"];
+  return ["nuvole", ""];
+}
+function icona(t) {
+  var S = 'stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  var nuv = '<path ' + S + ' d="M14 30h20a8 8 0 0 0 0-16 11 11 0 0 0-21 3 6.5 6.5 0 0 0 1 13z"/>';
+  var p = {
+    sole: '<circle cx="24" cy="24" r="8" ' + S + '/><path ' + S + ' d="M24 6v5M24 37v5M6 24h5M37 24h5M11 11l3.5 3.5M33.5 33.5L37 37M11 37l3.5-3.5M33.5 14.5L37 11"/>',
+    poco: '<circle cx="17" cy="17" r="6" ' + S + '/><path ' + S + ' d="M17 5v3M5 17h3M8.5 8.5l2 2M25.5 8.5l-2 2"/><path ' + S + ' d="M18 38h16a7 7 0 0 0 0-14 9 9 0 0 0-17 3 5.5 5.5 0 0 0 1 11z"/>',
+    nuvole: '<path ' + S + ' d="M14 36h20a8 8 0 0 0 0-16 11 11 0 0 0-21 3 6.5 6.5 0 0 0 1 13z"/>',
+    nebbia: '<path ' + S + ' d="M8 18h32M12 25h26M8 32h32M14 39h20"/>',
+    pioggia: nuv + '<path ' + S + ' d="M17 35l-2 6M25 35l-2 6M33 35l-2 6"/>',
+    neve: nuv + '<path ' + S + ' d="M17 37v.1M24 40v.1M31 37v.1"/>',
+    temporale: nuv + '<path ' + S + ' d="M25 32l-4 6h6l-4 6"/>'
+  };
+  return '<svg viewBox="0 0 48 48">' + (p[t] || p.nuvole) + '</svg>';
+}
+function meteo() {
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+    "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min" +
+    "&timezone=Europe%2FRome&forecast_days=5";
+  fetch(url).then(function (r) { return r.json(); }).then(function (j) {
+    var t = tipo(j.current.weather_code);
+    $("icona").innerHTML = icona(t[0]);
+    $("temp").textContent = Math.round(j.current.temperature_2m) + "°";
+    $("descr").textContent = t[1] + " · " + Math.round(j.daily.temperature_2m_min[0]) + "° / " + Math.round(j.daily.temperature_2m_max[0]) + "°";
+    var html = "";
+    for (var i = 1; i < 5; i++) {
+      var d = new Date(j.daily.time[i] + "T12:00:00");
+      html += '<div class="giorno">' + GIORNI[d.getDay()].slice(0, 3) + icona(tipo(j.daily.weather_code[i])[0]) +
+        '<b>' + Math.round(j.daily.temperature_2m_max[i]) + '°</b> ' + Math.round(j.daily.temperature_2m_min[i]) + '°</div>';
+    }
+    $("giorni").innerHTML = html;
+    // prossime ore (ogni 2 ore, 6 colonne)
+    var adesso = Date.now(), ore = "", n = 0;
+    for (var h = 0; h < j.hourly.time.length && n < 6; h++) {
+      var t0 = new Date(j.hourly.time[h]);
+      if (t0.getTime() < adesso - 30 * 60000 || t0.getHours() % 2) continue;
+      var pp = j.hourly.precipitation_probability ? j.hourly.precipitation_probability[h] : 0;
+      ore += '<div class="ora-h">' + due(t0.getHours()) + ':00' + icona(tipo(j.hourly.weather_code[h])[0]) +
+        '<b>' + Math.round(j.hourly.temperature_2m[h]) + '°</b><span class="pp">' + (pp >= 20 ? pp + "%" : "") + '</span></div>';
+      n++;
+    }
+    $("ore").innerHTML = ore;
+  }).catch(function () { $("descr").textContent = "Meteo non disponibile"; });
+}
+
+// ================= turni bisettimanali =================
+function lunedi(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
+function iso(d) { return d.getFullYear() + "-" + due(d.getMonth() + 1) + "-" + due(d.getDate()); }
+function daIso(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function quale(d) {   // "A" o "B" per la data d
+  if (!cfg.ancora) { cfg.ancora = { lunedi: iso(lunedi(new Date())), sett: "A" }; salvaCfg(); }
+  var diff = Math.round((lunedi(d) - daIso(cfg.ancora.lunedi)) / (7 * 864e5));
+  var pari = ((diff % 2) + 2) % 2 === 0;
+  return pari ? cfg.ancora.sett : (cfg.ancora.sett === "A" ? "B" : "A");
+}
+function turno(d, p) { return cfg.turni[quale(d)][(d.getDay() + 6) % 7][p] || ""; }
+function cella(t) { var td = document.createElement("td"); if (t) td.textContent = t; else { td.textContent = "Riposo"; td.className = "riposo"; } return td; }
+function disegnaTurni() {
+  var oggi = new Date(), dom = new Date(); dom.setDate(dom.getDate() + 1);
+  $("sett-label").textContent = "settimana " + quale(oggi) + " · tocca per vederla";
+  var tb = $("turni-corpo"); tb.innerHTML = "";
+  [0, 1].forEach(function (p) {
+    var tr = document.createElement("tr"), n = document.createElement("td");
+    n.textContent = cfg.nomi[p]; tr.appendChild(n);
+    tr.appendChild(cella(turno(oggi, p))); tr.appendChild(cella(turno(dom, p)));
+    tb.appendChild(tr);
+  });
+}
+function tabellaSett(tab, lun, modificabile, lettera) {
+  tab.innerHTML = "";
+  var head = document.createElement("tr");
+  head.innerHTML = "<th></th><th></th><th></th>";
+  head.children[1].textContent = cfg.nomi[0]; head.children[2].textContent = cfg.nomi[1];
+  tab.appendChild(head);
+  var oggiIso = iso(new Date());
+  for (var g = 0; g < 7; g++) {
+    var tr = document.createElement("tr"), td0 = document.createElement("td");
+    var giorno = null;
+    if (lun) { giorno = new Date(lun); giorno.setDate(giorno.getDate() + g); }
+    td0.textContent = GIORNI_LUN[g] + (giorno ? " " + giorno.getDate() : "");
+    if (giorno && iso(giorno) === oggiIso) tr.className = "oggi";
+    tr.appendChild(td0);
+    for (var p = 0; p < 2; p++) {
+      if (modificabile) {
+        var td = document.createElement("td"), inp = document.createElement("input");
+        inp.type = "text"; inp.placeholder = "Riposo"; inp.value = cfg.turni[lettera][g][p];
+        (function (g, p) { inp.oninput = function () { cfg.turni[lettera][g][p] = this.value.trim(); salvaCfg(); disegnaTurni(); }; })(g, p);
+        td.appendChild(inp); tr.appendChild(td);
+      } else {
+        tr.appendChild(cella(cfg.turni[lettera][g][p]));
+      }
+    }
+    tab.appendChild(tr);
+  }
+}
+$("card-turni").onclick = function () {
+  var lun = lunedi(new Date()), pross = new Date(lun); pross.setDate(pross.getDate() + 7);
+  $("settimana-titolo").textContent = "Questa settimana (" + quale(lun) + ")";
+  $("prossima-titolo").textContent = "Prossima settimana (" + quale(pross) + ")";
+  tabellaSett($("settimana-tab"), lun, false, quale(lun));
+  tabellaSett($("prossima-tab"), pross, false, quale(pross));
+  apri("settimana");
+};
+
+// ================= timer da cucina =================
+var PRESET = [1, 3, 5, 8, 10, 15, 20, 30];
+var timers = leggi("cucina_timers", []);
+var audio = null, allarmeAttivo = null, beepInt = null;
+PRESET.forEach(function (m) {
+  var b = document.createElement("button"); b.textContent = m + " min";
+  b.onclick = function () { avviaTimer(m); }; $("preset").appendChild(b);
+});
+(function () {   // pulsante "altro" per minuti a scelta
+  var b = document.createElement("button"); b.className = "btn-piccolo"; b.textContent = "Altro…";
+  b.onclick = function () {
+    var m = parseFloat(prompt("Quanti minuti?", "12"));
+    if (m > 0) avviaTimer(m);
+  };
+  $("timer-custom-wrap").appendChild(b);
+})();
+function sbloccaAudio() {
+  try { if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch (e) {}
+}
+function avviaTimer(min) {
+  sbloccaAudio();
+  timers.push({ id: Date.now(), min: min, fine: Date.now() + min * 60000 });
+  salva("cucina_timers", timers); disegnaTimer();
+}
+function fmt(ms) {
+  var s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return (h ? h + ":" + due(m) : m) + ":" + due(s % 60);
+}
+function disegnaTimer() {
+  var box = $("timer-lista"), now = Date.now(); box.innerHTML = "";
+  timers.sort(function (a, b) { return a.fine - b.fine; });
+  timers.forEach(function (t) {
+    var d = document.createElement("div"); d.className = "timer";
+    d.innerHTML = '<span class="t"></span><span class="n"></span><button aria-label="Annulla">×</button>';
+    d.children[0].textContent = fmt(t.fine - now);
+    d.children[1].textContent = "timer " + t.min + " min";
+    d.children[2].onclick = function () { timers = timers.filter(function (x) { return x.id !== t.id; }); salva("cucina_timers", timers); disegnaTimer(); };
+    box.appendChild(d);
+  });
+  $("foto-timer").textContent = timers.length ? "⏱ " + fmt(timers[0].fine - now) : "";
+}
+function beep() {
+  if (!audio) return;
+  try {
+    [0, 0.3, 0.6].forEach(function (t) {
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = 880; o.type = "square"; g.gain.value = 0.15;
+      o.connect(g); g.connect(audio.destination);
+      o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.18);
+    });
+  } catch (e) {}
+}
+function controllaTimer() {
+  var now = Date.now(), scaduti = timers.filter(function (t) { return t.fine <= now; });
+  if (scaduti.length && !allarmeAttivo) {
+    allarmeAttivo = scaduti[0];
+    timers = timers.filter(function (t) { return t.id !== allarmeAttivo.id; });
+    salva("cucina_timers", timers);
+    $("allarme-nome").textContent = "Timer da " + allarmeAttivo.min + " min";
+    chiudiFoto(); $("allarme").classList.add("on");
+    beep(); beepInt = setInterval(beep, 1500);
+  }
+  disegnaTimer();
+}
+$("allarme").onclick = function () {
+  $("allarme").classList.remove("on"); clearInterval(beepInt); allarmeAttivo = null; toccato();
+};
+
+// ================= liste =================
+[].forEach.call(document.querySelectorAll("[data-lista]"), function (card) {
+  var key = "cucina_" + card.getAttribute("data-lista");
+  var ul = card.querySelector("ul"), input = card.querySelector("input");
+  var voci = leggi(key, []);
+  function disegna() {
+    ul.innerHTML = "";
+    if (!voci.length) { ul.innerHTML = '<li class="vuoto">Niente per ora</li>'; return; }
+    voci.forEach(function (v, i) {
+      var li = document.createElement("li");
+      if (v.fatto) li.className = "fatto";
+      li.innerHTML = '<span class="box"></span><span></span>';
+      li.lastChild.textContent = v.testo;
+      li.onclick = function () { voci[i].fatto = !voci[i].fatto; salva(key, voci); disegna(); };
+      ul.appendChild(li);
+    });
+  }
+  card.querySelector("form").onsubmit = function (e) {
+    e.preventDefault();
+    var t = input.value.trim();
+    if (t) { voci.push({ testo: t, fatto: false }); salva(key, voci); disegna(); }
+    input.value = ""; input.blur();
+  };
+  card.querySelector(".pulisci").onclick = function () {
+    voci = voci.filter(function (v) { return !v.fatto; }); salva(key, voci); disegna();
+  };
+  disegna();
+});
+
+// ================= foto (IndexedDB, solo su questo tablet) =================
+function db() {
+  return new Promise(function (ok, ko) {
+    var r = indexedDB.open("cucina", 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore("foto", { autoIncrement: true }); };
+    r.onsuccess = function () { ok(r.result); }; r.onerror = function () { ko(r.error); };
+  });
+}
+function store(mode) { return db().then(function (d) { return d.transaction("foto", mode).objectStore("foto"); }); }
+function req(r) { return new Promise(function (ok, ko) { r.onsuccess = function () { ok(r.result); }; r.onerror = function () { ko(r.error); }; }); }
+var fotoChiavi = [];
+function caricaChiavi() {
+  return store("readonly").then(function (s) { return req(s.getAllKeys()); }).then(function (k) {
+    fotoChiavi = k; $("foto-conta").textContent = k.length + " foto salvate";
+  }).catch(function () { fotoChiavi = []; });
+}
+function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
+  return new Promise(function (ok) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      var c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); c.toBlob(ok, "image/jpeg", 0.85);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); ok(null); };
+    img.src = url;
+  });
+}
+$("foto-input").onchange = function () {
+  var files = [].slice.call(this.files); this.value = "";
+  $("foto-conta").textContent = "Salvo " + files.length + " foto…";
+  files.reduce(function (p, f) {
+    return p.then(function () { return rimpicciolisci(f); }).then(function (b) {
+      if (b) return store("readwrite").then(function (s) { return req(s.add(b)); });
+    });
+  }, Promise.resolve()).then(caricaChiavi);
+};
+$("foto-svuota").onclick = function () {
+  if (confirm("Eliminare tutte le foto dal tablet?")) store("readwrite").then(function (s) { return req(s.clear()); }).then(caricaChiavi);
+};
+
+var ultimoTocco = Date.now(), fotoIdx = 0, fotoTimer = null, fotoUrl = [null, null], fotoLato = 0;
+function toccato() { ultimoTocco = Date.now(); }
+["touchstart", "mousedown", "keydown"].forEach(function (e) { document.addEventListener(e, toccato, true); });
+function mostraProssima() {
+  if (!fotoChiavi.length) return chiudiFoto();
+  var k = fotoChiavi[fotoIdx++ % fotoChiavi.length];
+  store("readonly").then(function (s) { return req(s.get(k)); }).then(function (blob) {
+    if (!blob) return;
+    fotoLato = 1 - fotoLato;
+    var img = fotoLato ? $("fotoB") : $("fotoA"), altra = fotoLato ? $("fotoA") : $("fotoB");
+    if (fotoUrl[fotoLato]) URL.revokeObjectURL(fotoUrl[fotoLato]);
+    fotoUrl[fotoLato] = URL.createObjectURL(blob);
+    img.onload = function () { img.classList.add("vis"); altra.classList.remove("vis"); };
+    img.src = fotoUrl[fotoLato];
+  });
+}
+function apriFoto() {
+  fotoIdx = Math.floor(Math.random() * fotoChiavi.length);
+  $("foto").classList.add("on"); mostraProssima();
+  fotoTimer = setInterval(mostraProssima, Math.max(3, cfg.fotoOgni) * 1000);
+}
+function chiudiFoto() { $("foto").classList.remove("on"); clearInterval(fotoTimer); fotoTimer = null; }
+$("foto").onclick = function () { chiudiFoto(); toccato(); };
+function controllaInattivita() {
+  var aperto = document.querySelector(".pannello.on") || allarmeAttivo || document.activeElement.tagName === "INPUT";
+  if (!fotoTimer && !aperto && fotoChiavi.length && !isNotte() && Date.now() - ultimoTocco > cfg.fotoAttesa * 60000) apriFoto();
+  if (fotoTimer && isNotte()) chiudiFoto();
+}
+
+// ================= pannelli =================
+function apri(id) { $(id).classList.add("on"); }
+[].forEach.call(document.querySelectorAll(".pannello"), function (p) {
+  p.querySelector(".chiudi").onclick = function () { p.classList.remove("on"); };
+  p.onclick = function (e) { if (e.target === p) p.classList.remove("on"); };
+});
+var sottoModifica = "A";
+function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === val); }); }
+function aggiornaImpostazioni() {
+  $("nome0").value = cfg.nomi[0]; $("nome1").value = cfg.nomi[1];
+  $("foto-attesa").value = cfg.fotoAttesa; $("foto-ogni").value = cfg.fotoOgni;
+  seg("seg-corrente", quale(new Date())); seg("seg-modifica", sottoModifica);
+  tabellaSett($("tab-modifica"), quale(new Date()) === sottoModifica ? lunedi(new Date()) : null, true, sottoModifica);
+}
+$("ingranaggio").onclick = function () { sottoModifica = quale(new Date()); aggiornaImpostazioni(); caricaChiavi(); apri("impostazioni"); };
+function cambiaNome(i, v) {
+  cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni();
+  var th = $("tab-modifica").querySelectorAll("th"); if (th[i + 1]) th[i + 1].textContent = cfg.nomi[i];
+}
+$("nome0").oninput = function () { cambiaNome(0, this.value); };
+$("nome1").oninput = function () { cambiaNome(1, this.value); };
+$("foto-attesa").onchange = function () { cfg.fotoAttesa = Math.max(1, +this.value || 5); salvaCfg(); };
+$("foto-ogni").onchange = function () { cfg.fotoOgni = Math.max(3, +this.value || 12); salvaCfg(); };
+$("seg-corrente").onclick = function (e) {
+  var v = e.target.getAttribute("data-v"); if (!v) return;
+  cfg.ancora = { lunedi: iso(lunedi(new Date())), sett: v }; salvaCfg();
+  aggiornaImpostazioni(); disegnaTurni();
+};
+$("seg-modifica").onclick = function (e) {
+  var v = e.target.getAttribute("data-v"); if (!v) return;
+  sottoModifica = v; aggiornaImpostazioni();
+};
+
+// ================= avvio =================
+orologio(); meteo(); disegnaTurni(); disegnaTimer(); caricaChiavi();
+setInterval(orologio, 10000);
+setInterval(meteo, 30 * 60 * 1000);
+setInterval(controllaTimer, 1000);
+setInterval(controllaInattivita, 5000);
+setInterval(disegnaTurni, 60 * 1000);
+// ricarica completa ogni notte alle 4 (evita rallentamenti dopo giorni accesa)
+setInterval(function () { var d = new Date(); if (d.getHours() === 4 && d.getMinutes() === 0 && !timers.length) location.reload(); }, 60000);
+</script>
+</body>
+</html>
