@@ -171,7 +171,9 @@
   .rete-barre i.persa { background: var(--done); opacity: .5; height: 100% !important; }
   .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: .9vh 1.4vw; margin: 0 0 1.6vh; font-size: 2.1vh; }
   .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
-  .rete-nota { margin-top: 1.4vh; }
+  .rete-wifi { border-top: 1px solid var(--line); margin-top: 1.8vh; padding-top: 1.6vh; }
+  .rete-wifi h3 { margin: 0 0 1vh; font-size: 2.2vh; font-weight: 500; color: var(--muted); }
+  #card-rete { overflow-y: auto; }
   .col-cielo { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .ospiti { display: flex; gap: 1.2vw; align-items: center; }
   #ospiti-qr { width: 20vh; height: 20vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
@@ -514,7 +516,20 @@
         <dt>Velocità misurata</dt><dd id="rete-quando">mai</dd>
       </dl>
       <button class="btn-pieno" id="rete-misura">Misura velocità</button>
-      <div class="nota-txt rete-nota">Nome della rete e segnale non sono leggibili da una pagina web: il browser li blocca per sicurezza.</div>
+      <div class="rete-wifi">
+      <h3>Wi‑Fi di casa</h3>
+      <div class="nota-txt" id="wifi-vuoto">Il QR arriva dal lettore in Termux, che legge la rete dalla Vodafone Station una volta l'ora.</div>
+      <div class="ospiti" id="ospiti" hidden>
+        <img id="ospiti-qr" alt="QR code della rete Wi-Fi di casa">
+        <div class="ospiti-testo">
+          <b><span id="ospiti-stato" class="pillola"></span></b>
+          <span class="ospiti-riga">Rete <strong id="ospiti-ssid"></strong></span>
+          <span class="ospiti-riga" id="ospiti-5-riga" hidden>5 GHz <strong id="ospiti-ssid5"></strong></span>
+          <span class="ospiti-riga">Password <strong id="ospiti-pw"></strong></span>
+          <small>Inquadra il QR con la fotocamera del telefono per collegarti.</small>
+        </div>
+      </div>
+      </div>
     </section>
     </div>
     <div class="col-cielo">
@@ -531,20 +546,6 @@
     </section>
     </div>
     <div class="col-cielo">
-      <section class="card" id="card-wifi">
-        <h2>Wi‑Fi di casa</h2>
-        <div class="nota-txt" id="wifi-vuoto">Il QR arriva dal lettore in Termux, che legge la rete dalla Vodafone Station una volta l'ora.</div>
-        <div class="ospiti" id="ospiti" hidden>
-          <img id="ospiti-qr" alt="QR code della rete Wi-Fi di casa">
-          <div class="ospiti-testo">
-            <b><span id="ospiti-stato" class="pillola"></span></b>
-            <span class="ospiti-riga">Rete <strong id="ospiti-ssid"></strong></span>
-            <span class="ospiti-riga" id="ospiti-5-riga" hidden>5 GHz <strong id="ospiti-ssid5"></strong></span>
-            <span class="ospiti-riga">Password <strong id="ospiti-pw"></strong></span>
-            <small>Inquadra il QR con la fotocamera del telefono per collegarti.</small>
-          </div>
-        </div>
-      </section>
       <section class="card" id="card-ricetta">
         <h2>Ricetta del giorno <button class="btn-piccolo" id="ricetta-altra">Un'altra</button></h2>
         <div class="ricetta-titolo"><b id="ricetta-titolo"></b><span id="ricetta-tempo"></span></div>
