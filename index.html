@@ -461,8 +461,10 @@
     <div class="riga"><span class="stato" id="sync-stato"></span></div>
     <div class="riga">
       <button class="btn-piccolo" id="sync-ora">Sincronizza ora</button>
+      <button class="btn-piccolo" id="sync-codice">Nuovo codice GitHub</button>
       <button class="btn-piccolo btn-rosso" id="sync-esci">Esci da questo dispositivo</button>
     </div>
+    <div class="nota-txt">Se avete rigenerato il codice GitHub (o è scaduto), crealo su <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--accent)">questa pagina</a> con accesso solo a HomeDashboard e "Contents: Read and write", poi premi "Nuovo codice GitHub". Vale subito per tutti i dispositivi.</div>
 
     <h3>Schermo</h3>
     <div class="riga">
@@ -867,6 +869,15 @@ function mostraStatoSync() {
   s.textContent = ultimaSync ? "Cifrata e sincronizzata ✓ · ultimo aggiornamento alle " + due(new Date(ultimaSync).getHours()) + ":" + due(new Date(ultimaSync).getMinutes()) : "Sincronizzo…";
 }
 $("sync-ora").onclick = function () { remoto.etag = ""; sincronizza(); sincronizzaFoto(); };
+$("sync-codice").onclick = function () {
+  chiedi("Incolla il nuovo codice GitHub", "", false, function (v) {
+    if (!v) return;
+    $("sync-stato").className = "stato"; $("sync-stato").textContent = "Salvo il nuovo codice…";
+    sostituisciCodice(v).then(function () { sincronizza(); sincronizzaFoto(); }, function (e) {
+      $("sync-stato").className = "stato no"; $("sync-stato").textContent = e.message && !/^HTTP/.test(e.message) ? e.message : "Non sono riuscito a salvarlo (" + e.message + ").";
+    });
+  });
+};
 $("sync-esci").onclick = function () {
   if (confirm("Uscire da questo dispositivo? Per rientrare servirà la password. I dati restano sugli altri dispositivi.")) esci();
 };

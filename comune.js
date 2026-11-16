@@ -311,7 +311,7 @@ function sincronizza(tentativo) {
   }).catch(function (e) {
     if ((e.status === 409 || e.status === 422) && tentativo < 3) { syncInCorso = false; remoto.etag = ""; return sincronizza(tentativo + 1); }
     erroreSync = e.chiave ? "La password è stata cambiata: esci da questo dispositivo e rientra con quella nuova."
-      : e.status === 401 ? "Il codice GitHub non è più valido (forse è scaduto): serve crearne uno nuovo."
+      : e.status === 401 ? "Il codice GitHub non è più valido (rigenerato o scaduto): in ⚙ premi \"Nuovo codice GitHub\" e incolla quello nuovo."
       : e.status === 403 ? "Il codice GitHub non ha il permesso \"Contents: Read and write\" su HomeDashboard."
       : navigator.onLine === false ? "Nessuna connessione, riprovo tra poco." : "Non riesco a sincronizzare (" + (e.message || "errore") + "), riprovo tra poco.";
   }).then(function () {
@@ -372,13 +372,38 @@ function entra(password, cassa) {
     }, function () { throw new Error("Password sbagliata."); });
   });
 }
+var PASSI_CODICE = '<ol><li>Apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">questa pagina di GitHub</a></li>' +
+  "<li>Repository access: <b>Only select repositories → HomeDashboard</b></li><li>Permissions: <b>Contents → Read and write</b></li>" +
+  "<li>Scadenza la più lunga possibile, poi <b>Generate token</b> e incolla qui il codice</li></ol>";
+function provaCodice(t) {   // resolve se il codice funziona, altrimenti errore con messaggio chiaro
+  return fetch(API, { cache: "no-store", headers: { Authorization: "Bearer " + t, Accept: "application/vnd.github+json" } }).then(function (r) {
+    if (r.status === 401) throw new Error("Questo codice GitHub non è valido (forse è stato rigenerato o è scaduto).");
+    if (!r.ok) throw new Error("Il codice GitHub non vede il repository HomeDashboard: controlla \"Only select repositories\".");
+  });
+}
+// Codice rigenerato o scaduto: salva quello nuovo (cifrato) in chiave.json. Serve la chiave già sbloccata.
+function sostituisciCodice(nuovo) {
+  nuovo = (nuovo || "").trim();
+  if (!nuovo) return Promise.reject(new Error("Incolla il nuovo codice GitHub."));
+  return provaCodice(nuovo).then(function () {
+    token = nuovo;
+    return gh("GET", "/contents/" + CHIAVE + "?ref=" + RAMO);
+  }).then(function (r) { if (!r.ok) throw errore(r); return r.json(); }).then(function (j) {
+    var cassa = JSON.parse(da64(j.content));
+    return cifraTesto(nuovo).then(function (c) {
+      cassa.token = c;
+      return gh("PUT", "/contents/" + CHIAVE, { message: "Nuovo codice GitHub", content: b64(JSON.stringify(cassa, null, 1)), sha: j.sha, branch: RAMO });
+    });
+  }).then(function (r) {
+    if (!r.ok) throw errore(r);
+    salva("cucina_token", token); erroreSync = ""; remoto.etag = "";
+  });
+}
 // Prima volta: crea la cassaforte, porta dentro (cifrati) i dati e le foto del vecchio ramo "dati" e poi lo elimina.
 function creaCassaforte(password, avanza) {
   var sale = crypto.getRandomValues(new Uint8Array(16)), chiave;
   avanza("Preparo la chiave…");
-  return gh("GET", "").then(function (r) {   // il codice funziona?
-    if (r.status === 401) throw new Error("Il codice GitHub non è valido.");
-    if (!r.ok) throw new Error("Il codice GitHub non vede il repository HomeDashboard.");
+  return provaCodice(token).then(function () {
     return derivaChiave(password, sale, GIRI);
   }).then(function (k) {
     chiave = k; chiaveCripto = k;
@@ -439,6 +464,15 @@ function mostraLucchetto() {
   document.head.appendChild(st); document.body.appendChild(l);
   var box = l.firstChild;
   function campo(tipo, ph, auto) { var i = document.createElement("input"); i.type = tipo; i.placeholder = ph; i.autocomplete = auto; return i; }
+  function sezioneCodice(f, aperta, nota) {   // campo per il codice GitHub, nascosto dietro un link se non serve
+    var wrap = document.createElement("div"), cod = campo("text", "github_pat_…", "off");
+    wrap.innerHTML = (nota ? "<p></p>" : "") + PASSI_CODICE; if (nota) wrap.firstChild.textContent = nota;
+    wrap.appendChild(cod); wrap.hidden = !aperta;
+    var link = document.createElement("a"); link.href = "#"; link.textContent = "Ho un nuovo codice GitHub";
+    link.style.cssText = "display:block;margin:12px 0 0;font-size:14px"; link.hidden = aperta;
+    link.onclick = function (e) { e.preventDefault(); wrap.hidden = false; link.hidden = true; cod.focus(); };
+    return { wrap: wrap, link: link, cod: cod, apri: function (t) { if (t) { wrap.querySelector("p") ? wrap.querySelector("p").textContent = t : wrap.insertAdjacentHTML("afterbegin", "<p>" + t + "</p>"); } wrap.hidden = false; link.hidden = true; cod.focus(); } };
+  }
   function riprova(msg) {
     box.innerHTML = "<h1>HomeDashboard</h1><p></p><button>Riprova</button>";
     box.querySelector("p").textContent = msg;
@@ -451,13 +485,21 @@ function mostraLucchetto() {
     if (cassa) {   // ---- entra con la password
       f.innerHTML = "<h1>HomeDashboard</h1><p>Inserisci la password di casa.</p>";
       var pw = campo("password", "Password", "current-password"); f.appendChild(pw);
-      bottone.textContent = "Entra"; f.appendChild(bottone); f.appendChild(msg);
+      var sc = sezioneCodice(f, false); f.appendChild(sc.wrap);
+      bottone.textContent = "Entra"; f.appendChild(bottone); f.appendChild(msg); f.appendChild(sc.link);
       f.onsubmit = function (e) {
         e.preventDefault(); if (!pw.value) return;
         bottone.disabled = true; msg.className = "msg ok"; msg.textContent = "Sblocco…";
-        entra(pw.value, cassa).then(sbloccato, function (err) {
+        var nuovo = sc.wrap.hidden ? "" : sc.cod.value.trim();
+        entra(pw.value, cassa).then(function () {
+          if (nuovo) { msg.textContent = "Salvo il nuovo codice…"; return sostituisciCodice(nuovo); }
+          return provaCodice(token).catch(function () {   // la password è giusta ma il codice salvato non vale più
+            var e = new Error("Password giusta, ma il codice GitHub salvato non funziona più: incolla quello nuovo e premi Entra.");
+            e.codice = true; throw e;
+          });
+        }).then(sbloccato, function (err) {
           bottone.disabled = false; msg.className = "msg"; msg.textContent = err.message || "Non riesco a entrare.";
-          pw.select();
+          if (err.codice) sc.apri(); else if (!nuovo) pw.select();
         });
       };
       box.appendChild(f); setTimeout(function () { pw.focus(); }, 50);
@@ -466,18 +508,14 @@ function mostraLucchetto() {
     // ---- prima volta: scegli la password (e, se serve, il codice GitHub)
     f.innerHTML = "<h1>Proteggi la dashboard</h1><p>Scegli la password di casa: turni, promemoria, foto e dispositivi verranno cifrati con questa. " +
       "Usa una frase di almeno 4 parole (es. pentola-luna-bici-verde). Se la dimenticate i dati non si possono recuperare.</p>";
-    var cod = null;
-    if (!token) {
-      f.insertAdjacentHTML("beforeend", '<ol><li>Apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">questa pagina di GitHub</a></li>' +
-        "<li>Repository access: <b>Only select repositories → HomeDashboard</b></li><li>Permissions: <b>Contents → Read and write</b></li>" +
-        "<li>Scadenza la più lunga possibile, poi <b>Generate token</b> e incolla qui il codice</li></ol>");
-      cod = campo("text", "github_pat_…", "off"); f.appendChild(cod);
-    }
+    var sc = sezioneCodice(f, !token); f.appendChild(sc.wrap);
+    if (token) provaCodice(token).catch(function () { sc.apri("Il codice GitHub salvato su questo dispositivo non funziona più: incolla quello nuovo."); });
     var p1 = campo("password", "Nuova password", "new-password"), p2 = campo("password", "Ripeti la password", "new-password");
     f.appendChild(p1); f.appendChild(p2);
-    bottone.textContent = "Crea la password e cifra i dati"; f.appendChild(bottone); f.appendChild(msg);
+    bottone.textContent = "Crea la password e cifra i dati"; f.appendChild(bottone); f.appendChild(msg); f.appendChild(sc.link);
     f.onsubmit = function (e) {
       e.preventDefault();
+      var cod = sc.wrap.hidden ? null : sc.cod;
       if (cod && !cod.value.trim()) { msg.textContent = "Incolla il codice GitHub."; return; }
       if (p1.value.length < 12) { msg.textContent = "Troppo corta: usa almeno 12 caratteri, meglio una frase di 4 parole."; return; }
       if (p1.value !== p2.value) { msg.textContent = "Le due password non sono uguali."; return; }

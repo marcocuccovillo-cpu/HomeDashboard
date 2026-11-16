@@ -212,8 +212,11 @@ def github(c, metodo, percorso, corpo=None):
 
 def pubblica(c, contenuto):
     stato, attuale = github(c, "GET", f"/contents/{FILE}?ref={RAMO}")
+    if stato == 401:   # il codice è stato cambiato dalla dashboard: rileggo quello nuovo dalla cassaforte
+        c["_chiave"], c["_token"] = apri_cassaforte(c)
+        stato, attuale = github(c, "GET", f"/contents/{FILE}?ref={RAMO}")
     if stato == 401:
-        raise RuntimeError("Il codice GitHub salvato nella dashboard non è più valido (forse è scaduto).")
+        raise RuntimeError("Il codice GitHub della dashboard non è valido: in ⚙ premi \"Nuovo codice GitHub\".")
     cifrato = cifra_testo(c["_chiave"], json.dumps(contenuto, ensure_ascii=False))
     corpo = {"message": "Aggiorna dispositivi", "branch": RAMO,
              "content": base64.b64encode(json.dumps({"v": 2, "dati": cifrato}).encode()).decode()}

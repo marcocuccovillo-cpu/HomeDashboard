@@ -280,6 +280,8 @@
     <h3>Collegamento</h3>
     <p class="nota-txt" id="imp-stato"></p>
     <p class="nota-txt"><a href="index.html?completa" style="color:var(--accent)">Apri la dashboard completa (quella del tablet)</a></p>
+    <div class="campo" style="margin-top:14px"><label>Nuovo codice GitHub (solo se l'avete rigenerato)</label>
+      <div class="riga2"><input type="text" id="imp-codice" placeholder="github_pat_…" autocomplete="off" style="flex:1"><button type="button" class="btn" id="imp-salva-codice">Salva</button></div></div>
     <div class="azioni"><button type="button" class="btn rosso sx" id="imp-esci">Esci</button><button type="button" class="btn" id="imp-sync">Aggiorna ora</button><button type="button" class="btn pieno chiudi">Chiudi</button></div>
   </div>
 </div>
@@ -582,6 +584,12 @@ function mostraStatoSync() {
 }
 $("apri-imp").onclick = function () { mostraStatoSync(); apri("ed-imp"); };
 $("imp-sync").onclick = function () { remoto.etag = ""; sincronizza(); };
+$("imp-salva-codice").onclick = function () {
+  $("imp-stato").textContent = "Salvo il nuovo codice…";
+  sostituisciCodice($("imp-codice").value).then(function () { $("imp-codice").value = ""; sincronizza(); mostraStatoSync(); }, function (e) {
+    $("imp-stato").textContent = e.message && !/^HTTP/.test(e.message) ? e.message : "Non sono riuscito a salvarlo (" + e.message + ").";
+  });
+};
 $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Per rientrare servirà la password.")) esci(); };
 function dopoSblocco() { if (scheda === "foto") disegnaFoto(); }
 
