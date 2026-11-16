@@ -178,11 +178,6 @@
 </header>
 
 <main>
-  <div id="avviso" hidden>
-    <b>Questo telefono non è ancora collegato.</b> Quello che inserisci resta solo qui e il tablet non lo vede.
-    Apri il link che ti hanno mandato dal tablet (⚙ → "Collega un altro telefono"), oppure incolla il codice.
-    <br><button class="btn pieno" id="avviso-collega">Incolla il codice</button>
-  </div>
 
   <section class="scheda" id="s-oggi">
     <div class="oggi-data" id="oggi-data"></div>
@@ -214,7 +209,7 @@
     <label class="carica">Aggiungi foto<input type="file" id="foto-input" accept="image/*" multiple hidden></label>
     <div id="foto-stato">Le foto appaiono sul tablet a rotazione quando nessuno lo usa.</div>
     <div id="foto-griglia"></div>
-    <p class="avviso-foto">Le foto vengono salvate nel vostro repository GitHub, che è pubblico: chi conosce l'indirizzo può vederle. Tocca una foto per toglierla.</p>
+    <p class="avviso-foto">Le foto vengono cifrate con la password di casa prima di partire. Tocca una foto per toglierla.</p>
   </section>
 
 </main>
@@ -284,15 +279,8 @@
   <div class="foglio">
     <h3>Collegamento</h3>
     <p class="nota-txt" id="imp-stato"></p>
-    <div id="imp-scollegato">
-      <div class="campo"><label>Codice di collegamento (dal tablet: ⚙ → "Collega un altro telefono" → Copia codice)</label>
-        <input type="text" id="imp-token" placeholder="github_pat_…" autocomplete="off"></div>
-      <div class="azioni"><button type="button" class="btn sx" id="imp-incolla">Incolla</button><button type="button" class="btn chiudi">Chiudi</button><button type="button" class="btn pieno" id="imp-collega">Collega</button></div>
-    </div>
     <p class="nota-txt"><a href="index.html?completa" style="color:var(--accent)">Apri la dashboard completa (quella del tablet)</a></p>
-    <div id="imp-collegato">
-      <div class="azioni"><button type="button" class="btn rosso sx" id="imp-scollega">Scollega</button><button type="button" class="btn" id="imp-sync">Aggiorna ora</button><button type="button" class="btn pieno chiudi">Chiudi</button></div>
-    </div>
+    <div class="azioni"><button type="button" class="btn rosso sx" id="imp-esci">Esci</button><button type="button" class="btn" id="imp-sync">Aggiorna ora</button><button type="button" class="btn pieno chiudi">Chiudi</button></div>
   </div>
 </div>
 
@@ -549,16 +537,20 @@ $("ed-nota").querySelector("form").onsubmit = function (e) {
 $("en-elimina").onclick = function () { note = note.filter(function (x) { return x !== en.nota; }); salva("cucina_note", note); disegnaNote(); chiudi("ed-nota"); };
 
 // ================= foto =================
-var fotoRemote = [];
+var fotoRemote = [], miniature = {};   // sha → indirizzo dell'immagine già decifrata
+function miniatura(img, x) {
+  if (miniature[x.sha]) { img.src = miniature[x.sha]; return; }
+  scaricaFotoRemota(x).then(function (b) { miniature[x.sha] = URL.createObjectURL(b); img.src = miniature[x.sha]; }, function () {});
+}
 function disegnaFoto() {
   var g = $("foto-griglia");
-  if (!token) { g.innerHTML = ""; $("foto-stato").textContent = "Collega prima il telefono (⚙) per mandare le foto al tablet."; return; }
+  if (!token || !chiaveCripto) { g.innerHTML = ""; $("foto-stato").textContent = "Sblocca prima con la password."; return; }
   listaFotoRemote().then(function (l) {
     fotoRemote = l.sort(function (a, b) { return b.name.localeCompare(a.name); });   // le più recenti prima
     g.innerHTML = "";
     fotoRemote.forEach(function (x) {
       var b = el("button"), img = el("img"); b.type = "button";
-      img.loading = "lazy"; img.alt = ""; img.src = x.download_url; b.appendChild(img);
+      img.alt = ""; b.appendChild(img); miniatura(img, x);
       b.onclick = function () {
         if (!confirm("Togliere questa foto? Sparirà anche dal tablet.")) return;
         eliminaFotoRemota(x).then(disegnaFoto, function () { alert("Non sono riuscito a toglierla, riprova."); });
@@ -570,7 +562,7 @@ function disegnaFoto() {
 }
 $("foto-input").onchange = function () {
   var files = [].slice.call(this.files), fatte = 0; this.value = "";
-  if (!token) { disegnaFoto(); return; }
+  if (!token || !chiaveCripto) { disegnaFoto(); return; }
   $("foto-stato").textContent = "Carico 1 di " + files.length + "…";
   files.reduce(function (p, f) {
     return p.then(function () { return rimpicciolisci(f); }).then(function (b) {
@@ -581,24 +573,17 @@ $("foto-input").onchange = function () {
 
 // ================= collegamento =================
 function mostraStatoSync() {
-  var s = $("stato"), collegato = !!token;
-  $("avviso").hidden = collegato;
-  $("imp-scollegato").hidden = collegato; $("imp-collegato").hidden = !collegato;
-  if (!collegato) { s.className = ""; s.textContent = "Non collegato"; $("imp-stato").textContent = "Questo telefono non è collegato: i dati restano solo qui."; return; }
+  var s = $("stato");
+  if (!chiaveCripto) { s.className = ""; s.textContent = "Bloccata"; $("imp-stato").textContent = "Serve la password di casa."; return; }
   if (erroreSync) { s.className = "err"; s.textContent = "Errore"; $("imp-stato").textContent = erroreSync; return; }
   var ora = ultimaSync ? due(new Date(ultimaSync).getHours()) + ":" + due(new Date(ultimaSync).getMinutes()) : "";
   s.className = ultimaSync ? "ok" : ""; s.textContent = ultimaSync ? "Aggiornato " + ora : "Collego…";
-  $("imp-stato").textContent = ultimaSync ? "Collegato ✓ · ultimo aggiornamento alle " + ora + ". Le modifiche arrivano al tablet in pochi secondi." : "Collegato, sincronizzo…";
+  $("imp-stato").textContent = ultimaSync ? "Cifrata e sincronizzata ✓ · ultimo aggiornamento alle " + ora + "." : "Sincronizzo…";
 }
 $("apri-imp").onclick = function () { mostraStatoSync(); apri("ed-imp"); };
-$("avviso-collega").onclick = function () { mostraStatoSync(); apri("ed-imp"); };
-$("imp-incolla").onclick = function () {
-  if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(function (t) { $("imp-token").value = t.trim(); }).catch(function () { $("imp-token").focus(); });
-  else $("imp-token").focus();
-};
-$("imp-collega").onclick = function () { collega($("imp-token").value); $("imp-token").value = ""; };
 $("imp-sync").onclick = function () { remoto.etag = ""; sincronizza(); };
-$("imp-scollega").onclick = function () { if (confirm("Scollegare questo telefono?")) scollega(); };
+$("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Per rientrare servirà la password.")) esci(); };
+function dopoSblocco() { if (scheda === "foto") disegnaFoto(); }
 
 // ================= avvio =================
 function ridisegna() { disegnaOggi(); disegnaTurni(); disegnaNote(); }

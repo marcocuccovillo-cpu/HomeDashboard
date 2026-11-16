@@ -102,13 +102,16 @@ var ICONE_DISP = {
 var dispDati = null, dispEtag = "", dispTutti = false, dispStato = "";
 var GUIDA_DISP = "https://github.com/marcocuccovillo-cpu/HomeDashboard/blob/main/strumenti/LEGGIMI.md";
 function leggiDispositivi() {
-  if (!token) { dispStato = "scollegato"; disegnaDispositivi(); return; }
+  if (!token || !chiaveCripto) { dispStato = "scollegato"; disegnaDispositivi(); return; }
   gh("GET", "/contents/dispositivi.json?ref=" + RAMO, null, dispEtag ? { "If-None-Match": dispEtag } : null).then(function (r) {
     if (r.status === 304) return;
     if (r.status === 404) { dispStato = "manca"; dispDati = null; return; }
     if (!r.ok) throw new Error(r.status);
     dispEtag = r.headers.get("ETag") || "";
-    return r.json().then(function (j) { dispDati = JSON.parse(da64(j.content)); dispStato = "ok"; });
+    return r.json().then(function (j) {
+      var f = JSON.parse(da64(j.content));
+      return decifraTesto(f.dati).then(function (t) { dispDati = JSON.parse(t); dispStato = "ok"; });
+    });
   }).catch(function () { if (!dispDati) dispStato = "errore"; }).then(disegnaDispositivi);
 }
 function disegnaDispositivi() {
@@ -116,7 +119,7 @@ function disegnaDispositivi() {
   ul.innerHTML = ""; altri.hidden = true; st.innerHTML = "";
   if (!dispDati) {
     conta.textContent = "–"; conta.className = "pillola";
-    var testo = dispStato === "scollegato" ? "Collega prima il tablet in ⚙ → Condivisione, poi installa il lettore della Vodafone Station."
+    var testo = dispStato === "scollegato" ? "Sblocca prima la dashboard con la password, poi installa il lettore della Vodafone Station."
       : dispStato === "errore" ? "Non riesco a leggere la lista, riprovo tra un minuto."
       : "Per vedere qui i dispositivi della Vodafone Station installa il lettore sul tablet con Termux (10 minuti, una volta sola).";
     st.textContent = testo + " ";

@@ -113,14 +113,15 @@ if (!note) {   // recupera i vecchi promemoria a lista
 var spesa = leggi("cucina_spesa", []);
 spesa.forEach(function (v, i) { if (!v.id) v.id = Date.now() * 1000 + i; });
 
-// ================= sincronizzazione tra dispositivi (file dati.json nel ramo "dati" del repository) =================
+// ================= sincronizzazione tra dispositivi (dati.json cifrato nel ramo "cassaforte" del repository) =================
 // Ogni dato è una voce separata con l'ora dell'ultima modifica: se due persone cambiano cose diverse
 // nello stesso momento non si perde niente; se cambiano la stessa cosa vince l'ultima modifica.
 var REPO = (function () {
   var h = location.hostname, seg = location.pathname.split("/")[1];
   return /\.github\.io$/.test(h) && seg ? h.split(".")[0] + "/" + seg : "marcocuccovillo-cpu/HomeDashboard";
 })();
-var API = "https://api.github.com/repos/" + REPO, RAMO = "dati", FILE = "dati.json";
+var API = "https://api.github.com/repos/" + REPO, FILE = "dati.json", CHIAVE = "chiave.json";
+var RAMO = "cassaforte", RAMO_VECCHIO = "dati";   // "dati" era il ramo in chiaro, sostituito da quello cifrato
 var NOMI_DEF = ["Marco", "Lei"], MESE_MS = 30 * 864e5;
 var token = leggi("cucina_token", "");
 var reg = leggi("cucina_registro", null), base = null, regPronto = false;
@@ -173,7 +174,7 @@ function registra() {   // confronta lo stato attuale con l'ultimo noto e annota
 function cambiato() {
   if (!regPronto) return;
   registra();
-  if (token) { clearTimeout(tPush); tPush = setTimeout(sincronizza, 1200); }
+  if (token && chiaveCripto) { clearTimeout(tPush); tPush = setTimeout(sincronizza, 1200); }
 }
 function unisci(a, b) {
   var r = {}, limite = Date.now() - MESE_MS;
@@ -221,45 +222,81 @@ function gh(metodo, percorso, corpo, extra) {
   return fetch(API + percorso, { method: metodo, headers: h, cache: "no-store", body: corpo ? JSON.stringify(corpo) : undefined });
 }
 function errore(r) { var e = new Error("HTTP " + r.status); e.status = r.status; return e; }
+
+// ================= cifratura (AES-GCM, chiave ricavata dalla password con PBKDF2) =================
+// Formato di ogni dato cifrato: 12 byte di IV + testo cifrato con il suo tag, il tutto in base64.
+// Lo stesso formato lo usa strumenti/dispositivi.py.
+var GIRI = 600000;                       // PBKDF2-SHA256: rende lento provare password a caso
+var chiaveCripto = null;                 // CryptoKey AES-GCM, ricordata su questo dispositivo
+function b64DaByte(buf) {
+  var b = buf instanceof Uint8Array ? buf : new Uint8Array(buf), s = "", PEZZO = 0x8000;
+  for (var i = 0; i < b.length; i += PEZZO) s += String.fromCharCode.apply(null, b.subarray(i, i + PEZZO));
+  return btoa(s);
+}
+function byteDaB64(s) {
+  var bin = atob(s.replace(/\s/g, "")), a = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return a;
+}
+function derivaChiave(password, sale, giri) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]).then(function (k) {
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt: sale, iterations: giri, hash: "SHA-256" }, k,
+      { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+  });
+}
+function cifraByte(dati, chiave) {
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, chiave || chiaveCripto, dati).then(function (c) {
+    var out = new Uint8Array(12 + c.byteLength); out.set(iv); out.set(new Uint8Array(c), 12); return out;
+  });
+}
+function decifraByte(dati, chiave) {
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: dati.subarray(0, 12) }, chiave || chiaveCripto, dati.subarray(12))
+    .then(function (b) { return new Uint8Array(b); });
+}
+function cifraTesto(t, chiave) { return cifraByte(new TextEncoder().encode(t), chiave).then(b64DaByte); }
+function decifraTesto(s, chiave) { return decifraByte(byteDaB64(s), chiave).then(function (b) { return new TextDecoder().decode(b); }); }
+function caricaChiaveSalvata() {
+  var s = leggi("cucina_chiave", "");
+  if (!s) return Promise.resolve(null);
+  return crypto.subtle.importKey("raw", byteDaB64(s), { name: "AES-GCM" }, true, ["encrypt", "decrypt"])
+    .then(function (k) { chiaveCripto = k; return k; }, function () { return null; });
+}
+function ricordaChiave(k) {
+  return crypto.subtle.exportKey("raw", k).then(function (raw) { salva("cucina_chiave", b64DaByte(raw)); chiaveCripto = k; });
+}
+function errCifra() { var e = new Error("chiave"); e.chiave = true; return e; }
+
+// ================= dati condivisi (cifrati) =================
 function leggiRemoto() {
   return gh("GET", "/contents/" + FILE + "?ref=" + RAMO, null, remoto.etag ? { "If-None-Match": remoto.etag } : null).then(function (r) {
     if (r.status === 304) return;
     if (r.status === 404) { remoto = { etag: "", sha: null, reg: {} }; return; }
     if (!r.ok) throw errore(r);
-    remoto.etag = r.headers.get("ETag") || "";
+    var etag = r.headers.get("ETag") || "";
     return r.json().then(function (j) {
-      remoto.sha = j.sha;
-      try { remoto.reg = JSON.parse(da64(j.content)).registro || {}; } catch (e) { remoto.reg = {}; }
+      var f = JSON.parse(da64(j.content));
+      if (!f.dati) { remoto.sha = j.sha; remoto.reg = {}; remoto.etag = etag; return; }
+      return decifraTesto(f.dati).then(function (t) {
+        remoto.sha = j.sha; remoto.reg = JSON.parse(t).registro || {}; remoto.etag = etag;
+      }, function () { throw errCifra(); });
     });
   });
 }
 function scriviRemoto(dati) {
-  var testo = JSON.stringify({ app: "cucina", versione: 1, aggiornato: new Date().toISOString(), registro: dati }, null, 1);
-  if (remoto.sha) {
-    return gh("PUT", "/contents/" + FILE, { message: "Aggiorna dati", content: b64(testo), sha: remoto.sha, branch: RAMO }).then(function (r) {
-      if (!r.ok) throw errore(r);
-      return r.json().then(function (j) { remoto.sha = j.content.sha; remoto.etag = ""; remoto.reg = dati; });
-    });
-  }
-  // il ramo "dati" non esiste ancora: lo creo con un primo commit che contiene solo dati.json
-  return gh("POST", "/git/trees", { tree: [{ path: FILE, mode: "100644", type: "blob", content: testo }] }).then(function (r) {
-    if (!r.ok) throw errore(r); return r.json();
-  }).then(function (t) {
-    return gh("POST", "/git/commits", { message: "Dati della dashboard", tree: t.sha, parents: [] });
+  var testo = JSON.stringify({ app: "homedashboard", versione: 2, aggiornato: new Date().toISOString(), registro: dati });
+  return cifraTesto(testo).then(function (c) {
+    var corpo = { message: "Aggiorna dati", content: b64(JSON.stringify({ v: 2, dati: c })), branch: RAMO };
+    if (remoto.sha) corpo.sha = remoto.sha;
+    return gh("PUT", "/contents/" + FILE, corpo);
   }).then(function (r) {
-    if (!r.ok) throw errore(r); return r.json();
-  }).then(function (c) {
-    return gh("POST", "/git/refs", { ref: "refs/heads/" + RAMO, sha: c.sha });
-  }).then(function (r) {
-    if (r.status === 422) { var e = new Error("conflitto"); e.status = 409; throw e; }   // creato nel frattempo da un altro dispositivo
     if (!r.ok) throw errore(r);
-    remoto.etag = ""; remoto.reg = dati;
-    return leggiRemoto();
+    return r.json().then(function (j) { remoto.sha = j.content.sha; remoto.etag = ""; remoto.reg = dati; });
   });
 }
 var ultimaSync = 0, erroreSync = "";
 function sincronizza(tentativo) {
-  if (!token) return Promise.resolve();
+  if (!token || !chiaveCripto) return Promise.resolve();
   if (syncInCorso) { syncAncora = true; return Promise.resolve(); }
   syncInCorso = true; tentativo = tentativo || 0;
   registra();
@@ -273,8 +310,9 @@ function sincronizza(tentativo) {
     ultimaSync = Date.now(); erroreSync = "";
   }).catch(function (e) {
     if ((e.status === 409 || e.status === 422) && tentativo < 3) { syncInCorso = false; remoto.etag = ""; return sincronizza(tentativo + 1); }
-    erroreSync = e.status === 401 ? "Il codice non è valido o è scaduto: ricollega il dispositivo."
-      : e.status === 403 || e.status === 404 ? "Il codice non ha il permesso \"Contents: Read and write\" su HomeDashboard."
+    erroreSync = e.chiave ? "La password è stata cambiata: esci da questo dispositivo e rientra con quella nuova."
+      : e.status === 401 ? "Il codice GitHub non è più valido (forse è scaduto): serve crearne uno nuovo."
+      : e.status === 403 ? "Il codice GitHub non ha il permesso \"Contents: Read and write\" su HomeDashboard."
       : navigator.onLine === false ? "Nessuna connessione, riprovo tra poco." : "Non riesco a sincronizzare (" + (e.message || "errore") + "), riprovo tra poco.";
   }).then(function () {
     syncInCorso = false; mostraStato();
@@ -282,31 +320,182 @@ function sincronizza(tentativo) {
   });
 }
 function mostraStato() { if (window.mostraStatoSync) mostraStatoSync(); }
-function collega(t) {
-  t = (t || "").trim(); if (!t) return;
-  token = t; salva("cucina_token", token); remoto = { etag: "", sha: null, reg: {} }; erroreSync = "";
-  mostraStato(); sincronizza();
+function esci() {   // dimentica password e codice su questo dispositivo
+  try { localStorage.removeItem("cucina_chiave"); localStorage.removeItem("cucina_token"); } catch (e) {}
+  location.reload();
 }
-function scollega() { token = ""; salva("cucina_token", ""); erroreSync = ""; ultimaSync = 0; mostraStato(); }
 function cartella() { return location.origin + location.pathname.replace(/[^/]*$/, ""); }
-function linkTelefono() { return cartella() + "telefono.html#collega=" + encodeURIComponent(token); }
-(function () {   // link "Collega un altro telefono": il codice arriva nell'indirizzo dopo #collega=
-  var m = location.hash.match(/^#collega=(.+)$/);
-  if (m) { salva("cucina_token", decodeURIComponent(m[1])); token = leggi("cucina_token", ""); history.replaceState(null, "", location.pathname + location.search); }
-})();
+if (/^#collega=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);   // vecchi link: non servono più
 
 function avviaSync() {   // da chiamare dopo aver disegnato la pagina
   salva("cucina_spesa", spesa);
   avviaRegistro();
   pulisciEccezioni(); salvaCfg();
-  mostraStato(); sincronizza();
+  mostraStato();
   setInterval(function () { if (document.visibilityState === "visible") sincronizza(); }, 10 * 1000);   // ogni 10 secondi
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") sincronizza(); });
   setInterval(function () { if (daApplicare && puoApplicare()) applica(); }, 1000);
+  caricaChiaveSalvata().then(function (k) {
+    if (k && token) { sbloccato(); return; }
+    mostraLucchetto();
+  });
+}
+function sbloccato() {
+  var l = document.getElementById("lucchetto"); if (l) l.remove();
+  remoto = { etag: "", sha: null, reg: {} };
+  mostraStato(); sincronizza();
+  if (window.dopoSblocco) dopoSblocco();
 }
 
-// ================= foto condivise (cartella foto/ nel ramo "dati") =================
-// Il telefono le carica, il tablet le scarica e le mostra a rotazione.
+// ================= lucchetto: password di casa =================
+// chiave.json (nel ramo "cassaforte", leggibile da tutti) contiene il sale e il codice GitHub cifrato:
+// chi conosce la password ricava la chiave, decifra il codice e da lì legge e scrive tutto il resto.
+function leggiCassaforte() {   // senza codice: basta che il repository sia pubblico
+  return fetch(API + "/contents/" + CHIAVE + "?ref=" + RAMO, { cache: "no-store", headers: { Accept: "application/vnd.github+json" } }).then(function (r) {
+    if (r.status === 404) return null;
+    if (!r.ok) throw errore(r);
+    return r.json().then(function (j) { return JSON.parse(da64(j.content)); });
+  }).catch(function (e) {   // limite di richieste senza codice: provo la copia di raw.githubusercontent.com
+    if (e && e.status === undefined) throw e;
+    return fetch("https://raw.githubusercontent.com/" + REPO + "/" + RAMO + "/" + CHIAVE + "?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (r.status === 404) return null;
+      if (!r.ok) throw errore(r);
+      return r.json();
+    });
+  });
+}
+function entra(password, cassa) {
+  return derivaChiave(password, byteDaB64(cassa.sale), cassa.giri).then(function (k) {
+    return decifraTesto(cassa.token, k).then(function (t) {
+      token = t; salva("cucina_token", t);
+      return ricordaChiave(k);
+    }, function () { throw new Error("Password sbagliata."); });
+  });
+}
+// Prima volta: crea la cassaforte, porta dentro (cifrati) i dati e le foto del vecchio ramo "dati" e poi lo elimina.
+function creaCassaforte(password, avanza) {
+  var sale = crypto.getRandomValues(new Uint8Array(16)), chiave;
+  avanza("Preparo la chiave…");
+  return gh("GET", "").then(function (r) {   // il codice funziona?
+    if (r.status === 401) throw new Error("Il codice GitHub non è valido.");
+    if (!r.ok) throw new Error("Il codice GitHub non vede il repository HomeDashboard.");
+    return derivaChiave(password, sale, GIRI);
+  }).then(function (k) {
+    chiave = k; chiaveCripto = k;
+    avanza("Recupero i dati già condivisi…");
+    return gh("GET", "/contents/" + FILE + "?ref=" + RAMO_VECCHIO).then(function (r) {
+      if (!r.ok) return {};
+      return r.json().then(function (j) { try { return JSON.parse(da64(j.content)).registro || {}; } catch (e) { return {}; } });
+    });
+  }).then(function (vecchio) {
+    registra(); reg = unisci(reg, vecchio); salva("cucina_registro", reg); applica();   // mostra subito i dati recuperati
+    return Promise.all([
+      cifraTesto(token, chiave),
+      cifraTesto(JSON.stringify({ app: "homedashboard", versione: 2, aggiornato: new Date().toISOString(), registro: reg }), chiave)
+    ]);
+  }).then(function (c) {
+    avanza("Creo lo spazio cifrato…");
+    var cassa = { v: 1, sale: b64DaByte(sale), giri: GIRI, token: c[0] };
+    return gh("POST", "/git/trees", { tree: [
+      { path: CHIAVE, mode: "100644", type: "blob", content: JSON.stringify(cassa, null, 1) },
+      { path: FILE, mode: "100644", type: "blob", content: JSON.stringify({ v: 2, dati: c[1] }) }
+    ] }).then(function (r) { if (!r.ok) throw errore(r); return r.json(); })
+      .then(function (t) { return gh("POST", "/git/commits", { message: "Dati cifrati della dashboard", tree: t.sha, parents: [] }); })
+      .then(function (r) { if (!r.ok) throw errore(r); return r.json(); })
+      .then(function (cm) { return gh("POST", "/git/refs", { ref: "refs/heads/" + RAMO, sha: cm.sha }); })
+      .then(function (r) {
+        if (r.status === 422) throw new Error("Nel frattempo un altro dispositivo ha già creato la password: ricarica la pagina e inseriscila.");
+        if (!r.ok) throw errore(r);
+      });
+  }).then(function () {
+    return gh("GET", "/contents/foto?ref=" + RAMO_VECCHIO).then(function (r) { return r.ok ? r.json() : []; });
+  }).then(function (foto) {
+    foto = foto.filter(function (x) { return x.type === "file" && /\.jpe?g$/i.test(x.name); });
+    return foto.reduce(function (p, x, i) {
+      return p.then(function () {
+        avanza("Cifro le foto: " + (i + 1) + " di " + foto.length + "…");
+        return gh("GET", "/git/blobs/" + x.sha).then(function (r) { if (!r.ok) throw errore(r); return r.json(); })
+          .then(function (j) { return cifraByte(byteDaB64(j.content)); })
+          .then(function (b) { return gh("PUT", "/contents/foto/" + x.name.replace(/\.jpe?g$/i, ".bin"), { message: "Foto cifrata", content: b64DaByte(b), branch: RAMO }); });
+      });
+    }, Promise.resolve());
+  }).then(function () {
+    avanza("Elimino i vecchi dati non cifrati…");
+    return gh("DELETE", "/git/refs/heads/" + RAMO_VECCHIO);   // se non c'era, pazienza
+  }).then(function () { return ricordaChiave(chiave); });
+}
+function mostraLucchetto() {
+  if (document.getElementById("lucchetto")) return;
+  var st = document.createElement("style");
+  st.textContent = "#lucchetto{position:fixed;inset:0;z-index:100;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}" +
+    "#lucchetto .box{width:min(460px,100%);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 24px;font-size:16px;line-height:1.45}" +
+    "#lucchetto h1{margin:0 0 8px;font-size:24px;font-weight:500}#lucchetto p{margin:0 0 14px;color:var(--muted);font-size:14.5px}" +
+    "#lucchetto ol{margin:0 0 14px;padding-left:20px;color:var(--muted);font-size:14px}#lucchetto ol b{color:var(--ink);font-weight:500}#lucchetto a{color:var(--accent)}" +
+    "#lucchetto input{width:100%;box-sizing:border-box;padding:13px 14px;margin:0 0 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:17px;outline:none;-webkit-user-select:text;user-select:text}" +
+    "#lucchetto button{width:100%;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:17px;font-weight:500;padding:13px;margin-top:4px;cursor:pointer}" +
+    "#lucchetto button:disabled{opacity:.6}#lucchetto .msg{min-height:20px;margin-top:10px;font-size:14px;color:var(--accent)}#lucchetto .msg.ok{color:var(--muted)}";
+  var l = document.createElement("div"); l.id = "lucchetto";
+  l.innerHTML = '<div class="box"><h1>HomeDashboard</h1><p>Controllo…</p></div>';
+  document.head.appendChild(st); document.body.appendChild(l);
+  var box = l.firstChild;
+  function campo(tipo, ph, auto) { var i = document.createElement("input"); i.type = tipo; i.placeholder = ph; i.autocomplete = auto; return i; }
+  function riprova(msg) {
+    box.innerHTML = "<h1>HomeDashboard</h1><p></p><button>Riprova</button>";
+    box.querySelector("p").textContent = msg;
+    box.querySelector("button").onclick = function () { l.remove(); st.remove(); mostraLucchetto(); };
+  }
+  leggiCassaforte().then(function (cassa) {
+    box.innerHTML = "";
+    var f = document.createElement("form"), msg = document.createElement("div"); msg.className = "msg";
+    var bottone = document.createElement("button");
+    if (cassa) {   // ---- entra con la password
+      f.innerHTML = "<h1>HomeDashboard</h1><p>Inserisci la password di casa.</p>";
+      var pw = campo("password", "Password", "current-password"); f.appendChild(pw);
+      bottone.textContent = "Entra"; f.appendChild(bottone); f.appendChild(msg);
+      f.onsubmit = function (e) {
+        e.preventDefault(); if (!pw.value) return;
+        bottone.disabled = true; msg.className = "msg ok"; msg.textContent = "Sblocco…";
+        entra(pw.value, cassa).then(sbloccato, function (err) {
+          bottone.disabled = false; msg.className = "msg"; msg.textContent = err.message || "Non riesco a entrare.";
+          pw.select();
+        });
+      };
+      box.appendChild(f); setTimeout(function () { pw.focus(); }, 50);
+      return;
+    }
+    // ---- prima volta: scegli la password (e, se serve, il codice GitHub)
+    f.innerHTML = "<h1>Proteggi la dashboard</h1><p>Scegli la password di casa: turni, promemoria, foto e dispositivi verranno cifrati con questa. " +
+      "Usa una frase di almeno 4 parole (es. pentola-luna-bici-verde). Se la dimenticate i dati non si possono recuperare.</p>";
+    var cod = null;
+    if (!token) {
+      f.insertAdjacentHTML("beforeend", '<ol><li>Apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">questa pagina di GitHub</a></li>' +
+        "<li>Repository access: <b>Only select repositories → HomeDashboard</b></li><li>Permissions: <b>Contents → Read and write</b></li>" +
+        "<li>Scadenza la più lunga possibile, poi <b>Generate token</b> e incolla qui il codice</li></ol>");
+      cod = campo("text", "github_pat_…", "off"); f.appendChild(cod);
+    }
+    var p1 = campo("password", "Nuova password", "new-password"), p2 = campo("password", "Ripeti la password", "new-password");
+    f.appendChild(p1); f.appendChild(p2);
+    bottone.textContent = "Crea la password e cifra i dati"; f.appendChild(bottone); f.appendChild(msg);
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      if (cod && !cod.value.trim()) { msg.textContent = "Incolla il codice GitHub."; return; }
+      if (p1.value.length < 12) { msg.textContent = "Troppo corta: usa almeno 12 caratteri, meglio una frase di 4 parole."; return; }
+      if (p1.value !== p2.value) { msg.textContent = "Le due password non sono uguali."; return; }
+      if (cod) token = cod.value.trim();
+      bottone.disabled = true; msg.className = "msg ok";
+      creaCassaforte(p1.value, function (t) { msg.textContent = t; }).then(function () {
+        salva("cucina_token", token); sbloccato();
+      }, function (err) {
+        chiaveCripto = null; bottone.disabled = false; msg.className = "msg";
+        msg.textContent = (err && err.message && !/^HTTP/.test(err.message) ? err.message : "Qualcosa non è andato (" + (err && err.message) + "). Riprova.");
+      });
+    };
+    box.appendChild(f);
+  }, function () { riprova("Non riesco a collegarmi a GitHub. Controlla la connessione e riprova."); });
+}
+
+// ================= foto condivise (cartella foto/ del ramo "cassaforte", cifrate) =================
+// Il telefono le carica, il tablet le scarica e le mostra nel carosello.
 function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
   return new Promise(function (ok) {
     var img = new Image(), url = URL.createObjectURL(file);
@@ -320,41 +509,29 @@ function rimpicciolisci(file) {   // max 1600px, jpeg: occupa poco spazio
     img.src = url;
   });
 }
-function blobA64(blob) {
-  return new Promise(function (ok, ko) {
-    var r = new FileReader();
-    r.onload = function () { ok(String(r.result).split(",")[1]); }; r.onerror = function () { ko(r.error); };
-    r.readAsDataURL(blob);
-  });
-}
-function b64ABlob(b64, tipo) {
-  var bin = atob(b64.replace(/\s/g, "")), a = new Uint8Array(bin.length);
-  for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
-  return new Blob([a], { type: tipo || "image/jpeg" });
-}
-function listaFotoRemote() {   // [{name, sha, path, download_url}]
-  if (!token) return Promise.resolve([]);
+function listaFotoRemote() {   // [{name, sha}]
+  if (!token || !chiaveCripto) return Promise.resolve([]);
   return gh("GET", "/contents/foto?ref=" + RAMO).then(function (r) {
     if (r.status === 404) return [];
     if (!r.ok) throw errore(r);
-    return r.json().then(function (l) { return l.filter(function (x) { return x.type === "file" && /\.jpe?g$/i.test(x.name); }); });
+    return r.json().then(function (l) { return l.filter(function (x) { return x.type === "file" && /\.bin$/i.test(x.name); }); });
   });
 }
 function caricaFotoRemota(blob) {   // resolve con {name, sha}
-  var nome = nuovoId() + ".jpg";
-  var ramo = remoto.sha ? Promise.resolve() : sincronizza();   // al primo uso crea il ramo "dati"
-  return ramo.then(function () { return blobA64(blob); }).then(function (b) {
-    return gh("PUT", "/contents/foto/" + nome, { message: "Aggiungi foto", content: b, branch: RAMO });
+  var nome = nuovoId() + ".bin";
+  return blob.arrayBuffer().then(function (b) { return cifraByte(b); }).then(function (c) {
+    return gh("PUT", "/contents/foto/" + nome, { message: "Aggiungi foto", content: b64DaByte(c), branch: RAMO });
   }).then(function (r) {
     if (!r.ok) throw errore(r);
     return r.json().then(function (j) { return { name: nome, sha: j.content.sha }; });
   });
 }
-function scaricaFotoRemota(f) {
+function scaricaFotoRemota(f) {   // resolve con il Blob JPEG già decifrato
   return gh("GET", "/git/blobs/" + f.sha).then(function (r) {
     if (!r.ok) throw errore(r);
-    return r.json().then(function (j) { return b64ABlob(j.content); });
-  });
+    return r.json();
+  }).then(function (j) { return decifraByte(byteDaB64(j.content)); })
+    .then(function (b) { return new Blob([b], { type: "image/jpeg" }); });
 }
 function eliminaFotoRemota(f) {
   return gh("DELETE", "/contents/foto/" + f.name, { message: "Togli foto", sha: f.sha, branch: RAMO }).then(function (r) {

@@ -2,22 +2,24 @@
 """HomeDashboard — lettore dei dispositivi connessi alla Vodafone Station.
 
 Gira in casa (sul tablet con Termux, o su un PC/Raspberry sempre acceso): ogni pochi minuti
-entra nel router, legge la lista dei dispositivi e la pubblica in dispositivi.json nel ramo
-"dati" del repository GitHub, da dove la dashboard la mostra nella seconda schermata.
+entra nel router, legge la lista dei dispositivi e la pubblica, cifrata con la password di casa,
+in dispositivi.json nel ramo "cassaforte" del repository GitHub. La dashboard la mostra nella
+seconda schermata. Con la password ricava anche il codice GitHub (salvato cifrato in chiave.json).
 
 Uso:
-  python dispositivi.py --configura   chiede router, utente, password e codice GitHub (una volta)
+  python dispositivi.py --configura   chiede router, utente e password del router e la password di casa
   python dispositivi.py --prova       legge il router una volta e stampa la lista, senza pubblicare
   python dispositivi.py               continua a leggere e pubblicare (lasciarlo acceso)
 
 Per il router usa la libreria aiovodafone (la stessa dell'integrazione Home Assistant).
-Non pubblica gli indirizzi MAC: il repository è pubblico.
+Non pubblica gli indirizzi MAC.
 """
 
 import argparse
 import asyncio
 import base64
 import getpass
+import hashlib
 import json
 import os
 import sys
@@ -28,7 +30,8 @@ from datetime import datetime, timezone
 
 CONFIG = os.path.expanduser("~/.homedashboard.json")
 FILE = "dispositivi.json"
-RAMO = "dati"
+RAMO = "cassaforte"
+CHIAVE = "chiave.json"
 BATTITO = 30 * 60   # anche se non cambia niente, pubblica almeno ogni 30 minuti (così si vede che è vivo)
 
 
@@ -68,13 +71,13 @@ def configura():
         "router": chiedi("Indirizzo del router", vecchia.get("router", "192.168.1.1")),
         "utente": chiedi("Utente del router (di solito 'vodafone' o 'admin')", vecchia.get("utente", "vodafone")),
         "password": chiedi("Password del router (quella dell'etichetta o quella che hai impostato)", segreto=True) or vecchia.get("password", ""),
-        "token": chiedi("Codice GitHub (dal tablet: ⚙ → Collega un altro telefono → Codice)", segreto=True) or vecchia.get("token", ""),
+        "segreto": chiedi("Password di casa (quella che usate per entrare nella dashboard)", segreto=True) or vecchia.get("segreto", ""),
         "repo": chiedi("Repository", vecchia.get("repo", "marcocuccovillo-cpu/HomeDashboard")),
         "ogni": int(chiedi("Ogni quanti secondi leggere il router", str(vecchia.get("ogni", 300)))),
     }
     with open(CONFIG, "w", encoding="utf-8") as f:
         json.dump(c, f, indent=1)
-    os.chmod(CONFIG, 0o600)   # password e codice: leggibili solo da questo utente
+    os.chmod(CONFIG, 0o600)   # password: leggibili solo da questo utente
     print(f"\nSalvata in {CONFIG}\n")
 
 
@@ -134,13 +137,70 @@ async def leggi_router(c):
     return str(modello), lista
 
 
+# ---------------------------------------------------------------- cifratura
+# Stesso formato della dashboard: base64( IV 12 byte + testo cifrato AES-GCM + tag 16 byte ),
+# chiave AES-256 ricavata dalla password con PBKDF2-SHA256.
+def _aes():
+    try:   # pycryptodome (arriva con aiovodafone, anche su Termux)
+        from Crypto.Cipher import AES
+
+        def cifra(k, iv, dati):
+            ct, tag = AES.new(k, AES.MODE_GCM, nonce=iv).encrypt_and_digest(dati)
+            return ct + tag
+
+        def decifra(k, iv, dati):
+            return AES.new(k, AES.MODE_GCM, nonce=iv).decrypt_and_verify(dati[:-16], dati[-16:])
+    except ImportError:   # in alternativa la libreria "cryptography"
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+        def cifra(k, iv, dati):
+            return AESGCM(k).encrypt(iv, dati, None)
+
+        def decifra(k, iv, dati):
+            return AESGCM(k).decrypt(iv, dati, None)
+    return cifra, decifra
+
+
+def cifra_testo(chiave, testo):
+    cifra, _ = _aes()
+    iv = os.urandom(12)
+    return base64.b64encode(iv + cifra(chiave, iv, testo.encode())).decode()
+
+
+def decifra_testo(chiave, b64):
+    _, decifra = _aes()
+    dati = base64.b64decode(b64)
+    return decifra(chiave, dati[:12], dati[12:]).decode()
+
+
+def apri_cassaforte(c):
+    """Legge chiave.json (pubblico), ricava la chiave dalla password e decifra il codice GitHub."""
+    url = f"https://api.github.com/repos/{c['repo']}/contents/{CHIAVE}?ref={RAMO}"
+    try:
+        req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "homedashboard-dispositivi"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            cassa = json.loads(base64.b64decode(json.loads(r.read())["content"]))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise RuntimeError("La dashboard non ha ancora una password: creala prima sul tablet.")
+        raise RuntimeError(f"Non riesco a leggere la cassaforte (GitHub {e.code}).")
+    if not c.get("segreto"):
+        raise RuntimeError("Manca la password di casa: rifai  --configura")
+    chiave = hashlib.pbkdf2_hmac("sha256", c["segreto"].encode(), base64.b64decode(cassa["sale"]), int(cassa["giri"]), 32)
+    try:
+        token = decifra_testo(chiave, cassa["token"])
+    except Exception:
+        raise RuntimeError("La password di casa non è giusta: rifai  --configura")
+    return chiave, token
+
+
 # ---------------------------------------------------------------- GitHub
 def github(c, metodo, percorso, corpo=None):
     req = urllib.request.Request(
         f"https://api.github.com/repos/{c['repo']}{percorso}",
         method=metodo,
         data=json.dumps(corpo).encode() if corpo is not None else None,
-        headers={"Authorization": f"Bearer {c['token']}", "Accept": "application/vnd.github+json",
+        headers={"Authorization": f"Bearer {c['_token']}", "Accept": "application/vnd.github+json",
                  "Content-Type": "application/json", "User-Agent": "homedashboard-dispositivi"},
     )
     try:
@@ -153,14 +213,15 @@ def github(c, metodo, percorso, corpo=None):
 def pubblica(c, contenuto):
     stato, attuale = github(c, "GET", f"/contents/{FILE}?ref={RAMO}")
     if stato == 401:
-        raise RuntimeError("Il codice GitHub non è valido o è scaduto: rifai  --configura")
+        raise RuntimeError("Il codice GitHub salvato nella dashboard non è più valido (forse è scaduto).")
+    cifrato = cifra_testo(c["_chiave"], json.dumps(contenuto, ensure_ascii=False))
     corpo = {"message": "Aggiorna dispositivi", "branch": RAMO,
-             "content": base64.b64encode(json.dumps(contenuto, ensure_ascii=False, indent=1).encode()).decode()}
+             "content": base64.b64encode(json.dumps({"v": 2, "dati": cifrato}).encode()).decode()}
     if stato == 200:
         corpo["sha"] = attuale["sha"]
     stato, _ = github(c, "PUT", f"/contents/{FILE}", corpo)
     if stato == 404:
-        raise RuntimeError("Il ramo 'dati' non esiste ancora: collega prima il tablet in ⚙ → Condivisione.")
+        raise RuntimeError("Il ramo 'cassaforte' non esiste: crea prima la password sul tablet.")
     if stato not in (200, 201):
         raise RuntimeError(f"GitHub ha risposto {stato} alla pubblicazione.")
 
@@ -189,10 +250,36 @@ def main():
         return
     c = leggi_config()
     if a.prova:
-        modello, lista = asyncio.run(leggi_router(c))
-        stampa(modello, lista)
+        try:
+            prova(c)
+        except RuntimeError as e:
+            sys.exit(f"\n{e}\n")
         return
+    corri(c)
 
+
+def prova(c):
+    """Legge il router una volta, stampa la lista e controlla la password di casa."""
+    modello, lista = asyncio.run(leggi_router(c))
+    stampa(modello, lista)
+    apri_cassaforte(c)   # se la password di casa è sbagliata qui si ferma con il messaggio
+    print("Password di casa giusta: la lista arriverà alla dashboard.\n")
+
+
+def corri(c):
+    """Continua a leggere il router e a pubblicare la lista cifrata."""
+    while True:   # all'accensione la rete può non esserci ancora
+        try:
+            c["_chiave"], c["_token"] = apri_cassaforte(c)
+            break
+        except RuntimeError as e:
+            print(f"{ora()}  {e}")
+            if "password" in str(e) or "non ha ancora" in str(e):
+                sys.exit(1)
+            time.sleep(60)
+        except OSError as e:
+            print(f"{ora()}  rete non pronta ({e}), riprovo tra un minuto")
+            time.sleep(60)
     print(f"{ora()}  lettore avviato: leggo il router ogni {c.get('ogni', 300)} secondi")
     ultima_lista, ultima_pubblicazione, attesa_errore = None, 0, 60
     while True:

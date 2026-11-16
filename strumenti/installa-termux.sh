@@ -32,7 +32,7 @@ if python "$CARTELLA/dispositivi.py" --prova; then
   echo "   Funziona."
 else
   echo
-  echo "   Non sono riuscito a leggere il router: controlla utente e password e rilancia"
+  echo "   Qualcosa non va (vedi il messaggio sopra): controlla utente e password e rilancia"
   echo "     python $CARTELLA/dispositivi.py --configura"
   echo "     python $CARTELLA/dispositivi.py --prova"
   exit 1
@@ -53,5 +53,6 @@ nohup sh "$HOME/.termux/boot/homedashboard" >/dev/null 2>&1 &
 
 echo
 echo "Fatto. Entro qualche minuto i dispositivi compaiono nella seconda schermata della dashboard."
+echo "(Se cambiate la password di casa: python $CARTELLA/dispositivi.py --configura)"
 echo "Registro: $CARTELLA/registro.txt"
 echo

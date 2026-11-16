@@ -2,8 +2,9 @@
 
 La dashboard è una pagina web e il browser non le permette di parlare con il router.
 Per questo c'è un piccolo programma, `dispositivi.py`, che gira **sul tablet** dentro Termux:
-ogni 5 minuti entra nella Vodafone Station, legge la lista dei dispositivi e la pubblica in
-`dispositivi.json` nel ramo `dati` del repository. La dashboard la mostra nella seconda schermata.
+ogni 5 minuti entra nella Vodafone Station, legge la lista dei dispositivi e la pubblica, cifrata
+con la password di casa, in `dispositivi.json` nel ramo `cassaforte` del repository.
+La dashboard la mostra nella seconda schermata.
 
 Per leggere il router usa [aiovodafone](https://github.com/chemelli74/aiovodafone), la stessa
 libreria dell'integrazione "Vodafone Station" di Home Assistant.
@@ -11,8 +12,7 @@ libreria dell'integrazione "Vodafone Station" di Home Assistant.
 ## Cosa serve
 
 - La **password del router** (di solito sull'etichetta sotto la Vodafone Station, se non l'avete cambiata).
-- Il **codice GitHub** della dashboard: sul tablet ⚙ → Condivisione → "Collega un altro telefono" → Copia accanto a *Codice*.
-  Il tablet deve essere già collegato (così esiste il ramo `dati`).
+- La **password di casa** della dashboard (deve essere già stata creata sul tablet).
 
 ## Installazione (una volta sola, sul tablet)
 
@@ -26,7 +26,7 @@ libreria dell'integrazione "Vodafone Station" di Home Assistant.
    ```
 
 4. Rispondi alle domande: indirizzo del router (Invio per `192.168.1.1`), utente (`vodafone`; se non va, `admin`),
-   password del router, codice GitHub.
+   password del router, password di casa.
 5. Nelle impostazioni di Android togli Termux dall'**ottimizzazione della batteria**, così non viene chiuso.
 
 Alla fine il programma legge il router una volta e mostra la lista: se la vedi, funziona.
@@ -40,6 +40,18 @@ Si riavvia da solo quando il tablet si accende.
 
 ## Privacy
 
-Il repository è pubblico: nomi e indirizzi IP dei dispositivi saranno visibili a chi conosce l'indirizzo.
-Gli indirizzi MAC **non** vengono pubblicati. Password del router e codice GitHub restano solo sul tablet,
-in `~/.homedashboard.json`, leggibile solo da Termux.
+La lista viene cifrata con la password di casa prima di essere pubblicata: sul repository (che è pubblico)
+c'è solo testo illeggibile. Gli indirizzi MAC non vengono pubblicati comunque. Password del router e
+password di casa restano solo sul tablet, in `~/.homedashboard.json`, leggibile solo da Termux.
+
+## Se avevi già installato la versione precedente
+
+Scarica il programma aggiornato e rifai la configurazione (ora chiede la password di casa invece del codice GitHub):
+
+```
+curl -fsSL https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/dispositivi.py -o ~/homedashboard/dispositivi.py
+python ~/homedashboard/dispositivi.py --configura
+python ~/homedashboard/dispositivi.py --prova
+```
+
+Poi riavvia il tablet (o chiudi e riapri Termux) per far ripartire il lettore.

@@ -456,35 +456,12 @@
     </div>
     <div class="nota-txt">I turni si ripetono ogni due settimane (A e B si alternano). Per cambiarli tocca direttamente le caselle della griglia.</div>
 
-    <h3>Condivisione tra tablet e telefoni</h3>
-    <div class="nota-txt">Turni, nomi, promemoria e foto vengono salvati nel vostro repository GitHub (nel ramo "dati"), così sono uguali su tutti i dispositivi collegati. Ogni dispositivo va collegato una volta sola.</div>
+    <h3>Password e condivisione</h3>
+    <div class="nota-txt">Turni, nomi, promemoria, foto e dispositivi sono cifrati con la password di casa e condivisi tra tablet e telefoni tramite GitHub. Per aggiungere un dispositivo basta aprire la dashboard e scrivere la password.</div>
     <div class="riga"><span class="stato" id="sync-stato"></span></div>
-    <div id="sync-scollegato">
-      <ol class="passi piccoli">
-        <li>Apri <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">questa pagina di GitHub</a> (va bene anche dal telefono)</li>
-        <li>Nome: <b>HomeDashboard</b> · Scadenza: <b>la più lunga possibile</b></li>
-        <li>Repository access: <b>Only select repositories → HomeDashboard</b></li>
-        <li>Permissions: <b>Contents → Read and write</b>, poi <b>Generate token</b></li>
-        <li>Copia il codice (inizia con <b>github_pat_</b>) e incollalo qui sotto</li>
-      </ol>
-      <div class="riga">
-        <input type="text" id="sync-token" placeholder="github_pat_…" autocomplete="off" style="flex:1">
-        <button class="btn-piccolo" id="sync-incolla">Incolla</button>
-        <button class="btn-pieno" id="sync-collega">Collega</button>
-      </div>
-    </div>
-    <div id="sync-collegato">
-      <div class="riga">
-        <button class="btn-pieno" id="sync-condividi">Collega un altro telefono</button>
-        <button class="btn-piccolo" id="sync-ora">Sincronizza ora</button>
-        <button class="btn-piccolo btn-rosso" id="sync-scollega">Scollega questo dispositivo</button>
-      </div>
-      <div id="sync-link-box" hidden>
-        <div class="nota-txt">Manda questo link all'altro telefono: si apre la versione per smartphone già collegata, senza fare altro.<br>
-          Per averla tra le app: <b>Android</b> menu ⋮ → "Aggiungi a schermata Home"; <b>iPhone</b> Condividi → "Aggiungi alla schermata Home", poi nell'app ⚙ → incolla il codice qui sotto (su iPhone l'app installata non vede il link).</div>
-        <div class="riga"><label style="width:7em">Link</label><input type="text" id="sync-link" readonly style="flex:1"><button class="btn-piccolo" data-copia="sync-link">Copia</button></div>
-        <div class="riga"><label style="width:7em">Codice</label><input type="text" id="sync-codice" readonly style="flex:1"><button class="btn-piccolo" data-copia="sync-codice">Copia</button></div>
-      </div>
+    <div class="riga">
+      <button class="btn-piccolo" id="sync-ora">Sincronizza ora</button>
+      <button class="btn-piccolo btn-rosso" id="sync-esci">Esci da questo dispositivo</button>
     </div>
 
     <h3>Schermo</h3>
@@ -882,37 +859,17 @@ $("allarme").onclick = function () {
 };
 
 function mostraStatoSync() {
-  var collegato = !!token, s = $("sync-stato"), p = $("sync-punto");
-  $("sync-scollegato").hidden = collegato; $("sync-collegato").hidden = !collegato;
-  if (!collegato) { s.className = "stato"; s.textContent = "Questo dispositivo non è collegato: i dati restano solo qui."; p.className = ""; return; }
+  var s = $("sync-stato"), p = $("sync-punto");
+  if (!chiaveCripto) { s.className = "stato"; s.textContent = "Bloccata: serve la password."; p.className = ""; return; }
   if (erroreSync) { s.className = "stato no"; s.textContent = erroreSync; p.className = "err"; return; }
   p.className = ultimaSync ? "ok" : "";
   s.className = "stato ok";
-  s.textContent = ultimaSync ? "Collegato ✓ · ultimo aggiornamento alle " + due(new Date(ultimaSync).getHours()) + ":" + due(new Date(ultimaSync).getMinutes()) : "Collegato, sincronizzo…";
+  s.textContent = ultimaSync ? "Cifrata e sincronizzata ✓ · ultimo aggiornamento alle " + due(new Date(ultimaSync).getHours()) + ":" + due(new Date(ultimaSync).getMinutes()) : "Sincronizzo…";
 }
-$("sync-collega").onclick = function () { collega($("sync-token").value); $("sync-token").value = ""; };
-$("sync-incolla").onclick = function () {
-  if (navigator.clipboard && navigator.clipboard.readText) navigator.clipboard.readText().then(function (t) { $("sync-token").value = t.trim(); }).catch(function () { $("sync-token").focus(); });
-  else $("sync-token").focus();
+$("sync-ora").onclick = function () { remoto.etag = ""; sincronizza(); sincronizzaFoto(); };
+$("sync-esci").onclick = function () {
+  if (confirm("Uscire da questo dispositivo? Per rientrare servirà la password. I dati restano sugli altri dispositivi.")) esci();
 };
-$("sync-ora").onclick = function () { remoto.etag = ""; sincronizza(); };
-$("sync-scollega").onclick = function () {
-  if (!confirm("Scollegare questo dispositivo? I dati restano su GitHub e sugli altri dispositivi.")) return;
-  $("sync-link-box").hidden = true; scollega();
-};
-$("sync-condividi").onclick = function () {
-  var link = linkTelefono();
-  $("sync-link").value = link; $("sync-codice").value = token; $("sync-link-box").hidden = false;
-  if (navigator.share) navigator.share({ title: "HomeDashboard", text: "Collega la dashboard di casa", url: link }).catch(function () {});
-};
-[].forEach.call(document.querySelectorAll("[data-copia]"), function (b) {
-  b.onclick = function () {
-    var inp = $(b.getAttribute("data-copia")); inp.select();
-    var fatto = function () { b.textContent = "Copiato ✓"; setTimeout(function () { b.textContent = "Copia"; }, 1500); };
-    if (navigator.clipboard) navigator.clipboard.writeText(inp.value).then(fatto, function () { document.execCommand("copy"); fatto(); });
-    else { document.execCommand("copy"); fatto(); }
-  };
-});
 
 // ================= foto (IndexedDB, solo su questo tablet) =================
 function db() {
@@ -940,7 +897,7 @@ $("foto-input").onchange = function () {   // collegato: le foto vanno anche su 
   files.reduce(function (p, f) {
     return p.then(function () { return rimpicciolisci(f); }).then(function (b) {
       if (!b) return;
-      var dove = token ? caricaFotoRemota(b).then(function (x) { return "gh:" + x.name; }) : Promise.resolve(undefined);
+      var dove = token && chiaveCripto ? caricaFotoRemota(b).then(function (x) { return "gh:" + x.name; }) : Promise.resolve(undefined);
       return dove.then(function (chiave) {
         return store("readwrite").then(function (s) { return req(chiave ? s.put(b, chiave) : s.add(b)); });
       }).then(function () { $("foto-conta").textContent = "Salvate " + (++fatti) + " di " + files.length + "…"; });
@@ -948,15 +905,15 @@ $("foto-input").onchange = function () {   // collegato: le foto vanno anche su 
   }, Promise.resolve()).catch(function () { alert("Non sono riuscito a caricare tutte le foto. Riprova."); }).then(caricaChiavi);
 };
 $("foto-svuota").onclick = function () {
-  var msg = token ? "Eliminare tutte le foto, anche da GitHub e dagli altri dispositivi?" : "Eliminare tutte le foto dal tablet?";
+  var msg = token && chiaveCripto ? "Eliminare tutte le foto, anche da GitHub e dagli altri dispositivi?" : "Eliminare tutte le foto dal tablet?";
   if (!confirm(msg)) return;
-  (token ? listaFotoRemote().then(function (l) { return l.reduce(function (p, x) { return p.then(function () { return eliminaFotoRemota(x); }); }, Promise.resolve()); }) : Promise.resolve())
+  (token && chiaveCripto ? listaFotoRemote().then(function (l) { return l.reduce(function (p, x) { return p.then(function () { return eliminaFotoRemota(x); }); }, Promise.resolve()); }) : Promise.resolve())
     .catch(function () {})
     .then(function () { return store("readwrite"); }).then(function (s) { return req(s.clear()); }).then(caricaChiavi);
 };
 var fotoSyncInCorso = false;
 function sincronizzaFoto() {   // scarica le foto nuove caricate dal telefono e toglie quelle eliminate
-  if (!token || fotoSyncInCorso) return;
+  if (!token || !chiaveCripto || fotoSyncInCorso) return;   // bloccata: non tocco le foto salvate qui
   fotoSyncInCorso = true;
   listaFotoRemote().then(function (lista) {
     return store("readonly").then(function (s) { return req(s.getAllKeys()); }).then(function (chiavi) {
@@ -1079,6 +1036,7 @@ function occupato() { return !!(trascinata && trascinata.mossa); }
 tieniAcceso(); avviaCarosello(); aggiornaPunti(); avviaRete();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
+function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }
 sincronizzaFoto(); setInterval(sincronizzaFoto, 60 * 1000);
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
