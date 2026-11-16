@@ -74,6 +74,9 @@ function nuovaMeta() {
 var CU = { cibo: 100, acqua: 100, diario: {}, w: 0, h: 0, pos: {}, cade: [], gioco: 0 };
 (function () { var v = leggi("gatto_ciotole", null); if (v) { CU.cibo = v.cibo; CU.acqua = v.acqua; CU.diario = v.diario || {}; } })();
 function salvaCiotole() { salva("gatto_ciotole", { cibo: Math.round(CU.cibo), acqua: Math.round(CU.acqua), diario: CU.diario }); }
+function cucciaPronta() {   // la cuccia esiste ed è impaginata (anche se la pagina 2 non è in vista)
+  var c = $("cuccia"); return !!(c && c.parentNode.clientWidth > 0);
+}
 function cucciaVisibile() {
   var c = $("cuccia"); if (!c || !c.width) return false;
   var r = c.getBoundingClientRect();
@@ -171,7 +174,7 @@ function iniziaAttivita(ora, u) {
   else { G.stato = "mangia"; G.verso = 1; G.fino = ora + 6000 + Math.random() * 4000; fumetto(a === "cibo" ? "gnam gnam" : "slurp"); }
 }
 function passoGatto() {
-  var u = umore(), ora = Date.now(), vis = cucciaVisibile(); G.f++;
+  var u = umore(), ora = Date.now(), vis = cucciaPronta(), vista = cucciaVisibile(); G.f++;
   if (G.preso) {   // in braccio: lo muove il dito, qui solo l'animazione
     G.dondolo *= .85; mettiGatto(0, 0);
     disegnaGatto($("gatto").getContext("2d"), "preso", G.f);
@@ -181,10 +184,15 @@ function passoGatto() {
   if (G.salto > 0) G.salto--;
   if (vis) { misuraCuccia(); aggiornaCiotole(); }
   if (G.attivita && !vis) { G.attivita = null; if (G.stato !== "dorme") { G.stato = "seduto"; G.fino = ora + 2000; } }
-  if (G.attivita && G.stato === "cammina") { var q = punto(G.attivita); G.tx = q.x; G.ty = q.y; }
+  // nel suo angolo resta attaccato alla cuccia anche quando si cambia pagina
+  if (G.attivita) { var q = punto(G.attivita); G.tx = q.x; G.ty = q.y; if (G.stato !== "cammina") { G.x = q.x; G.y = q.y; } }
   CU.gioco = 0;
   if (G.coccole > ora) G.stato = "seduto";
   else if (G.stato === "cammina") {
+    // fuori dallo schermo non serve camminare: va dritto alla meta (o rientra dal bordo)
+    var largo = G.W * G.S, fuori = function (x) { return x > innerWidth || x < -largo; };
+    if (fuori(G.x) && fuori(G.tx)) { G.x = G.tx; G.y = G.ty; }
+    else if (fuori(G.x)) G.x = G.tx > G.x ? -largo : innerWidth;
     var dx = G.tx - G.x, dy = G.ty - G.y, d = Math.sqrt(dx * dx + dy * dy), v = 5;
     if (d < v) { G.x = G.tx; G.y = G.ty; if (G.attivita) iniziaAttivita(ora, u); else { G.stato = "seduto"; G.fino = ora + 4000 + Math.random() * 9000; } }
     else { G.x += dx / d * v; G.y += dy / d * v; G.verso = dx >= 0 ? 1 : -1; }
@@ -200,7 +208,7 @@ function passoGatto() {
     if (ora > G.fino) { if (G.attivita !== "gioco") salvaCiotole(); G.attivita = null; G.stato = "seduto"; G.fino = ora + 3000 + Math.random() * 5000; }
   }
   else if (G.stato === "seduto" && ora > G.fino) {
-    if (vis && Math.random() < .6) vaiA(scegliAttivita()); else { nuovaMeta(); G.stato = "cammina"; }
+    if (vis && Math.random() < (vista ? .6 : .35)) vaiA(scegliAttivita()); else { nuovaMeta(); G.stato = "cammina"; }
   }
   // effetti dell'umore
   if (G.stato !== "dorme" && u.festa && G.f % 70 === 0) cuoricino();
@@ -212,6 +220,7 @@ function passoGatto() {
   $("gatto").title = G.stato === "dorme" ? (G.attivita === "cuccia" ? "Dorme nella cuccia" : "Dorme: " + u.perche) : "Accarezzami";
   disegnaGatto($("gatto").getContext("2d"), G.stato, G.f);
   if (vis) { disegnaCuccia(); if (G.f % 5 === 0) scriviStatoCuccia(); }
+  $("gatto-zzz").style.visibility = G.x > innerWidth || G.x < -G.W * G.S ? "hidden" : "";
 }
 function mettiGatto(tremo, salto) {
   $("gatto").style.transform = "translate(" + Math.round(G.x + tremo) + "px," + Math.round(G.y + salto) + "px)" +
@@ -276,5 +285,10 @@ function avviaGatto() {
   var c = $("gatto"); c.width = G.W; c.height = G.H; c.style.width = G.W * G.S + "px"; c.style.height = G.H * G.S + "px";
   G.x = innerWidth * 0.6; G.y = innerHeight * 0.75; nuovaMeta(); G.fino = Date.now() + 2000;
   avviaPresa();
+  if ($("pagine")) $("pagine").addEventListener("scroll", function () {   // scorrendo le pagine il gatto nella cuccia scorre con lei
+    if (!G.attivita || G.stato === "cammina" || G.preso) return;
+    var q = punto(G.attivita); G.x = q.x; G.y = q.y; mettiGatto(0, 0);
+    $("gatto-zzz").style.transform = "translate(" + Math.round(G.x + 70) + "px," + Math.round(G.y - 6) + "px)";
+  }, { passive: true });
   setInterval(passoGatto, 100);
 }
