@@ -22,6 +22,7 @@ import getpass
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -30,6 +31,7 @@ from urllib.parse import parse_qs, urlparse
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
@@ -584,6 +586,38 @@ def titolo_in_onda(url):
     return titolo
 
 
+# ---------------------------------------------------------------- bus TPER (HelloBus) per la dashboard
+# HelloBus non permette a una pagina di un altro sito di leggerlo (CORS): lo chiede il lettore.
+_bus = {}
+_PASSAGGIO = re.compile(r"(?:\((?:Bus\s*)?(\w+)[^)]*\)\s*)?\b([A-Z]?\d{1,3}[A-Z]?|[A-Z]{1,3}\d?)\s+(DaSatellite|Previsto|DaOrario)\s+(\d{1,2}[:.]\d{2})", re.I)
+
+
+def leggi_bus(testo):
+    """'TperHellobus: (Bus5547 CON PEDANA) 27 DaSatellite 15:01, 14 Previsto 15:10' → passaggi."""
+    out = []
+    for m in _PASSAGGIO.finditer(testo or ""):
+        out.append({"linea": m.group(2).upper(), "ora": m.group(4).replace(".", ":"),
+                    "dal_vivo": m.group(3).lower() == "dasatellite", "mezzo": m.group(1) or ""})
+    return out
+
+
+def bus(fermata, linea=""):
+    chiave = (fermata, linea)
+    c = _bus.get(chiave)
+    if c and time.time() - c[0] < 20:
+        return c[1]
+    url = ("https://hellobuswsweb.tper.it/web-services/hello-bus.asmx/QueryHellobus?fermata="
+           + urllib.parse.quote(fermata) + "&linea=" + urllib.parse.quote(linea) + "&oraHHMM=")
+    req = urllib.request.Request(url, headers={"User-Agent": "homedashboard"})
+    with urllib.request.urlopen(req, timeout=8) as r:
+        grezzo = r.read().decode("utf-8", errors="ignore")
+    testo = re.sub(r"<[^>]+>", " ", grezzo)
+    testo = re.sub(r"\s+", " ", testo).strip()
+    dati = {"fermata": fermata, "testo": testo, "passaggi": leggi_bus(testo)}
+    _bus[chiave] = (time.time(), dati)
+    return dati
+
+
 def _url_valido(u):
     return isinstance(u, str) and u.startswith(("http://", "https://")) and len(u) < 1000
 
@@ -637,6 +671,21 @@ class _Aerei(BaseHTTPRequestHandler):
                 corpo = json.dumps({"titolo": ""}).encode()
             try:
                 self._intestazioni(200)
+                self.wfile.write(corpo)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            return
+        if u.path == "/bus":
+            fermata = q.get("fermata", [""])[0].strip()
+            linea = q.get("linea", [""])[0].strip()
+            try:
+                if not re.fullmatch(r"\d{1,6}", fermata) or not re.fullmatch(r"[\w]{0,5}", linea):
+                    raise ValueError("fermata non valida")
+                corpo, stato = json.dumps(bus(fermata, linea)).encode(), 200
+            except Exception as e:
+                corpo, stato = json.dumps({"errore": str(e)}).encode(), 502
+            try:
+                self._intestazioni(stato)
                 self.wfile.write(corpo)
             except (BrokenPipeError, ConnectionResetError):
                 pass

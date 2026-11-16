@@ -360,6 +360,19 @@
   .tr-tempo em { font-style: normal; font-size: 1.6vh; color: #c0392b; }
   .tr-info { font-size: 1.55vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #tr-vuoto { margin-top: 1vh; }
+  /* --- bus TPER --- */
+  #card-bus { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  #card-bus h2 small { margin-left: auto; font-size: 1.7vh; color: var(--muted); font-weight: 400; }
+  .bus-lista { display: flex; flex-direction: column; gap: 1.2vh; overflow-y: auto; min-height: 0; }
+  .bus-nome { font-size: 1.7vh; color: var(--muted); margin-bottom: .5vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bus-passaggi { display: flex; flex-wrap: wrap; gap: .6vh .6vw; }
+  .bus-pass { display: inline-flex; align-items: center; gap: .5vw; background: var(--bg); border: 1px solid var(--line); border-radius: 1.4vh;
+              padding: .5vh .7vw .5vh .5vh; font-size: 2.1vh; font-variant-numeric: tabular-nums; }
+  .bus-pass b { background: #d6252b; color: #fff; border-radius: 1vh; padding: .2vh .6vw; font-size: 1.9vh; font-weight: 700; min-width: 3.4vh; text-align: center; }
+  .bus-pass.ora { border-color: #d6252b; color: #d6252b; font-weight: 500; }
+  .bus-vivo { width: .9vh; height: .9vh; border-radius: 50%; background: #3f9b4f; animation: pulsabus 1.6s infinite; }
+  @keyframes pulsabus { 50% { opacity: .25; } }
+  .bus-niente { font-size: 1.8vh; color: var(--muted); }
 
 
   /* --- livelli sopra --- */
@@ -588,6 +601,11 @@
         <div class="tr-righe" id="tr-righe"></div>
         <div class="nota-txt" id="tr-vuoto">Impostate casa e lavori per vedere percorsi e tempi. <button class="btn-piccolo" id="tr-imposta">Imposta</button></div>
       </section>
+      <section class="card" id="card-bus">
+        <h2>Bus sotto casa <small>TPER in tempo reale</small></h2>
+        <div class="bus-lista" id="bus-lista"></div>
+        <div class="nota-txt" id="bus-vuoto">Scegliete le fermate vicino a casa. <button class="btn-piccolo" id="bus-imposta">Imposta</button></div>
+      </section>
     </div>
   </div>
 </div>
@@ -729,6 +747,14 @@
     <div class="riga"><button class="btn-piccolo" id="tr-salva">Salva e trova gli indirizzi</button><span class="stato" id="tr-stato"></span></div>
     <div class="nota-txt">Senza chiave i tempi sono calcolati con OpenStreetMap, senza traffico. Per il traffico dal vivo create un account gratuito su <a href="https://developer.tomtom.com" target="_blank" rel="noopener" style="color:var(--accent)">developer.tomtom.com</a> e copiate qui la chiave «API key»: il piano gratuito basta e avanza. Indirizzi e chiave sono cifrati come i turni.</div>
 
+    <h3>Bus sotto casa</h3>
+    <div class="campo-imp"><label>Numeri delle fermate TPER (fino a 3, separati da virgola: sono scritti sulla palina)</label>
+      <div class="riga"><input type="text" autocomplete="off" name="x-bus-codici" id="bus-codici" placeholder="es. 3105, 3106" style="flex:1"><button class="btn-piccolo" type="button" id="bus-cerca">Cerca vicino a casa</button></div></div>
+    <div class="riga" id="bus-vicine"></div>
+    <div class="campo-imp"><label>Solo queste linee (facoltativo)</label><input type="text" autocomplete="off" name="x-bus-linee" id="bus-linee" placeholder="es. 27, 11 — vuoto per tutte"></div>
+    <div class="riga"><button class="btn-piccolo" id="bus-salva">Salva fermate</button><span class="stato" id="bus-stato"></span></div>
+    <div class="nota-txt">Gli orari arrivano da HelloBus di TPER passando per il lettore in Termux: dopo questo aggiornamento fate ripartire il lettore con il comando «Aggiorna e fai ripartire il lettore» qui sopra.</div>
+
     <h3>Gatto di casa</h3>
     <div class="riga">
       <label>Mostra il gatto</label>
@@ -764,14 +790,15 @@
   </div>
 </div>
 
-<script src="comune.js?v=25"></script>
-<script src="rete.js?v=25"></script>
-<script src="giorno.js?v=25"></script>
-<script src="radio.js?v=25"></script>
-<script src="forza4.js?v=25"></script>
+<script src="comune.js?v=26"></script>
+<script src="rete.js?v=26"></script>
+<script src="giorno.js?v=26"></script>
+<script src="radio.js?v=26"></script>
+<script src="forza4.js?v=26"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=25"></script>
-<script src="gatto.js?v=25"></script>
+<script src="tragitti.js?v=26"></script>
+<script src="bus.js?v=26"></script>
+<script src="gatto.js?v=26"></script>
 <script>
 
 // ================= orologio =================
@@ -1346,6 +1373,7 @@ function aggiornaImpostazioni() {
   seg("seg-schermo", cfg.schermoAcceso ? "si" : "no"); statoSchermo();
   seg("seg-gatto", leggi("gatto_acceso", true) ? "si" : "no");
   if (window.trApriImpostazioni) trApriImpostazioni();
+  if (window.busApriImpostazioni) busApriImpostazioni();
 }
 function apriImpostazioni() { $("ingranaggio").onclick(); }
 $("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi(); mostraStatoSync(); apri("impostazioni"); };
@@ -1438,7 +1466,7 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }
