@@ -777,15 +777,15 @@
   </div>
 </div>
 
-<script src="comune.js?v=21"></script>
-<script src="rete.js?v=21"></script>
-<script src="giorno.js?v=21"></script>
-<script src="radio.js?v=21"></script>
-<script src="forza4.js?v=21"></script>
-<script src="ricette.js?v=21"></script>
+<script src="comune.js?v=22"></script>
+<script src="rete.js?v=22"></script>
+<script src="giorno.js?v=22"></script>
+<script src="radio.js?v=22"></script>
+<script src="forza4.js?v=22"></script>
+<script src="ricette.js?v=22"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=21"></script>
-<script src="gatto.js?v=21"></script>
+<script src="tragitti.js?v=22"></script>
+<script src="gatto.js?v=22"></script>
 <script>
 
 // ================= orologio =================
@@ -1363,7 +1363,11 @@ function aggiornaImpostazioni() {
 }
 function apriImpostazioni() { $("ingranaggio").onclick(); }
 $("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi(); mostraStatoSync(); apri("impostazioni"); };
-function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni(); }
+function cambiaNome(i, v) {
+  cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni();
+  if ($("tr-lab" + i)) $("tr-lab" + i).textContent = "Lavoro di " + cfg.nomi[i];   // le etichette dei lavori seguono il nome
+  f4Disegna($("f4-griglia"), $("f4-info")); if (window.trDisegnaRighe) trDisegnaRighe();
+}
 $("nome0").oninput = function () { cambiaNome(0, this.value); };
 $("nome1").oninput = function () { cambiaNome(1, this.value); };
 $("foto-ogni").onchange = function () { cfg.fotoOgni = Math.max(3, +this.value || 12); salvaCfg(); avviaCarosello(); };
