@@ -26,8 +26,8 @@ pip install --upgrade --no-deps aiovodafone
 
 echo "-> Scarico il lettore…"
 mkdir -p "$CARTELLA"
-curl -fsSL "$SITO/strumenti/dispositivi.py" -o "$CARTELLA/dispositivi.py"
-curl -fsSL "$SITO/strumenti/orjson.py" -o "$CARTELLA/orjson.py"
+curl -fsSL "$SITO/strumenti/dispositivi.py?t=$(date +%s)" -o "$CARTELLA/dispositivi.py"
+curl -fsSL "$SITO/strumenti/orjson.py?t=$(date +%s)" -o "$CARTELLA/orjson.py"
 
 echo
 python "$CARTELLA/dispositivi.py" --configura

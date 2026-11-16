@@ -15,8 +15,8 @@ pkg install -y termux-api >/dev/null 2>&1 || echo "   (non riesco a installare t
 
 echo "-> Aggiorno il lettore…"
 mkdir -p "$CARTELLA"
-curl -fsSL "$SITO/strumenti/dispositivi.py" -o "$CARTELLA/dispositivi.py"
-curl -fsSL "$SITO/strumenti/orjson.py" -o "$CARTELLA/orjson.py"
+curl -fsSL "$SITO/strumenti/dispositivi.py?t=$(date +%s)" -o "$CARTELLA/dispositivi.py"
+curl -fsSL "$SITO/strumenti/orjson.py?t=$(date +%s)" -o "$CARTELLA/orjson.py"
 
 echo "-> Avvio automatico all'accensione del tablet (app Termux:Boot)…"
 mkdir -p "$HOME/.termux/boot"
@@ -36,6 +36,9 @@ sleep 40
 echo
 tail -n 8 "$CARTELLA/registro.txt" 2>/dev/null || echo "   (ancora nessun messaggio nel registro)"
 echo
+if ! grep -q "servizio aerei" "$CARTELLA/registro.txt" 2>/dev/null; then
+  echo "Attenzione: il lettore scaricato è una versione vecchia (manca il servizio aerei). Riprova tra qualche minuto."
+fi
 if pgrep -f "dispositivi.py" >/dev/null; then
   echo "Il lettore è acceso. Se sopra c'è \"pubblicati … dispositivi\", tra un minuto li vedi nella dashboard."
 else
