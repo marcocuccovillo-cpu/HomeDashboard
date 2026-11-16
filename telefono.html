@@ -15,68 +15,125 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4efe6; --card: #fffaf2; --ink: #2b261f; --muted: #8a7f70;
-    --accent: #c4622d; --accent-soft: #f3dfd0; --line: #e6dccb; --done: #b9ad9b; --ok: #4f8a3c;
+    --bg: #faf5f0; --card: #ffffff; --ink: #2a2124; --muted: #8d7f80; --soft: #f5eeea;
+    --accent: #d7263d; --accent-soft: #fde4e7; --line: #eee3dc; --done: #c5b8b3; --ok: #3f8a4c;
+    --p0: #e0703a; --p0-soft: #fcebe1; --p1: #2f9a93; --p1-soft: #def3f1;
+    --ombra: 0 1px 2px rgba(80,30,30,.06), 0 6px 18px -8px rgba(80,30,30,.18);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #14120f; --card: #1d1a16; --ink: #e2d8c8; --muted: #8a806f;
-      --accent: #d9834c; --accent-soft: #3a2a1f; --line: #2e2923; --done: #5e564a; --ok: #7fb069;
+      --bg: #121013; --card: #1d1a1e; --ink: #ece2df; --muted: #9a8e8e; --soft: #262226;
+      --accent: #ff5468; --accent-soft: #3b1c23; --line: #2d282c; --done: #5d5457; --ok: #74c07f;
+      --p0: #f08b55; --p0-soft: #3a261c; --p1: #4fc1b8; --p1-soft: #193230;
+      --ombra: 0 1px 2px rgba(0,0,0,.3), 0 8px 20px -10px rgba(0,0,0,.6);
     }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }
   html, body { margin: 0; }
-  body { background: var(--bg); color: var(--ink); font: 16px/1.4 "Roboto", "Helvetica Neue", Arial, sans-serif;
-         padding: env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom)); }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.4 -apple-system, "Roboto", "Helvetica Neue", Arial, sans-serif;
+         padding: env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom)); }
   button { font: inherit; cursor: pointer; color: inherit; }
   input, textarea { font: inherit; }
 
-  header { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center;
-           gap: 10px; padding: 14px 16px 10px; }
-  header h1 { font-size: 22px; font-weight: 500; margin: 0; flex: 1; }
-  header h1 .due { color: #d7263d; font-weight: 700; }
-  #stato { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  #stato::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--done); }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 16px 10px;
+           background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .logo { width: 34px; height: 34px; border-radius: 10px; flex: none; background: var(--accent); display: grid; place-items: center;
+          box-shadow: 0 4px 10px -4px rgba(215,38,61,.6); }
+  .logo svg { width: 24px; height: 24px; }
+  header h1 { font-size: 21px; font-weight: 700; margin: 0; flex: 1; letter-spacing: -.01em; }
+  header h1 .due { color: var(--accent); }
+  #stato { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; background: var(--card);
+           padding: 5px 10px; border-radius: 20px; box-shadow: var(--ombra); }
+  #stato::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--done); }
   #stato.ok::before { background: var(--ok); } #stato.err { color: var(--accent); } #stato.err::before { background: var(--accent); }
   .icona-btn { border: 0; background: transparent; width: 40px; height: 40px; padding: 8px; color: var(--muted); }
   .icona-btn svg { width: 100%; height: 100%; display: block; }
 
   main { padding: 0 16px; }
-  .scheda { display: none; } .scheda.on { display: block; }
-  .titolo { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 0 12px; }
-  .titolo h2 { font-size: 20px; font-weight: 500; margin: 0; }
-  .link { border: 0; background: none; color: var(--accent); font-size: 15px; padding: 6px 0; }
+  .scheda { display: none; } .scheda.on { display: block; animation: entra .25s ease-out; }
+  @keyframes entra { from { opacity: 0; transform: translateY(6px); } }
+  .titolo { display: flex; align-items: baseline; justify-content: space-between; margin: 8px 2px 12px; }
+  .titolo h2 { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+  .link { border: 0; background: none; color: var(--accent); font-size: 15px; font-weight: 500; padding: 6px 0; }
+  .card { background: var(--card); border-radius: 20px; box-shadow: var(--ombra); padding: 16px; margin-bottom: 14px; }
 
-  /* --- avviso collegamento --- */
-  #avviso { background: var(--accent-soft); border-radius: 16px; padding: 14px 16px; margin: 4px 0 16px; font-size: 14.5px; }
-  #avviso b { font-weight: 500; }
-  #avviso button { margin-top: 10px; }
+  /* --- oggi --- */
+  .eroe { position: relative; overflow: hidden; border-radius: 24px; padding: 20px 20px 18px; margin: 6px 0 14px; color: #fff;
+          background: linear-gradient(135deg, #e8384f 0%, #d7263d 45%, #a8122c 100%); box-shadow: 0 12px 26px -14px rgba(215,38,61,.8); }
+  .eroe::after { content: "♥"; position: absolute; right: -6px; bottom: -34px; font-size: 140px; line-height: 1; opacity: .12; }
+  .eroe .giorno-txt { font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+  .eroe .sett { font-size: 13.5px; opacity: .85; margin-top: 2px; }
+  .eroe .cuore { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; background: rgba(255,255,255,.18);
+                 padding: 7px 12px; border-radius: 20px; font-size: 14px; font-weight: 500; position: relative; z-index: 1; }
+  .persona { width: 100%; border: 0; text-align: left; display: block; background: var(--card); border-radius: 20px;
+             box-shadow: var(--ombra); padding: 14px 16px 12px; margin-bottom: 12px; }
+  .persona .testa { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff;
+            font-weight: 700; font-size: 18px; background: var(--pc); }
+  .persona .nome { display: block; font-size: 13.5px; color: var(--muted); }
+  .persona .ore { display: block; font-size: 24px; font-weight: 650; line-height: 1.15; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .persona .ore.riposo { color: var(--muted); font-weight: 500; }
+  .persona.eccezione .ore { color: var(--accent); }
+  .pillola { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 10px; border-radius: 20px;
+             background: var(--soft); color: var(--muted); margin-top: 10px; }
+  .pillola::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--done); flex: none; }
+  .pillola.lavoro { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); } .pillola.lavoro::before { background: var(--ok); animation: pulsa 1.6s infinite; }
+  .pillola.dopo, .pillola.altro { background: var(--pc-soft); color: var(--pc); } .pillola.dopo::before, .pillola.altro::before { background: var(--pc); }
+  @keyframes pulsa { 50% { opacity: .3; } }
+  .p0 { --pc: var(--p0); --pc-soft: var(--p0-soft); } .p1 { --pc: var(--p1); --pc-soft: var(--p1-soft); }
 
-  /* --- turni --- */
-  .settimana { font-size: 13px; color: var(--accent); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; margin: 18px 0 8px; }
-  .settimana:first-child { margin-top: 4px; }
-  .giorno { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px;
-            display: grid; grid-template-columns: 64px 1fr 1fr; gap: 8px; align-items: center; }
-  .giorno.oggi { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
-  .giorno.passato { opacity: .45; }
-  .giorno .data { font-size: 13px; color: var(--muted); line-height: 1.2; }
-  .giorno .data b { display: block; font-size: 17px; color: var(--ink); font-weight: 500; }
-  .cella { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 7px 8px; text-align: left; min-height: 48px; }
-  .cella small { display: block; font-size: 11.5px; color: var(--muted); }
-  .cella span { font-size: 15px; white-space: pre-line; }
-  .cella.riposo span { color: var(--muted); font-style: italic; font-size: 14px; }
-  .cella.eccezione span { color: var(--accent); font-weight: 500; }
-  .cella:active { background: var(--accent-soft); }
+  /* barra delle 24 ore */
+  .barra { position: relative; height: 10px; border-radius: 6px; background: var(--soft); margin-top: 12px; }
+  .barra i { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: var(--pc); }
+  .barra b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--ink); }
+  .ore-assi { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
 
-  .seg.vista { margin: 0 0 14px; }
-  .seg.vista button { padding: 10px 2px; font-size: 14px; }
-  .riga-sett { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--card);
-               border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; margin-bottom: 8px; }
-  .riga-sett .g { width: 46px; font-weight: 500; }
-  .riga-sett .v { flex: 1; white-space: pre-line; }
-  .riga-sett .v.riposo { color: var(--muted); font-style: italic; }
-  .riga-sett::after { content: "›"; color: var(--muted); font-size: 22px; line-height: 1; }
+  /* --- turni: calendario --- */
+  .seg.vista { margin: 0 0 14px; background: var(--soft); border: 0; padding: 4px; border-radius: 14px; gap: 4px; }
+  .seg.vista button { padding: 8px 2px; font-size: 14px; border-radius: 10px; color: var(--muted); line-height: 1.2; }
+  .seg.vista button small { display: block; font-size: 11px; opacity: .8; font-weight: 400; }
+  .seg.vista button.sel { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: var(--ombra); }
+  .legenda { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--muted); margin: 0 2px 12px; flex-wrap: wrap; }
+  .legenda span { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font-weight: 500; }
+  .legenda span::before { content: ""; width: 10px; height: 10px; border-radius: 4px; background: var(--pc); }
+  .legenda small { margin-left: auto; font-size: 12px; }
+  .settimana { font-size: 12.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin: 20px 2px 8px; }
+  .legenda + .settimana { margin-top: 4px; }
+  .settimana em { font-style: normal; color: var(--accent); }
+  .giorno { background: var(--card); border-radius: 18px; box-shadow: var(--ombra); padding: 12px 14px 4px; margin-bottom: 10px; }
+  .giorno.oggi { box-shadow: 0 0 0 2px var(--accent), var(--ombra); }
+  .giorno .data { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .giorno .data b { font-size: 16px; font-weight: 700; }
+  .giorno .data span { font-size: 14px; color: var(--muted); }
+  .giorno .data .tag { font-size: 11.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); margin-left: auto; }
+  .riga { width: 100%; border: 0; background: none; text-align: left; display: grid; grid-template-columns: 70px 1fr 74px;
+          align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .data + .riga { border-top: 0; }
+  .riga .chi { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .riga .chi::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--pc); flex: none; }
+  .riga .barra { margin: 0; height: 12px; }
+  .riga .h { font-size: 14.5px; font-weight: 600; text-align: right; white-space: pre-line; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .riga .h.riposo { color: var(--muted); font-weight: 400; font-style: italic; }
+  .riga.eccezione .h { color: var(--accent); }
+  .riga:active { opacity: .6; }
+
+  /* --- turni: settimana abituale --- */
+  .spiega-box { background: var(--accent-soft); color: var(--ink); border-radius: 14px; padding: 11px 14px; font-size: 13.5px; margin-bottom: 12px; }
+  .tab-sett { background: var(--card); border-radius: 18px; box-shadow: var(--ombra); overflow: hidden; }
+  .tab-sett .r { display: grid; grid-template-columns: 44px 1fr 1fr; gap: 8px; padding: 7px 10px; border-top: 1px solid var(--line); align-items: stretch; }
+  .tab-sett .r:first-child { border-top: 0; }
+  .tab-sett .r.testa { font-size: 14px; font-weight: 600; padding: 12px 10px 6px; }
+  .tab-sett .r.testa span { display: flex; align-items: center; gap: 6px; color: var(--pc); }
+  .tab-sett .r.testa span::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--pc); }
+  .tab-sett .r.testa span:first-child::before { display: none; }
+  .tab-sett .g { font-weight: 600; font-size: 14px; align-self: center; }
+  .tab-sett .g.fine { color: var(--muted); }
+  .cella { border: 0; border-radius: 12px; padding: 9px 10px; text-align: left; min-height: 44px; background: var(--pc-soft);
+           box-shadow: inset 3px 0 0 var(--pc); font-size: 14.5px; font-weight: 600; white-space: pre-line; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .cella.riposo { background: var(--soft); box-shadow: none; color: var(--muted); font-style: italic; font-weight: 400; }
+  .cella:active { filter: brightness(.94); }
+
   /* editor orari */
   .fascia { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .fascia input[type=time] { flex: 1; min-width: 0; padding: 11px 10px; border-radius: 12px; border: 1px solid var(--line);
@@ -93,72 +150,58 @@
 
   /* --- promemoria --- */
   .note-griglia { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .nota { aspect-ratio: 1; border: 0; padding: 14px 12px; text-align: left; color: #3b3224; border-radius: 2px;
+  .nota { aspect-ratio: 1; border: 0; padding: 14px 12px; text-align: left; color: #3b3224; border-radius: 3px;
           font: 500 22px/1.05 "Caveat", "Segoe Print", cursive; overflow: hidden; word-break: break-word; white-space: pre-wrap;
-          box-shadow: 0 5px 10px -5px rgba(60,40,10,.35); transform: rotate(var(--r, 0deg)); }
+          box-shadow: 0 6px 12px -6px rgba(60,40,10,.4); transform: rotate(var(--r, 0deg)); }
   .nota.m { font-size: 19px; } .nota.s { font-size: 16px; }
   .nota.nuova { background: transparent; border: 2px dashed var(--done); color: var(--muted); box-shadow: none;
                 font: 300 44px/1 sans-serif; display: flex; align-items: center; justify-content: center; }
-  @media (prefers-color-scheme: dark) { .nota:not(.nuova) { filter: brightness(.8); } }
-
-  /* --- campo per aggiungere --- */
+  @media (prefers-color-scheme: dark) { .nota:not(.nuova) { filter: brightness(.82); } }
   .aggiungi { display: flex; gap: 8px; margin-bottom: 8px; }
-  .aggiungi input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
+  .aggiungi input { flex: 1; min-width: 0; padding: 13px 16px; border-radius: 14px; border: 0; box-shadow: var(--ombra);
                     background: var(--card); color: var(--ink); outline: none; font-size: 16px; }
-  .aggiungi button { border: 0; border-radius: 12px; background: var(--accent); color: #fff; width: 50px; font-size: 24px; }
+  .aggiungi button { border: 0; border-radius: 14px; background: var(--accent); color: #fff; width: 50px; font-size: 24px; }
 
-  /* --- forza 4 (stessa partita del tablet) --- */
-  :root { --p0: #c4622d; --p1: #3f8a86; }
-  .f4-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; margin-bottom: 8px; }
-  .f4-turno { font-weight: 500; } .f4-turno.p0 { color: var(--p0); } .f4-turno.p1 { color: var(--p1); }
+  /* --- forza 4 --- */
+  .f4-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 15px; margin-bottom: 10px; }
+  .f4-turno { font-weight: 600; } .f4-turno.p0 { color: var(--p0); } .f4-turno.p1 { color: var(--p1); }
   .f4-punti { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
-  .f4-rivincita { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 6px 12px; font-size: 14px; }
-  .f4-griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: #2f5d9e; padding: 7px; border-radius: 14px; margin-bottom: 20px; }
-  .f4c { aspect-ratio: 1; border-radius: 50%; background: var(--bg); box-shadow: inset 0 2px 4px rgba(0,0,0,.35); }
-  .f4c.p0 { background: radial-gradient(circle at 35% 35%, #f0a070, var(--p0)); }
-  .f4c.p1 { background: radial-gradient(circle at 35% 35%, #8fd0c8, var(--p1)); }
+  .f4-rivincita { border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 6px 12px; font-size: 14px; }
+  .f4-griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: #2f5d9e; padding: 7px; border-radius: 14px; }
+  .f4c { aspect-ratio: 1; border-radius: 50%; background: var(--card); box-shadow: inset 0 2px 4px rgba(0,0,0,.35); }
+  .f4c.p0 { background: radial-gradient(circle at 35% 35%, #f6aa7c, var(--p0)); }
+  .f4c.p1 { background: radial-gradient(circle at 35% 35%, #94dcd4, var(--p1)); }
   .f4c.ultima { animation: caduta .35s ease-in; }
   .f4c.vince { box-shadow: 0 0 0 3px #ffd75e, inset 0 2px 4px rgba(0,0,0,.2); }
   @keyframes caduta { from { transform: translateY(-300%); } }
-
-  /* --- oggi --- */
-  .oggi-data { font-size: 28px; font-weight: 400; margin: 6px 0 14px; }
-  .oggi-data small { display: block; font-size: 14px; color: var(--muted); }
-  .turno-oggi { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; background: var(--card);
-                border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; margin-bottom: 10px; }
-  .turno-oggi .chi { width: 84px; font-size: 15px; color: var(--muted); }
-  .turno-oggi .ore { display: block; font-size: 26px; line-height: 1.2; white-space: pre-line; }
-  .turno-oggi .ore.riposo { color: var(--muted); font-style: italic; font-size: 22px; }
-  .turno-oggi.eccezione .ore { color: var(--accent); }
-  .turno-oggi .testi { flex: 1; }
-  .turno-oggi .adesso { display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--muted); margin-top: 6px; }
-  .turno-oggi .adesso::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--done); flex: none; }
-  .turno-oggi .adesso.lavoro { color: var(--ok); } .turno-oggi .adesso.lavoro::before { background: var(--ok); }
-  .turno-oggi .adesso.dopo::before, .turno-oggi .adesso.altro::before { background: var(--accent); }
-  #s-oggi .titolo { margin-top: 22px; }
   .vuoto { color: var(--muted); border: 0; }
 
   /* --- foto --- */
-  .carica { display: block; text-align: center; background: var(--accent); color: #fff; border-radius: 14px; padding: 14px; font-weight: 500; margin-bottom: 8px; }
-  #foto-stato { font-size: 13.5px; color: var(--muted); margin: 6px 0 12px; min-height: 18px; }
-  #foto-griglia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-  #foto-griglia button { border: 0; padding: 0; aspect-ratio: 1; background: var(--line); overflow: hidden; border-radius: 4px; }
+  .carica { display: block; text-align: center; background: var(--accent); color: #fff; border-radius: 16px; padding: 15px; font-weight: 600;
+            margin-bottom: 8px; box-shadow: 0 10px 20px -12px rgba(215,38,61,.8); }
+  #foto-stato { font-size: 13.5px; color: var(--muted); margin: 6px 2px 12px; min-height: 18px; }
+  #foto-griglia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  #foto-griglia button { border: 0; padding: 0; aspect-ratio: 1; background: var(--line); overflow: hidden; border-radius: 10px; }
   #foto-griglia img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .avviso-foto { font-size: 12.5px; color: var(--muted); margin-top: 14px; }
 
-  /* --- barra in basso --- */
-  nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; background: var(--card);
-        border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
-  nav button { flex: 1; border: 0; background: none; padding: 9px 0 10px; font-size: 12px; color: var(--muted); }
-  nav button svg { width: 24px; height: 24px; display: block; margin: 0 auto 2px; }
-  nav button.on { color: var(--accent); }
+  /* --- barra in basso: pillola che galleggia --- */
+  nav { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 6; display: flex; gap: 2px;
+        background: color-mix(in srgb, var(--card) 92%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+        border-radius: 24px; padding: 6px; box-shadow: 0 10px 30px -10px rgba(60,20,20,.35), 0 0 0 1px var(--line); }
+  nav button { flex: 1; border: 0; background: none; padding: 7px 0 6px; font-size: 11.5px; color: var(--muted); border-radius: 18px; transition: background .2s, color .2s; }
+  nav button svg { width: 23px; height: 23px; display: block; margin: 0 auto 2px; }
+  nav button.on { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 
   /* --- fogli che salgono dal basso --- */
-  .velo { position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.4); display: none; }
+  .velo { position: fixed; inset: 0; z-index: 10; background: rgba(20,5,10,.45); display: none; }
   .velo.on { display: block; }
-  .foglio { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 20px 20px 0 0;
-            padding: 18px 18px calc(18px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; }
-  .foglio h3 { margin: 0 0 12px; font-size: 18px; font-weight: 500; }
+  .velo.on .foglio { animation: sale .25s ease-out; }
+  @keyframes sale { from { transform: translateY(40px); opacity: .5; } }
+  .foglio { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 24px 24px 0 0;
+            padding: 24px 18px calc(18px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; }
+  .foglio::before { content: ""; position: absolute; top: 9px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: var(--line); }
+  .foglio h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
   .foglio input[type=text], .foglio textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
             background: var(--bg); color: var(--ink); outline: none; font-size: 17px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -170,7 +213,7 @@
   .azioni { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
   .azioni .sx { margin-right: auto; }
   .btn { border: 1px solid var(--line); background: transparent; border-radius: 12px; padding: 11px 16px; font-size: 15px; color: var(--muted); }
-  .btn.pieno { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+  .btn.pieno { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
   .btn.rosso { color: #b4412f; border-color: #e5b7ad; }
   #ed-nota textarea { height: 170px; resize: none; border: 0; color: #3b3224; font: 500 26px/1.1 "Caveat", cursive; }
   .colori { display: flex; gap: 12px; margin-top: 12px; }
@@ -184,6 +227,7 @@
 </head>
 <body>
 <header>
+  <span class="logo"><svg viewBox="120 130 272 272"><path d="M146 252 L256 158 L366 252 V362 a18 18 0 0 1 -18 18 H164 a18 18 0 0 1 -18 -18 Z" fill="none" stroke="#fff" stroke-width="30" stroke-linejoin="round"/><path d="M256 342 C222 318 202 298 202 276 C202 258 215 246 231 246 C243 246 251 252 256 261 C261 252 269 246 281 246 C297 246 310 258 310 276 C310 298 290 318 256 342 Z" fill="#fff"/></svg></span>
   <h1>Home<span class="due">2</span>Love</h1>
   <span id="stato"></span>
   <button class="icona-btn" id="apri-imp" aria-label="Impostazioni">
@@ -194,21 +238,22 @@
 <main>
 
   <section class="scheda" id="s-oggi">
-    <div class="oggi-data" id="oggi-data"></div>
+    <div class="eroe" id="eroe"></div>
     <div id="oggi-turni"></div>
-    <div class="titolo"><h2>Forza 4</h2><span class="spiega" style="margin:0">tocca una colonna</span></div>
-    <div class="f4-info" id="f4-info"></div>
-    <div class="f4-griglia" id="f4-griglia"></div>
+    <div class="card">
+      <div class="titolo" style="margin-top:0"><h2>Forza 4</h2><span class="spiega" style="margin:0">tocca una colonna</span></div>
+      <div class="f4-info" id="f4-info"></div>
+      <div class="f4-griglia" id="f4-griglia"></div>
+    </div>
   </section>
 
   <section class="scheda" id="s-turni">
     <div class="titolo"><h2>Turni</h2><button class="link" id="btn-nomi">Nomi e settimane</button></div>
-    <div class="seg vista" id="vista"><button type="button" data-v="giorni">Prossimi giorni</button><button type="button" data-v="A">Settimana A</button><button type="button" data-v="B">Settimana B</button></div>
+    <div class="seg vista" id="vista"><button type="button" data-v="giorni">Calendario<small>giorno per giorno</small></button><button type="button" data-v="A">Settimana A<small id="sub-A"></small></button><button type="button" data-v="B">Settimana B<small id="sub-B"></small></button></div>
     <div id="giorni"></div>
     <div id="sett-tipo" hidden>
-      <div class="seg" id="persona"><button type="button" data-v="0"></button><button type="button" data-v="1"></button></div>
-      <p class="spiega" id="st-spiega" style="margin:8px 0 12px"></p>
-      <div id="st-giorni"></div>
+      <div class="spiega-box" id="st-spiega"></div>
+      <div class="tab-sett" id="st-giorni"></div>
     </div>
   </section>
 
@@ -327,60 +372,89 @@ function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classLi
 [].forEach.call(document.querySelectorAll(".velo"), function (v) { v.classList.add("scuro"); });
 
 // ================= turni =================
-var vista = leggi("telefono_vista", "giorni"), personaSel = 0;
+var vista = leggi("telefono_vista", "giorni");
 function cambiaVista(v) {
   vista = v; salva("telefono_vista", v); seg("vista", v);
   $("giorni").hidden = v !== "giorni"; $("sett-tipo").hidden = v === "giorni";
   disegnaTurni();
 }
 $("vista").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) cambiaVista(v); };
-$("persona").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { personaSel = +v; disegnaTurni(); } };
 function testoTurno(v) { return v ? ordinato(v).replace(/\s*\/\s*/g, "\n") : "Riposo"; }
+function breve(v) { return testoTurno(v).replace(/:00/g, ""); }   // "9:00–17:00" → "9–17"
 function disegnaTurni() {
   seg("vista", vista);
+  var q = quale(lunedi(new Date()));
+  $("sub-A").textContent = q === "A" ? "questa" : "prossima"; $("sub-B").textContent = q === "B" ? "questa" : "prossima";
   if (vista === "giorni") disegnaGiorni(); else disegnaSettimanaTipo(vista);
 }
-function disegnaGiorni() {   // oggi e prossima settimana, giorno per giorno
+// barra delle 24 ore con i turni colorati (e la linea di "adesso" se è oggi)
+function barraGiorno(d, p, adesso) {
+  var b = el("div", "barra");
+  var pezzi = fasceGiorno(d, p).map(function (f) { return [f[0], Math.min(f[1], 1440)]; });
+  fasceGiorno(piuGiorni(d, -1), p).forEach(function (f) { if (f[1] > 1440) pezzi.push([0, f[1] - 1440]); });   // turno di notte iniziato ieri
+  pezzi.forEach(function (f) {
+    var i = el("i"); i.style.left = (f[0] / 14.4) + "%"; i.style.width = Math.max(1.5, (f[1] - f[0]) / 14.4) + "%"; b.appendChild(i);
+  });
+  if (adesso) { var n = new Date(), m = el("b"); m.style.left = ((n.getHours() * 60 + n.getMinutes()) / 14.4) + "%"; b.appendChild(m); }
+  return b;
+}
+function legenda() {
+  var l = el("div", "legenda");
+  [0, 1].forEach(function (p) { var s = el("span", "p" + p); s.textContent = cfg.nomi[p]; l.appendChild(s); });
+  var t = el("small"); t.textContent = "tocca un turno per cambiarlo"; l.appendChild(t);
+  return l;
+}
+function disegnaGiorni() {   // da oggi alla fine della prossima settimana, con le barre orarie di tutti e due
   var box = $("giorni"), lun = lunedi(new Date()), oggi = iso(new Date());
-  box.innerHTML = "";
+  box.innerHTML = ""; box.appendChild(legenda());
   [0, 1].forEach(function (w) {
     var l = piuGiorni(lun, 7 * w), t = el("div", "settimana");
-    t.textContent = (w ? "Prossima settimana" : "Questa settimana") + " · " + quale(l);
+    t.textContent = (w ? "Prossima settimana" : "Questa settimana") + " · ";
+    var em = el("em"); em.textContent = "settimana " + quale(l); t.appendChild(em);
     box.appendChild(t);
     for (var g = 0; g < 7; g++) {
       var d = piuGiorni(l, g), k = iso(d);
       if (k < oggi) continue;   // i giorni passati non servono
       var r = el("div", "giorno" + (k === oggi ? " oggi" : ""));
-      var dt = el("div", "data"); dt.textContent = GIORNI_LUN[g];
-      var b = el("b"); b.textContent = d.getDate() + " " + MESI[d.getMonth()].slice(0, 3); dt.appendChild(b);
+      var dt = el("div", "data"), b = el("b"), sp = el("span");
+      b.textContent = k === oggi ? "Oggi" : GIORNI_LUN_LUNGHI[g].charAt(0).toUpperCase() + GIORNI_LUN_LUNGHI[g].slice(1);
+      sp.textContent = d.getDate() + " " + MESI[d.getMonth()].slice(0, 3);
+      dt.appendChild(b); dt.appendChild(sp);
+      var ins = insieme(d);
+      if (ins) { var c = el("span", "tag"); c.textContent = ins === "giorno" ? "♥ liberi insieme" : "♡ serata insieme"; dt.appendChild(c); }
       r.appendChild(dt);
-      [0, 1].forEach(function (p) { cellaTurno(r, d, p); });
+      [0, 1].forEach(function (p) { rigaTurno(r, d, p, k === oggi); });
       box.appendChild(r);
     }
   });
 }
-function cellaTurno(r, d, p) {   // funzione a parte: ogni casella tiene la propria data
-  var v = turno(d, p), c = el("button", "cella" + (v ? "" : " riposo") + (haEccezione(d, p) ? " eccezione" : ""));
+function rigaTurno(r, d, p, eOggi) {   // funzione a parte: ogni riga tiene la propria data
+  var v = turno(d, p), c = el("button", "riga p" + p + (haEccezione(d, p) ? " eccezione" : ""));
   c.type = "button";
-  var n = el("small"); n.textContent = cfg.nomi[p]; c.appendChild(n);
-  var s = el("span"); s.textContent = testoTurno(v); c.appendChild(s);
+  var n = el("span", "chi"); n.textContent = cfg.nomi[p]; c.appendChild(n);
+  c.appendChild(barraGiorno(d, p, eOggi));
+  var h = el("span", "h" + (v ? "" : " riposo")); h.textContent = v ? breve(v) : "Riposo"; c.appendChild(h);
   c.onclick = function () { modificaTurno({ modo: "data", d: d, p: p }); };
   r.appendChild(c);
 }
-function disegnaSettimanaTipo(lettera) {   // la settimana A o B "tipo", per una persona
-  var p = personaSel, b = $("persona").children;
-  b[0].textContent = cfg.nomi[0]; b[1].textContent = cfg.nomi[1]; seg("persona", String(p));
-  var lun = lunedi(new Date()), questa = quale(lun) === lettera, l = questa ? lun : piuGiorni(lun, 7);
-  $("st-spiega").textContent = "La settimana " + lettera + " è " + (questa ? "questa" : "la prossima") + " (" + l.getDate() + "–" + piuGiorni(l, 6).getDate() + " " + MESI[piuGiorni(l, 6).getMonth()] + ") e si ripete ogni due settimane.";
+function disegnaSettimanaTipo(lettera) {   // la settimana A o B "tipo": tutti e due affiancati
+  var lun = lunedi(new Date()), questa = quale(lun) === lettera, l = questa ? lun : piuGiorni(lun, 7), fine = piuGiorni(l, 6);
+  $("st-spiega").textContent = "Turni abituali della settimana " + lettera + " (" + (questa ? "questa" : "la prossima") + ": " + l.getDate() + "–" +
+    fine.getDate() + " " + MESI[fine.getMonth()] + "). Si ripetono ogni due settimane; per cambiare un solo giorno usa il Calendario.";
   var box = $("st-giorni"); box.innerHTML = "";
-  for (var g = 0; g < 7; g++) (function (g) {
-    var v = cfg.turni[lettera][g][p], r = el("button", "riga-sett"); r.type = "button";
-    var a = el("span", "g"); a.textContent = GIORNI_LUN[g];
-    var c = el("span", "v" + (v ? "" : " riposo")); c.textContent = testoTurno(v);
-    r.appendChild(a); r.appendChild(c);
-    r.onclick = function () { modificaTurno({ modo: "sett", lettera: lettera, g: g, p: p }); };
+  var th = el("div", "r testa"); th.appendChild(el("span"));
+  [0, 1].forEach(function (p) { var s = el("span", "p" + p); s.textContent = cfg.nomi[p]; th.appendChild(s); });
+  box.appendChild(th);
+  for (var g = 0; g < 7; g++) {
+    var r = el("div", "r"), a = el("span", "g" + (g > 4 ? " fine" : "")); a.textContent = GIORNI_LUN[g]; r.appendChild(a);
+    [0, 1].forEach(function (p) {
+      var gg = g, v = cfg.turni[lettera][g][p], c = el("button", "cella p" + p + (v ? "" : " riposo"));
+      c.type = "button"; c.textContent = v ? breve(v) : "Riposo";
+      c.onclick = function () { modificaTurno({ modo: "sett", lettera: lettera, g: gg, p: p }); };
+      r.appendChild(c);
+    });
     box.appendChild(r);
-  })(g);
+  }
 }
 
 // --- editor orari: fasce con l'orologio del telefono, copia su più giorni ---
@@ -491,21 +565,31 @@ $("ed-nomi").querySelector("form").onsubmit = function (e) {
 
 // ================= oggi =================
 function disegnaOggi() {
-  var d = new Date(), gg = GIORNI[d.getDay()];
-  $("oggi-data").innerHTML = "";
-  $("oggi-data").appendChild(document.createTextNode(gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()]));
-  var sm = el("small"); sm.textContent = "Settimana " + quale(d); $("oggi-data").appendChild(sm);
+  var d = new Date(), gg = GIORNI[d.getDay()], oggi0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  var e = $("eroe"); e.innerHTML = "";
+  var t = el("div", "giorno-txt"); t.textContent = gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];
+  var sm = el("div", "sett"); sm.textContent = "Settimana " + quale(d);
+  e.appendChild(t); e.appendChild(sm);
+  var ins = insieme(oggi0), c = el("div", "cuore"), prox = prossimoGiornoInsieme(piuGiorni(oggi0, 1));
+  if (ins === "giorno") c.textContent = "♥ Oggi siete liberi insieme";
+  else if (ins === "sera") c.textContent = "♡ Stasera siete liberi insieme";
+  else if (prox) {
+    var diff = Math.round((prox - oggi0) / 864e5);
+    c.textContent = "♥ Prossimo giorno insieme: " + (diff === 1 ? "domani" : GIORNI[prox.getDay()] + " " + prox.getDate() + (diff > 6 ? " " + MESI[prox.getMonth()].slice(0, 3) : ""));
+  } else c.hidden = true;
+  e.appendChild(c);
   var box = $("oggi-turni"); box.innerHTML = "";
   [0, 1].forEach(function (p) {
-    var v = turno(d, p), b = el("button", "turno-oggi" + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
-    var chi = el("span", "chi"); chi.textContent = cfg.nomi[p];
-    var ore = el("span", "ore" + (v ? "" : " riposo")); ore.textContent = v ? scriviFasce(leggiFasce(v)).replace(/ \/ /g, "\n") || v : "Riposo";
-    var testi = el("span", "testi"), ad = el("span"), st = statoAdesso(p);
-    var cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");   // "Riposo" c'è già scritto sopra
-    ad.className = "adesso " + st.stato; ad.textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
-    testi.appendChild(ore); testi.appendChild(ad);
-    b.appendChild(chi); b.appendChild(testi);
-    b.onclick = function () { modificaTurno({ modo: "data", d: d, p: p }); };
+    var v = turno(d, p), b = el("button", "persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
+    var testa = el("div", "testa"), av = el("span", "avatar"); av.textContent = (cfg.nomi[p] || "?").charAt(0).toUpperCase();
+    var testi = el("div"), nome = el("span", "nome"); nome.textContent = cfg.nomi[p];
+    var ore = el("span", "ore" + (v ? "" : " riposo")); ore.textContent = v ? breve(v).replace(/\n/g, " · ") : "Riposo";
+    testi.appendChild(nome); testi.appendChild(ore); testa.appendChild(av); testa.appendChild(testi); b.appendChild(testa);
+    var st = statoAdesso(p), cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");
+    var pil = el("span", "pillola " + st.stato); pil.textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1); b.appendChild(pil);
+    b.appendChild(barraGiorno(oggi0, p, true));
+    var assi = el("div", "ore-assi"); ["0", "6", "12", "18", "24"].forEach(function (x) { var s = el("span"); s.textContent = x; assi.appendChild(s); }); b.appendChild(assi);
+    b.onclick = function () { modificaTurno({ modo: "data", d: oggi0, p: p }); };
     box.appendChild(b);
   });
 }
