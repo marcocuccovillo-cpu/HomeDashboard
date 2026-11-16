@@ -109,6 +109,10 @@ STRATEGIE = [
 ]
 
 
+class RouterOccupato(Exception):
+    """Il router non dà la pagina di accesso normale: di solito c'è già un'altra sessione aperta."""
+
+
 class RouterNonLegge(Exception):
     """Login riuscito ma il router non dà la lista: si prova la strategia successiva."""
 
@@ -140,7 +144,8 @@ async def leggi_wifi(api):
 
 async def _leggi_con(c, s):
     import aiohttp
-    from aiovodafone.exceptions import AlreadyLogged, CannotAuthenticate, CannotConnect, GenericLoginError, ModelNotSupported
+    from aiovodafone.exceptions import (AlreadyLogged, CannotAuthenticate, CannotConnect, GenericLoginError,
+                                        GenericResponseError, ModelNotSupported)
     from aiovodafone.models import get_device_type, init_device_class
 
     def barattolo():   # unsafe=True: serve per tenere i cookie con un indirizzo IP (192.168.1.1)
@@ -166,6 +171,8 @@ async def _leggi_con(c, s):
                 entrato = await api.login(force_logout=True)
             if not entrato:
                 raise RuntimeError("Il router ha rifiutato utente o password.")
+        except GenericResponseError as e:   # pagina di accesso diversa dal solito: router occupato da un'altra sessione
+            raise RouterOccupato(str(e))
         except (CannotAuthenticate, GenericLoginError):
             raise RuntimeError("Il router ha rifiutato utente o password (prova l'utente 'vodafone' o 'admin').")
         try:
@@ -194,12 +201,23 @@ async def leggi_router(c):
     """Restituisce (modello, [dispositivi]) leggendo la Vodafone Station."""
     preferita = c.get("strategia")
     ordine = sorted(STRATEGIE, key=lambda s: s["nome"] != preferita)
-    ultimo = None
+    ultimo, occupato = None, 0
     for s in ordine:
-        try:
-            modello, dati = await _leggi_con(c, s)
-        except RouterNonLegge as e:
-            ultimo = e
+        while True:   # router occupato da un'altra sessione: aspetto che scada e riprovo (al massimo 3 volte)
+            try:
+                modello, dati = await _leggi_con(c, s)
+                break
+            except RouterOccupato:
+                occupato += 1
+                if occupato > 3:
+                    raise RuntimeError("Il router è occupato da un'altra sessione (pannello web aperto o un altro lettore). "
+                                       "Riprovo più tardi.")
+                print(f"   (il router è occupato da un'altra sessione, riprovo tra 30 secondi)")
+                await asyncio.sleep(30)
+            except RouterNonLegge as e:
+                modello = None
+                break
+        if modello is None:
             print(f"   (modo '{s['nome']}': il router chiede di nuovo il login, provo un altro modo)")
             await asyncio.sleep(2)
             continue
@@ -393,8 +411,44 @@ def diagnosi(c):
     print("Per vedere le ultime righe:  tail -n 40 " + percorso)
 
 
+def altri_lettori():
+    """PID degli altri dispositivi.py in esecuzione (il lettore in background)."""
+    pid = []
+    for p in os.listdir("/proc"):
+        if not p.isdigit() or int(p) == os.getpid():
+            continue
+        try:
+            with open(f"/proc/{p}/cmdline", "rb") as f:
+                riga = f.read().replace(b"\0", b" ").decode(errors="ignore")
+        except OSError:
+            continue
+        if "dispositivi.py" in riga and "--" not in riga:
+            pid.append(int(p))
+    return pid
+
+
 def prova(c):
     """Legge il router una volta, stampa la lista e controlla la password di casa."""
+    import signal
+    fermati = altri_lettori()
+    if fermati:   # il router accetta una sessione alla volta: fermo il lettore in background durante la prova
+        print("Fermo per un momento il lettore in background (il router accetta una sessione alla volta)…")
+        for p in fermati:
+            try:
+                os.kill(p, signal.SIGTERM)
+            except OSError:
+                pass
+        time.sleep(3)
+    try:
+        _prova(c)
+    finally:
+        avvio = os.path.expanduser("~/.termux/boot/homedashboard")
+        if fermati and os.path.exists(avvio):
+            subprocess.Popen(["sh", avvio], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+            print("Lettore in background fatto ripartire.")
+
+
+def _prova(c):
     c["_vuoi_wifi"] = True
     modello, lista = asyncio.run(leggi_router(c))
     stampa(modello, lista)
