@@ -16,10 +16,11 @@ libreria dell'integrazione "Vodafone Station" di Home Assistant.
 
 ## Installazione (una volta sola, sul tablet)
 
-1. Installa **F-Droid** (https://f-droid.org) e da lì le app **Termux** e **Termux:Boot**.
-   Quelle del Play Store sono vecchie e non funzionano.
+1. Installa **F-Droid** (https://f-droid.org) e da lì le app **Termux**, **Termux:Boot** e **Termux:API**
+   (quest'ultima serve per batteria e temperatura del tablet). Quelle del Play Store sono vecchie e non funzionano.
 2. Apri **Termux:Boot** una volta (serve ad attivarlo), poi apri **Termux**.
-3. In Termux incolla questo comando e premi Invio:
+3. In Termux incolla questo comando e premi Invio. **Non serve scriverlo**: nella dashboard del tablet
+   apri ⚙ → *Lettore in Termux* e tocca **Copia**; in Termux tieni premuto sullo schermo e scegli **Incolla**.
 
    ```
    curl -fsSLo installa.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/installa-termux.sh && bash installa.sh
@@ -32,11 +33,18 @@ libreria dell'integrazione "Vodafone Station" di Home Assistant.
 Alla fine il programma legge il router una volta e mostra la lista: se la vedi, funziona.
 Si riavvia da solo quando il tablet si accende.
 
+## Comandi utili
+
+Tutti si trovano anche nella dashboard, in ⚙ → *Lettore in Termux*, con il tasto **Copia**.
+
+- Aggiornare e far ripartire il lettore:
+  `curl -fsSLo avvia.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/avvia-termux.sh && bash avvia.sh`
+
 ## Se qualcosa non va
 
 - Rifare le impostazioni: `python ~/homedashboard/dispositivi.py --configura`
 - Provare senza pubblicare: `python ~/homedashboard/dispositivi.py --prova`
-- Vedere cosa è successo: `tail ~/homedashboard/registro.txt`
+- Vedere cosa è successo: `tail -n 20 ~/homedashboard/registro.txt`
 - Registro dettagliato della conversazione con il router (senza password): `python ~/homedashboard/dispositivi.py --diagnosi`
 
 ## Privacy

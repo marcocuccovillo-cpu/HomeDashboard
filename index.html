@@ -273,6 +273,10 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
   .chips button { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 20px;
                   font-size: 2.1vh; padding: .8vh 14px; }
+  .cmd { margin-bottom: 1vh; }
+  .cmd label { display: block; font-size: 1.8vh; margin-bottom: .4vh; }
+  .cmd .riga { flex-wrap: nowrap; margin: 0; }
+  .cmd input { flex: 1; font-family: ui-monospace, "Roboto Mono", Menlo, monospace; font-size: 1.8vh !important; color: var(--muted) !important; }
   .nota-txt { font-size: 1.85vh; color: var(--muted); margin: 4px 0 8px; line-height: 1.4; }
   .btn-rosso { color: #b4412f; border-color: #e5b7ad; }
   .scuro #en-testo.giallo { background: #fbe38b; } .scuro #en-testo.rosa { background: #f7c4cf; } .scuro #en-testo.verde { background: #c9e5ad; }
@@ -521,6 +525,16 @@
       <button class="btn-piccolo btn-rosso" id="sync-esci">Esci da questo dispositivo</button>
     </div>
     <div class="nota-txt">Se avete rigenerato il codice GitHub (o è scaduto), crealo su <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--accent)">questa pagina</a> con accesso solo a HomeDashboard e "Contents: Read and write", poi premi "Nuovo codice GitHub". Vale subito per tutti i dispositivi.</div>
+
+    <h3>Lettore in Termux (dispositivi e tablet)</h3>
+    <div class="nota-txt">Tocca <b>Copia</b>, apri Termux, tieni premuto sullo schermo e scegli <b>Incolla</b>, poi premi Invio.
+      Serve aver installato da F-Droid le app Termux, Termux:Boot e Termux:API.</div>
+    <div class="cmd"><label>Prima installazione (una volta sola)</label><div class="riga"><input type="text" readonly value="curl -fsSLo installa.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/installa-termux.sh && bash installa.sh"><button class="btn-piccolo" type="button">Copia</button></div></div>
+    <div class="cmd"><label>Aggiorna e fai ripartire il lettore</label><div class="riga"><input type="text" readonly value="curl -fsSLo avvia.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/avvia-termux.sh && bash avvia.sh"><button class="btn-piccolo" type="button">Copia</button></div></div>
+    <div class="cmd"><label>Prova: leggi il router una volta</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --prova"><button class="btn-piccolo" type="button">Copia</button></div></div>
+    <div class="cmd"><label>Cambia password del router o di casa</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --configura"><button class="btn-piccolo" type="button">Copia</button></div></div>
+    <div class="cmd"><label>Ultime righe del registro</label><div class="riga"><input type="text" readonly value="tail -n 20 ~/homedashboard/registro.txt"><button class="btn-piccolo" type="button">Copia</button></div></div>
+    <div class="cmd"><label>Diagnosi (se qualcosa non va)</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --diagnosi"><button class="btn-piccolo" type="button">Copia</button></div></div>
 
     <h3>Schermo</h3>
     <div class="riga">
@@ -937,6 +951,14 @@ $("sync-codice").onclick = function () {
     });
   });
 };
+[].forEach.call(document.querySelectorAll(".cmd"), function (c) {   // tasti "Copia" dei comandi per Termux
+  var inp = c.querySelector("input"), b = c.querySelector("button");
+  b.onclick = function () {
+    var fatto = function () { b.textContent = "Copiato ✓"; setTimeout(function () { b.textContent = "Copia"; }, 2000); };
+    var vecchio = function () { inp.focus(); inp.select(); try { document.execCommand("copy"); fatto(); } catch (e) {} };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(fatto, vecchio); else vecchio();
+  };
+});
 $("sync-esci").onclick = function () {
   if (confirm("Uscire da questo dispositivo? Per rientrare servirà la password. I dati restano sugli altri dispositivi.")) esci();
 };
