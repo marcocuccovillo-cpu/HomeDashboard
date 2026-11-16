@@ -272,8 +272,11 @@
   /* --- carosello foto --- */
   #card-foto { padding: 0; overflow: hidden; }
   #carosello { position: relative; flex: 1; min-height: 0; background: var(--line); }
-  #carosello img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s; }
-  #carosello img.vis { opacity: 1; }
+  #carosello { overflow: hidden; }
+  #carosello img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1.2s; }
+  #carosello .sfondo { position: absolute; inset: -30px; background-size: cover; background-position: center;
+                       filter: blur(22px) brightness(.72) saturate(1.1); opacity: 0; transition: opacity 1.2s; }
+  #carosello img.vis, #carosello .sfondo.vis { opacity: 1; }
   #car-vuoto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
                color: var(--muted); font-size: 2.2vh; line-height: 1.5; padding: 2vw; }
   body.notte #carosello img { filter: brightness(.7); }
@@ -416,6 +419,7 @@
     </section>
     <section class="card riempi" id="card-foto">
       <div id="carosello">
+        <div class="sfondo" id="sfA"></div><div class="sfondo" id="sfB"></div>
         <img id="carA" alt=""><img id="carB" alt="">
         <div id="car-vuoto">Nessuna foto per ora.<br>Aggiungile dal telefono (scheda Foto) o da ⚙.</div>
       </div>
@@ -1165,15 +1169,17 @@ var car = { idx: Math.floor(Math.random() * 1000), lato: 0, url: [null, null], t
 function carosello() {
   var vuoto = !fotoChiavi.length;
   $("car-vuoto").hidden = !vuoto;
-  if (vuoto) { $("carA").classList.remove("vis"); $("carB").classList.remove("vis"); return; }
+  if (vuoto) { ["carA", "carB", "sfA", "sfB"].forEach(function (id) { $(id).classList.remove("vis"); }); return; }
   var k = fotoChiavi[car.idx++ % fotoChiavi.length];
   store("readonly").then(function (s) { return req(s.get(k)); }).then(function (blob) {
     if (!blob) return;
     car.lato = 1 - car.lato;
     var img = car.lato ? $("carB") : $("carA"), altra = car.lato ? $("carA") : $("carB");
+    var sf = car.lato ? $("sfB") : $("sfA"), sfAltro = car.lato ? $("sfA") : $("sfB");
     if (car.url[car.lato]) URL.revokeObjectURL(car.url[car.lato]);
     car.url[car.lato] = URL.createObjectURL(blob);
-    img.onload = function () { img.classList.add("vis"); altra.classList.remove("vis"); };
+    sf.style.backgroundImage = "url(" + car.url[car.lato] + ")";   // la stessa foto, sfocata, riempie i bordi
+    img.onload = function () { img.classList.add("vis"); sf.classList.add("vis"); altra.classList.remove("vis"); sfAltro.classList.remove("vis"); };
     img.src = car.url[car.lato];
   });
 }
