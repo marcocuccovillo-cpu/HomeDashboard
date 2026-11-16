@@ -24,7 +24,7 @@ function isNotte() { var h = new Date().getHours(); return h >= NOTTE_DA || h < 
 function vuotaSett() { var s = []; for (var i = 0; i < 7; i++) s.push(["", ""]); return s; }
 var cfg = leggi("cucina_cfg", {});
 cfg.nomi = cfg.nomi || ["Marco", "Lei"];
-cfg.fotoAttesa = cfg.fotoAttesa || 5; cfg.fotoOgni = cfg.fotoOgni || 12;
+cfg.fotoOgni = cfg.fotoOgni || 12;
 cfg.ancora = cfg.ancora || null;              // { lunedi: "YYYY-MM-DD", sett: "A" }
 cfg.turni = cfg.turni || { A: vuotaSett(), B: vuotaSett() };
 cfg.eccezioni = cfg.eccezioni || {};

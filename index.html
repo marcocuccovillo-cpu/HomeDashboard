@@ -436,7 +436,7 @@
       <span class="stato" id="stato-schermo"></span>
     </div>
 
-    <h3>Foto a rotazione</h3>
+    <h3>Foto</h3>
     <div class="riga">
       <label class="btn-pieno" style="color:#fff">Aggiungi foto
         <input type="file" id="foto-input" accept="image/*" multiple style="display:none">
@@ -445,14 +445,10 @@
       <label id="foto-conta"></label>
     </div>
     <div class="riga">
-      <label>Partono dopo</label>
-      <input type="number" id="foto-attesa" min="1" max="120" style="width:10vh"> <label>minuti senza toccare lo schermo</label>
-    </div>
-    <div class="riga">
       <label>Cambia foto ogni</label>
       <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
     </div>
-    <div class="nota-txt">Se il tablet è collegato, le foto si possono caricare anche dalla versione per telefono e arrivano qui da sole. Di notte non partono.</div>
+    <div class="nota-txt">Le foto girano nel riquadro a destra; toccandolo si vedono a tutto schermo per un minuto, poi torna la dashboard. Se il tablet è collegato, si possono caricare anche dal telefono e arrivano qui da sole.</div>
   </div>
 </div>
 
@@ -824,7 +820,7 @@ function controllaTimer() {
   disegnaTimer();
 }
 $("allarme").onclick = function () {
-  $("allarme").classList.remove("on"); clearInterval(beepInt); allarmeAttivo = null; toccato();
+  $("allarme").classList.remove("on"); clearInterval(beepInt); allarmeAttivo = null;
 };
 
 function mostraStatoSync() {
@@ -923,9 +919,7 @@ function sincronizzaFoto() {   // scarica le foto nuove caricate dal telefono e 
   }).catch(function () {}).then(function () { fotoSyncInCorso = false; caricaChiavi(); });
 }
 
-var ultimoTocco = Date.now(), fotoIdx = 0, fotoTimer = null, fotoUrl = [null, null], fotoLato = 0;
-function toccato() { ultimoTocco = Date.now(); }
-["touchstart", "mousedown", "keydown"].forEach(function (e) { document.addEventListener(e, toccato, true); });
+var fotoAperte = 0, fotoIdx = 0, fotoTimer = null, fotoUrl = [null, null], fotoLato = 0;
 function mostraProssima() {
   if (!fotoChiavi.length) return chiudiFoto();
   var k = fotoChiavi[fotoIdx++ % fotoChiavi.length];
@@ -960,23 +954,20 @@ function carosello() {
 function avviaCarosello() { clearInterval(car.timer); car.timer = setInterval(carosello, Math.max(3, cfg.fotoOgni) * 1000); }
 $("carosello").onclick = function () { if (fotoChiavi.length) apriFoto(); };
 function apriFoto() {
+  fotoAperte = Date.now();
   fotoIdx = Math.floor(Math.random() * fotoChiavi.length);
   $("foto").classList.add("on"); mostraProssima();
   fotoTimer = setInterval(mostraProssima, Math.max(3, cfg.fotoOgni) * 1000);
 }
 function chiudiFoto() { $("foto").classList.remove("on"); clearInterval(fotoTimer); fotoTimer = null; }
-$("foto").onclick = function () { chiudiFoto(); toccato(); };
-function controllaInattivita() {
-  var tag = document.activeElement ? document.activeElement.tagName : "";
-  var aperto = document.querySelector(".scuro.on") || allarmeAttivo || tag === "INPUT" || tag === "TEXTAREA";
-  if (!fotoTimer && !aperto && fotoChiavi.length && !isNotte() && Date.now() - ultimoTocco > cfg.fotoAttesa * 60000) apriFoto();
-  if (fotoTimer && isNotte()) chiudiFoto();
-}
+$("foto").onclick = function () { chiudiFoto(); };
+// le foto a tutto schermo si aprono solo toccando il carosello e dopo un minuto torna la dashboard
+function controllaFoto() { if (fotoTimer && Date.now() - fotoAperte > 60 * 1000) chiudiFoto(); }
 
 // ================= impostazioni =================
 function aggiornaImpostazioni() {
   $("nome0").value = cfg.nomi[0]; $("nome1").value = cfg.nomi[1];
-  $("foto-attesa").value = cfg.fotoAttesa; $("foto-ogni").value = cfg.fotoOgni;
+  $("foto-ogni").value = cfg.fotoOgni;
   seg("seg-corrente", quale(new Date()));
   seg("seg-schermo", cfg.schermoAcceso ? "si" : "no"); statoSchermo();
 }
@@ -984,7 +975,6 @@ $("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi();
 function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni(); }
 $("nome0").oninput = function () { cambiaNome(0, this.value); };
 $("nome1").oninput = function () { cambiaNome(1, this.value); };
-$("foto-attesa").onchange = function () { cfg.fotoAttesa = Math.max(1, +this.value || 5); salvaCfg(); };
 $("foto-ogni").onchange = function () { cfg.fotoOgni = Math.max(3, +this.value || 12); salvaCfg(); avviaCarosello(); };
 $("seg-corrente").onclick = function (e) {
   var v = e.target.getAttribute("data-v"); if (!v) return;
@@ -1048,7 +1038,7 @@ sincronizzaFoto(); setInterval(sincronizzaFoto, 60 * 1000);
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);
-setInterval(controllaInattivita, 5000);
+setInterval(controllaFoto, 5000);
 setInterval(tieniAcceso, 60 * 1000);
 setInterval(function () { if (!document.querySelector(".scuro.on")) disegnaTurni(); }, 60 * 1000);
 // ricarica completa ogni notte alle 4 (evita rallentamenti dopo giorni accesa)
