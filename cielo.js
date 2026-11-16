@@ -82,8 +82,27 @@ function leggiTLE() {
     .then(function (x) { x.quando = Date.now(); salva("cielo_tle", x); return x; }, function (e) { if (salvato) return salvato; throw e; });
 }
 
-// ---------------------------------------------------------------- mappa (equirettangolare 360×180)
-function xy(lat, lon) { return [lon + 180, 90 - lat]; }
+// ---------------------------------------------------------------- mappa: tre viste (casa, Italia, mondo)
+// Proiezione equirettangolare larga sempre 360 unità; nelle viste vicine la longitudine è corretta col coseno
+// della latitudine, così le distanze sono giuste e il cerchio dei 30 km è un cerchio.
+var VISTE = {
+  casa: { lonMin: 8.4, lonMax: 13.6, latMin: 43.55, latMax: 45.35, terra: "50m" },    // Emilia-Romagna e regioni intorno
+  italia: { lonMin: 6.3, lonMax: 19.2, latMin: 36.4, latMax: 47.3, terra: "50m" },
+  mondo: { terra: "110m" }
+};
+var vista = leggi("mappa_vista", "casa"); if (!VISTE[vista]) vista = "casa";
+var PROJ = null;
+function impostaVista(v) {
+  vista = v; var V = VISTE[v];
+  if (v === "mondo") PROJ = { mondo: true, H: 180 };
+  else { var c = Math.cos((V.latMin + V.latMax) / 2 * RAD), k = 360 / ((V.lonMax - V.lonMin) * c); PROJ = { c: c, k: k, V: V, H: (V.latMax - V.latMin) * k }; }
+}
+impostaVista(vista);
+function xy(lat, lon) {
+  if (PROJ.mondo) return [lon + 180, 90 - lat];
+  return [(lon - PROJ.V.lonMin) * PROJ.c * PROJ.k, (PROJ.V.latMax - lat) * PROJ.k];
+}
+function dentro(p, m) { m = m || 0; return p[0] >= -m && p[0] <= 360 + m && p[1] >= -m && p[1] <= PROJ.H + m; }
 function percorso(punti) {   // spezza la linea quando attraversa la linea del cambio data
   var d = "", prima = null;
   punti.forEach(function (p) {
@@ -109,29 +128,81 @@ function anelloTerra(anello) {   // [lon, lat] → path; gestisce i contorni che
   p.forEach(function (q, i) { if (salti.indexOf(i) >= 0) { d += percorso(pezzo) + "Z"; pezzo = []; } pezzo.push(q); });
   return d + percorso(pezzo) + "Z";
 }
-function caricaTerra() {
-  if (cielo.terra) return Promise.resolve(cielo.terra);
-  return fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json").then(function (r) { return r.json(); }).then(function (w) {
-    var f = topojson.feature(w, w.objects.land), d = "";
-    (f.features || [f]).forEach(function (ft) {
-      var g = ft.geometry, poli = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
-      poli.forEach(function (p) { p.forEach(function (anello) { d += anelloTerra(anello); }); });
-    });
-    cielo.terra = d; return d;
+cielo.land = {}; cielo.path = {};
+function caricaTerra() {   // terre emerse della risoluzione giusta per la vista (110m mondo, 50m vicino)
+  var res = VISTE[vista].terra;
+  if (cielo.land[res]) return Promise.resolve();
+  return fetch("https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-" + res + ".json").then(function (r) { return r.json(); }).then(function (w) {
+    var f = topojson.feature(w, w.objects.land); cielo.land[res] = f.features || [f];
   });
 }
+function caricaRegioni() {
+  if (cielo.regioni) return Promise.resolve();
+  return fetch("regioni.json").then(function (r) { return r.json(); }).then(function (j) { cielo.regioni = j.regioni; });
+}
+function pathTerra() {
+  var res = VISTE[vista].terra; if (!cielo.land[res]) return "";
+  if (cielo.path[vista]) return cielo.path[vista];
+  var d = "";
+  cielo.land[res].forEach(function (ft) {
+    var g = ft.geometry, poli = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+    poli.forEach(function (p) {
+      if (!PROJ.mondo) {   // nelle viste vicine salto le terre lontane (più leggero)
+        var b = p[0].reduce(function (m, c) { return [Math.min(m[0], c[0]), Math.max(m[1], c[0]), Math.min(m[2], c[1]), Math.max(m[3], c[1])]; }, [999, -999, 999, -999]);
+        var V = PROJ.V; if (b[1] < V.lonMin - 2 || b[0] > V.lonMax + 2 || b[3] < V.latMin - 2 || b[2] > V.latMax + 2) return;
+      }
+      p.forEach(function (anello) { d += anelloTerra(anello); });
+    });
+  });
+  return (cielo.path[vista] = d);
+}
+function disegnaRegioni(svg) {   // confini ISTAT; la regione di casa evidenziata, i nomi di quelle visibili
+  if (PROJ.mondo || !cielo.regioni) return;
+  cielo.regioni.forEach(function (r) {
+    var d = "", grande = null, area = 0;
+    r.a.forEach(function (an) {
+      d += percorso(an.map(function (c) { return [c[1], c[0]]; })) + "Z";
+      if (an.length > area) { area = an.length; grande = an; }
+    });
+    svg.appendChild(svgEl("path", { d: d, class: "reg" + (r.id === 8 ? " casa-reg" : "") }));
+    if (!grande || (vista !== "casa" && r.id !== 8)) return;   // in vista Italia solo il nome della regione di casa
+    // nome al centro della parte visibile della regione (se se ne vede abbastanza)
+    var vis = grande.map(function (c) { return xy(c[1], c[0]); }).filter(function (q) { return dentro(q, -6); });
+    if (vis.length < Math.max(6, grande.length * 0.12)) return;
+    var p = [0, 0]; vis.forEach(function (q) { p[0] += q[0]; p[1] += q[1]; }); p = [p[0] / vis.length, p[1] / vis.length];
+    var t = svgEl("text", { x: p[0].toFixed(1), y: p[1].toFixed(1), class: "reg-nome" + (r.id === 8 ? " casa-reg" : "") });
+    t.textContent = r.n.replace("Trentino-Alto Adige", "Trentino A.A.").replace("Friuli-Venezia Giulia", "Friuli V.G."); svg.appendChild(t);
+  });
+}
+function frecciaVerso(svg, lat, lon, testo, cls) {   // oggetto fuori dalla vista: freccia sul bordo nella sua direzione
+  var c = xy(CASA.lat, CASA.lon), az = rotta(CASA, { lat: lat, lon: lon }) * RAD, dx = Math.sin(az), dy = -Math.cos(az), M = 9;
+  var t = Math.min(dx > 0 ? (360 - M - c[0]) / dx : dx < 0 ? (M - c[0]) / dx : 1e9, dy > 0 ? (PROJ.H - M - c[1]) / dy : dy < 0 ? (M - c[1]) / dy : 1e9);
+  var x = c[0] + dx * t, y = c[1] + dy * t, g = svgEl("g", { class: "freccia " + (cls || ""), transform: "translate(" + x.toFixed(1) + " " + y.toFixed(1) + ")" });
+  g.appendChild(svgEl("path", { d: "M0 -4L3.5 3L0 1.5L-3.5 3Z", transform: "rotate(" + (az / RAD).toFixed(0) + ")" }));
+  var l = svgEl("text", { x: dx > .3 ? -6 : 6, y: dy > .3 ? -5 : 9, "text-anchor": dx > .3 ? "end" : "start" }); l.textContent = testo; g.appendChild(l);
+  svg.appendChild(g);
+}
 function disegnaMappa(ora, attuale) {
-  var svg = $("iss-mappa"); svg.innerHTML = "";
-  svg.appendChild(svgEl("rect", { x: 0, y: 0, width: 360, height: 180, class: "mare" }));
-  if (cielo.terra) svg.appendChild(svgEl("path", { d: cielo.terra, class: "terra" }));
+  var svg = $("iss-mappa"); svg.innerHTML = ""; svg.setAttribute("viewBox", "0 0 360 " + PROJ.H.toFixed(1));
+  svg.appendChild(svgEl("rect", { x: 0, y: 0, width: 360, height: PROJ.H, class: "mare" }));
+  var t = pathTerra(); if (t) svg.appendChild(svgEl("path", { d: t, class: "terra" }));
+  disegnaRegioni(svg);
   // notte: la parte di mondo dove il Sole è sotto l'orizzonte
-  var s = sole(ora), dec = s.dec * RAD, pts = [];
-  for (var lon = -180; lon <= 180; lon += 3) pts.push([Math.atan(-Math.cos((lon - s.lon) * RAD) / Math.tan(dec)) / RAD, lon]);
-  var polo = dec > 0 ? -90 : 90, dN = "M0 " + xy(polo, -180)[1];
-  pts.forEach(function (p) { var q = xy(p[0], p[1]); dN += "L" + q[0].toFixed(1) + " " + q[1].toFixed(1); });
-  dN += "L360 " + xy(polo, 180)[1] + "Z";
+  var s = sole(ora), dec = s.dec * RAD, polo = dec > 0 ? -90 : 90, dN = "M" + xy(polo, -180).join(" ");
+  for (var lon = -180; lon <= 180; lon += (PROJ.mondo ? 3 : 0.5)) { var q = xy(Math.atan(-Math.cos((lon - s.lon) * RAD) / Math.tan(dec)) / RAD, lon); dN += "L" + q[0].toFixed(1) + " " + q[1].toFixed(1); }
+  dN += "L" + xy(polo, 180).join(" ") + "Z";
   svg.appendChild(svgEl("path", { d: dN, class: "notte" }));
-  // traccia: 45 minuti indietro (tratteggiata) e 45 avanti
+  // casa vista: cerchio dei 30 km e aerei veri
+  var c = xy(CASA.lat, CASA.lon);
+  if (vista === "casa") {
+    svg.appendChild(svgEl("circle", { cx: c[0], cy: c[1], r: (RAGGIO_KM / 111.2 * PROJ.k).toFixed(1), class: "raggio" }));
+    (cielo.aerei || []).forEach(function (a) {
+      if (a.lat == null) return; var p = xy(a.lat, a.lon);
+      var g = svgEl("g", { transform: "translate(" + p[0].toFixed(1) + " " + p[1].toFixed(1) + ") rotate(" + (a.rotta || 0) + ")" });
+      g.appendChild(svgEl("path", { d: "M0 -3.4L2.3 2.8L0 1.4L-2.3 2.8Z", class: "aereo-mappa" })); svg.appendChild(g);
+    });
+  }
+  // traccia della ISS: 45 minuti indietro (tratteggiata) e 45 avanti
   var passato = [], futuro = [];
   for (var m = -45; m <= 45; m += 1) {
     var g = guarda(cielo.satrec, new Date(ora.getTime() + m * 60000)); if (!g) continue;
@@ -140,10 +211,17 @@ function disegnaMappa(ora, attuale) {
   svg.appendChild(svgEl("path", { d: percorso(passato), class: "traccia passata" }));
   svg.appendChild(svgEl("path", { d: percorso(futuro), class: "traccia" }));
   disegnaViaggiMappa(svg);
-  var c = xy(CASA.lat, CASA.lon); svg.appendChild(svgEl("circle", { cx: c[0], cy: c[1], r: 2.2, class: "casa" }));
+  svg.appendChild(svgEl("circle", { cx: c[0], cy: c[1], r: 2.2, class: "casa" }));
   var i = xy(attuale.lat, attuale.lon);
-  svg.appendChild(svgEl("circle", { cx: i[0], cy: i[1], r: 9, class: "iss-alone" }));
-  svg.appendChild(svgEl("circle", { cx: i[0], cy: i[1], r: 3.6, class: "iss" }));
+  if (dentro(i)) {
+    svg.appendChild(svgEl("circle", { cx: i[0], cy: i[1], r: 9, class: "iss-alone" }));
+    svg.appendChild(svgEl("circle", { cx: i[0], cy: i[1], r: 3.6, class: "iss" }));
+  } else frecciaVerso(svg, attuale.lat, attuale.lon, "ISS " + numero(attuale.dist) + " km", "iss-freccia");
+}
+function cambiaVista(v) {
+  impostaVista(v); salva("mappa_vista", v); seg("mappa-zoom", v);
+  Promise.all([window.topojson ? caricaTerra() : null, caricaRegioni()]).then(aggiornaISS, aggiornaISS);
+  aggiornaISS();
 }
 function quandoTesto(d) {
   var oggi = new Date(), dom = new Date(); dom.setDate(dom.getDate() + 1);
@@ -180,7 +258,9 @@ function avviaISS() {
   leggiTLE().then(function (t) {
     cielo.satrec = satellite.twoline2satrec(t.l1, t.l2); cielo.passaggi = null;
     aggiornaISS();
-    return window.topojson ? caricaTerra().then(aggiornaISS) : null;
+    $("mappa-zoom").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) cambiaVista(v); };
+    seg("mappa-zoom", vista);
+    return Promise.all([window.topojson ? caricaTerra() : null, caricaRegioni()]).then(aggiornaISS);
   }).catch(function () { $("iss-dati").textContent = "Non riesco a scaricare l'orbita della Stazione, riprovo più tardi."; });
 }
 
@@ -221,12 +301,12 @@ function leggiAerei() {
     .then(function (j) {
       cielo.aerei = (j.ac || j.aircraft || []).filter(function (a) { return typeof a.lat === "number"; }).map(function (a) {
         var p = { lat: a.lat, lon: a.lon }, quota = a.alt_baro === "ground" ? 0 : (a.alt_geom || a.alt_baro);
-        return { nome: (a.flight || a.r || a.hex || "").trim(), tipo: a.t || "", quota: typeof quota === "number" ? quota * 0.3048 : null,
+        return { nome: (a.flight || a.r || a.hex || "").trim(), tipo: a.t || "", quota: typeof quota === "number" ? quota * 0.3048 : null, lat: a.lat, lon: a.lon,
           vel: a.gs ? a.gs * 1.852 : null, rotta: a.track, km: distanzaKm(CASA, p), dir: rotta(CASA, p) };
       }).filter(function (a) { return a.km <= RAGGIO_KM; }).sort(function (a, b) { return a.km - b.km; });
       cielo.erroreAerei = "";
     }, function (e) { cielo.erroreAerei = e.message || "errore"; })
-    .then(disegnaRadar);
+    .then(function () { disegnaRadar(); if (vista === "casa") aggiornaISS(); });
 }
 function disegnaRadar() {
   var svg = $("radar"); svg.innerHTML = "";
