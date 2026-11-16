@@ -8,21 +8,26 @@ CARTELLA="$HOME/homedashboard"
 
 echo
 echo "== HomeDashboard: lettore dei dispositivi della Vodafone Station =="
-echo "   Ci vogliono 10-20 minuti la prima volta (alcuni pezzi si compilano sul tablet)."
+echo "   Ci vogliono 5-10 minuti la prima volta."
 echo
 
 echo "-> Installo Python e gli strumenti necessari…"
 pkg update -y
-pkg install -y python clang rust binutils libffi openssl
-# per compilare orjson (usato da aiovodafone) Android vuole sapere la sua versione
-export ANDROID_API_LEVEL="$(getprop ro.build.version.sdk)"
+pkg install -y python clang libffi openssl
 
-echo "-> Installo aiovodafone…"
-pip install --upgrade aiovodafone
+# Le librerie di rete in versione "solo Python": niente da compilare, funziona anche su Android a 32 bit
+export AIOHTTP_NO_EXTENSIONS=1 MULTIDICT_NO_EXTENSIONS=1 YARL_NO_EXTENSIONS=1 FROZENLIST_NO_EXTENSIONS=1 PROPCACHE_NO_EXTENSIONS=1
+
+echo "-> Installo le librerie…"
+pip install --upgrade aiohttp beautifulsoup4 pycryptodome segno
+# aiovodafone senza orjson: orjson richiede Rust e non si compila su Android a 32 bit (armv8l).
+# Al suo posto c'è orjson.py, scaricato qui sotto accanto al lettore.
+pip install --upgrade --no-deps aiovodafone
 
 echo "-> Scarico il lettore…"
 mkdir -p "$CARTELLA"
 curl -fsSL "$SITO/strumenti/dispositivi.py" -o "$CARTELLA/dispositivi.py"
+curl -fsSL "$SITO/strumenti/orjson.py" -o "$CARTELLA/orjson.py"
 
 echo
 python "$CARTELLA/dispositivi.py" --configura
