@@ -177,7 +177,7 @@
   #card-rete { flex: none; }
   #card-cuccia { flex: 1; min-height: 24vh; display: flex; flex-direction: column; padding-bottom: 1.4vh; }
   #card-cuccia h2 small { margin-left: auto; font-size: 1.8vh; color: var(--muted); font-weight: 400; }
-  .cuccia-scena { flex: 1; min-height: 0; position: relative; }
+  .cuccia-scena { flex: 1; min-height: 14vh; position: relative; }
   #cuccia { position: absolute; left: 0; bottom: 0; image-rendering: pixelated; }
   .cuccia-livelli { display: flex; gap: 1.2vw; align-items: center; font-size: 1.7vh; color: var(--muted); margin-top: .8vh; white-space: nowrap; }
   .cuccia-livelli i { display: inline-block; width: 4vw; height: .9vh; border-radius: 1vh; background: var(--line); vertical-align: middle; margin-left: .3vw; overflow: hidden; }
@@ -708,6 +708,12 @@
       <div class="seg" id="seg-gatto"><button data-v="si">Sì</button><button data-v="no">No</button></div>
     </div>
 
+    <h3>Aggiornamenti</h3>
+    <div class="riga">
+      <label>Versione <b id="versione-app"></b></label>
+      <button class="btn-piccolo" id="forza-agg">Scarica di nuovo tutto</button>
+    </div>
+
     <h3>Schermo</h3>
     <div class="riga">
       <label>Tieni lo schermo sempre acceso</label>
@@ -731,13 +737,13 @@
   </div>
 </div>
 
-<script src="comune.js?v=18"></script>
-<script src="rete.js?v=18"></script>
-<script src="giorno.js?v=18"></script>
-<script src="radio.js?v=18"></script>
-<script src="forza4.js?v=18"></script>
-<script src="ricette.js?v=18"></script>
-<script src="gatto.js?v=18"></script>
+<script src="comune.js?v=19"></script>
+<script src="rete.js?v=19"></script>
+<script src="giorno.js?v=19"></script>
+<script src="radio.js?v=19"></script>
+<script src="forza4.js?v=19"></script>
+<script src="ricette.js?v=19"></script>
+<script src="gatto.js?v=19"></script>
 <script>
 
 // ================= orologio =================
@@ -1323,6 +1329,15 @@ $("seg-corrente").onclick = function (e) {
   aggiornaImpostazioni(); disegnaTurni();
 };
 
+// versione = quella del ?v= degli script; "Scarica di nuovo tutto" svuota le copie salvate e ricarica
+(function () { var m = /\?v=(\d+)/.exec(document.querySelector('script[src*="gatto.js"]').src); $("versione-app").textContent = m ? m[1] : "?"; })();
+$("forza-agg").onclick = function () {
+  this.textContent = "Scarico…"; this.disabled = true;
+  var via = [];
+  if ("caches" in window) via.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+  if (navigator.serviceWorker) via.push(navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }));
+  Promise.all(via).catch(function () {}).then(function () { location.replace(location.pathname + "?agg=" + Date.now()); });
+};
 $("seg-gatto").onclick = function (e) {
   var v = e.target.getAttribute("data-v"); if (!v) return;
   salva("gatto_acceso", v === "si"); seg("seg-gatto", v); avviaGatto();
