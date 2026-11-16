@@ -341,8 +341,6 @@
   @keyframes caduta { from { transform: translateY(-300%); } }
   body.notte .f4-griglia { background: #22426f; }
 
-  /* --- ricetta del giorno --- */
-  #card-ricetta { flex: none; }
   .griglia2 > .col-cielo:last-child { align-self: stretch; min-height: 0; }
   /* --- tragitti casa → lavoro --- */
   #card-tragitti { flex: 1; min-height: 30vh; display: flex; flex-direction: column; }
@@ -362,13 +360,6 @@
   .tr-tempo em { font-style: normal; font-size: 1.6vh; color: #c0392b; }
   .tr-info { font-size: 1.55vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #tr-vuoto { margin-top: 1vh; }
-  .ricetta-titolo { display: flex; align-items: baseline; gap: .8vw; flex-wrap: wrap; margin-bottom: .4vh; }
-  .ricetta-titolo b { font-size: 2.4vh; font-weight: 500; } .ricetta-titolo span { font-size: 1.7vh; color: var(--muted); }
-  .ricetta-ingr { font-size: 1.7vh; color: var(--muted); line-height: 1.35; margin-bottom: .8vh; }
-  .ricetta-passi { margin: 0; padding-left: 1.3em; font-size: 1.85vh; line-height: 1.4; overflow-y: auto; flex: 1; min-height: 0; }
-  .ricetta-passi li { display: list-item; margin-bottom: .6vh; padding: 0; border: 0; font-size: inherit; }
-  .ricetta-timer { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 10px;
-                   font-size: 1.65vh; padding: .1vh .5vw; margin: 0 .3vw; white-space: nowrap; }
 
 
   /* --- livelli sopra --- */
@@ -591,12 +582,6 @@
     </section>
     </div>
     <div class="col-cielo">
-      <section class="card" id="card-ricetta">
-        <h2>Ricetta del giorno <button class="btn-piccolo" id="ricetta-altra">Un'altra</button></h2>
-        <div class="ricetta-titolo"><b id="ricetta-titolo"></b><span id="ricetta-tempo"></span></div>
-        <div class="ricetta-ingr" id="ricetta-ingr"></div>
-        <ol class="ricetta-passi" id="ricetta-passi"></ol>
-      </section>
       <section class="card" id="card-tragitti">
         <h2>Casa → lavoro <small id="tr-fonte"></small></h2>
         <div id="tr-mappa"></div>
@@ -779,15 +764,14 @@
   </div>
 </div>
 
-<script src="comune.js?v=23"></script>
-<script src="rete.js?v=23"></script>
-<script src="giorno.js?v=23"></script>
-<script src="radio.js?v=23"></script>
-<script src="forza4.js?v=23"></script>
-<script src="ricette.js?v=23"></script>
+<script src="comune.js?v=24"></script>
+<script src="rete.js?v=24"></script>
+<script src="giorno.js?v=24"></script>
+<script src="radio.js?v=24"></script>
+<script src="forza4.js?v=24"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=23"></script>
-<script src="gatto.js?v=23"></script>
+<script src="tragitti.js?v=24"></script>
+<script src="gatto.js?v=24"></script>
 <script>
 
 // ================= orologio =================
@@ -1454,7 +1438,7 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); avviaTragitti(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

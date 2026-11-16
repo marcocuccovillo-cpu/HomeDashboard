@@ -1,4 +1,4 @@
-// Home2Love — mappa di Bologna con il traffico e i tragitti casa → lavoro di tutti e due (pagina 2, sotto la ricetta).
+// Home2Love — mappa di Bologna con il traffico e i tragitti casa → lavoro di tutti e due (pagina 2, colonna di destra).
 // Ognuno sceglie il suo mezzo (auto o bici). Con una chiave TomTom (gratuita) ci sono il traffico in tempo reale
 // sulla mappa e i tempi in auto calcolati col traffico di adesso; senza chiave i tempi vengono da OpenStreetMap.
 // Indirizzi e chiave stanno in cfg.tragitti, cifrati e condivisi come i turni.
