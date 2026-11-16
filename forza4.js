@@ -8,8 +8,8 @@ function f4Nuova(primo) {
   return { celle: new Array(43).join("."), turno: primo || 0, primo: primo || 0, vincitore: null, vincenti: [], punti: p, ultima: -1 };
 }
 function f4Stato() {
-  if (!cfg.forza4 || typeof cfg.forza4.celle !== "string" || cfg.forza4.celle.length !== 42) cfg.forza4 = f4Nuova(0);
-  return cfg.forza4;
+  // partita vuota solo da mostrare: si salva alla prima mossa, così non copre una mossa dell'altro non ancora arrivata
+  return cfg.forza4 && typeof cfg.forza4.celle === "string" && cfg.forza4.celle.length === 42 ? cfg.forza4 : f4Nuova(0);
 }
 function f4Cella(s, r, c) { return s.celle.charAt(r * F4.C + c); }
 function f4Quattro(celle, i) {   // le 4 celle allineate che passano da i, se ci sono
