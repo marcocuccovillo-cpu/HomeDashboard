@@ -58,6 +58,38 @@ function disegnaGiorno() {
 }
 $("gioco-sol").onclick = function () { $("gioco-risposta").hidden = false; $("gioco-sol").hidden = true; };
 
+// ---------------------------------------------------------------- radar della pioggia (previsione a 15 minuti)
+// window.pioggia = [{t, mm}] da Open-Meteo (minutely_15): ogni voce è la pioggia nei 15 minuti dopo t.
+function statoPioggia() {
+  var p = window.pioggia; if (!p || !p.length) return null;
+  var ora = Date.now(), Q = 15 * 60000;
+  var adesso = p.filter(function (x) { return x.t <= ora && ora < x.t + Q; })[0];
+  var futuro = p.filter(function (x) { return x.t > ora - Q; }).slice(0, 8);
+  var mm = adesso ? adesso.mm : 0, testo;
+  function tra(x) { var m = Math.max(5, Math.round((x.t - ora) / 60000 / 5) * 5); return m >= 60 ? "tra " + Math.floor(m / 60) + " h " + (m % 60 ? m % 60 + " min" : "") : "tra " + m + " min"; }
+  if (mm >= 0.1) {
+    var fine = futuro.filter(function (x) { return x.t > ora && x.mm < 0.1; })[0];
+    testo = fine ? "☂ Smette " + tra(fine) : "☂ Piove per le prossime 2 ore";
+  } else {
+    var arriva = futuro.filter(function (x) { return x.t > ora && x.mm >= 0.1; })[0];
+    testo = arriva ? "🌧 Pioggia " + tra(arriva) : "Niente pioggia nelle prossime 2 ore";
+    if (arriva) var minuti = (arriva.t - ora) / 60000;
+  }
+  return { mm: mm, futuro: futuro, testo: testo, arrivaTra: minuti };
+}
+function disegnaPioggia() {
+  var s = statoPioggia(), barra = $("pioggia-barra"); if (!barra) return;
+  $("pioggia").hidden = !s; if (!s) return;
+  $("pioggia-testo").textContent = s.testo;
+  barra.innerHTML = "";
+  s.futuro.forEach(function (x) {
+    var i = document.createElement("i"); if (x.mm >= 0.1) i.className = "p";
+    i.style.height = Math.max(12, Math.min(100, x.mm / 1.5 * 100)) + "%";
+    i.title = new Date(x.t).getHours() + ":" + due(new Date(x.t).getMinutes()) + " · " + x.mm.toFixed(1) + " mm";
+    barra.appendChild(i);
+  });
+}
+
 // ---------------------------------------------------------------- pixel art
 var PX = { W: 96, H: 34, f: 0, fulmine: 0 };
 function casuale(seme) { var s = seme; return function () { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
@@ -82,7 +114,9 @@ var CITTA = (function () {   // profilo della città: [x, larghezza, altezza dal
 })();
 function disegnaPixel() {
   var c = $("pixel"); if (!c) return; var g = c.getContext("2d"), W = PX.W, H = PX.H, SUOLO = 30;
-  var ora = new Date(), m = momento(ora), tipo = window.meteoAdesso || "sole";
+  var ora = new Date(), m = momento(ora), tipo = window.meteoAdesso || "sole", rad = statoPioggia();
+  if (rad && rad.mm >= 0.1 && tipo !== "neve" && tipo !== "temporale") tipo = "pioggia";   // il radar ha la precedenza
+  if (rad && rad.mm < 0.1 && tipo === "pioggia") tipo = "nuvole";
   var cupo = { nuvole: .35, pioggia: .5, neve: .3, temporale: .7, nebbia: .3 }[tipo] || 0;
   PX.f++;
   // cielo
@@ -143,9 +177,15 @@ function disegnaPixel() {
   g.fillStyle = m.fase === "notte" ? "#0e0c12" : "#6b3a26";
   for (var ax = 1; ax < W; ax += 4) { g.fillRect(ax, SUOLO + 1, 2, 3); }
   // pioggia, neve, nebbia, fulmini
+  if (rad && rad.arrivaTra != null && rad.arrivaTra < 60) {   // nuvole scure che arrivano da ovest
+    var avanza = 1 - rad.arrivaTra / 60, fronte = Math.round(avanza * 70) - 10;
+    g.fillStyle = "rgba(70,78,98,.85)";
+    for (var nx = -20; nx < fronte; nx += 9) { g.fillRect(nx, 2 + (nx & 3), 12, 4); g.fillRect(nx + 3, 1 + (nx & 3), 6, 1); }
+  }
   if (tipo === "pioggia" || tipo === "temporale") {
     g.fillStyle = "rgba(190,215,255,.7)";
-    for (var p = 0; p < 40; p++) { var px = (p * 37 + PX.f * 2) % W, py = (p * 13 + PX.f * 3) % H; g.fillRect(px, py, 1, 2); }
+    var gocce = rad && rad.mm >= 0.1 ? Math.min(90, Math.round(15 + rad.mm * 45)) : 40;   // più pioggia, più gocce
+    for (var p = 0; p < gocce; p++) { var px = (p * 37 + PX.f * 2) % W, py = (p * 13 + PX.f * 3) % H; g.fillRect(px, py, 1, 2); }
   }
   if (tipo === "neve") {
     g.fillStyle = "rgba(255,255,255,.9)";
@@ -158,7 +198,8 @@ function disegnaPixel() {
   }
 }
 function avviaGiorno() {
-  disegnaGiorno(); disegnaPixel();
+  disegnaGiorno(); disegnaPixel(); disegnaPioggia();
+  setInterval(disegnaPioggia, 60 * 1000);
   setInterval(disegnaPixel, 125);   // 8 fotogrammi al secondo
   setInterval(function () {   // a mezzanotte cambia indovinello
     var oggi = new Date(), n = Math.floor(Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate()) / 864e5);

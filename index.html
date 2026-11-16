@@ -212,7 +212,7 @@
   .tab-numeri small { display: block; font-size: 1.8vh; color: var(--muted); margin-top: .4vh; }
   .tab-numeri .caldo { color: var(--accent); }
   #tab-dati { margin-bottom: .6vh; }
-  #card-disp { max-height: 54vh; }
+  #card-disp { max-height: calc(100vh - 28px); }
   .disp-lista { list-style: none; margin: 0 0 1vh; padding: 0; overflow-y: auto; min-height: 0; }
   .disp-lista li { display: flex; align-items: center; gap: .9vw; padding: 1vh .2vw; border-bottom: 1px solid var(--line); font-size: 2.1vh; }
   .disp-lista li svg { width: 2.8vh; height: 2.8vh; flex: none; color: var(--muted); }
@@ -286,7 +286,16 @@
 
   /* --- pixel art e indovinello del giorno --- */
   #card-gioco { padding: 0; overflow: hidden; }
+  .gioco-alto { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+  .pixel-box { position: relative; min-width: 0; }
   #pixel { width: 100%; aspect-ratio: 96 / 34; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .pioggia { display: flex; align-items: center; gap: .5vw; padding: .5vh .6vw; font-size: 1.6vh; color: var(--muted); }
+  .pioggia span { white-space: nowrap; }
+  .pioggia-barra { flex: 1; display: flex; gap: 2px; height: 1.6vh; align-items: flex-end; }
+  .pioggia-barra i { flex: 1; background: var(--line); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .pioggia-barra i.p { background: #4f8fd6; }
+  #card-radio { padding: 1vh .9vw; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .radio-testa { font-size: 1.8vh; font-weight: 500; display: flex; justify-content: space-between; align-items: center; margin-bottom: .6vh; }
   .gioco-box { padding: 1.2vh 1.4vw 1.4vh; }
   .gioco-tipo { font-size: 1.7vh; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .4vh; }
   .gioco-testo { font-size: 2.2vh; line-height: 1.35; }
@@ -295,21 +304,23 @@
 
   /* --- radio --- */
   .radio-ora { display: flex; align-items: center; gap: 1vw; }
-  #radio-play { width: 7vh; height: 7vh; border-radius: 50%; border: 0; background: var(--accent); color: #fff; font-size: 2.8vh; flex: none; }
-  #radio-logo { width: 5vh; height: 5vh; border-radius: 8px; object-fit: contain; background: #fff; flex: none; }
+  #radio-play { width: 5.5vh; height: 5.5vh; border-radius: 50%; border: 0; background: var(--accent); color: #fff; font-size: 2.8vh; flex: none; }
+  #radio-logo { width: 4vh; height: 4vh; border-radius: 8px; object-fit: contain; background: #fff; flex: none; }
   .radio-testi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .radio-testi b { font-weight: 500; font-size: 2.3vh; }
-  .radio-testi span { font-size: 1.8vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .eq { display: flex; align-items: flex-end; gap: 3px; height: 4vh; }
+  .radio-testi b { font-weight: 500; font-size: 2vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .radio-testi span { font-size: 1.6vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eq { display: flex; align-items: flex-end; gap: 2px; height: 3vh; flex: none; }
   .eq i { width: 5px; height: 20%; background: var(--done); border-radius: 2px; }
   #card-radio.accesa .eq i { background: var(--accent); animation: eq .9s ease-in-out infinite alternate; }
   #card-radio.accesa .eq i:nth-child(2) { animation-duration: .6s; } #card-radio.accesa .eq i:nth-child(3) { animation-duration: 1.1s; }
   #card-radio.accesa .eq i:nth-child(4) { animation-duration: .7s; } #card-radio.accesa .eq i:nth-child(5) { animation-duration: .95s; }
   @keyframes eq { from { height: 15%; } to { height: 100%; } }
-  .radio-volume { display: flex; align-items: center; gap: .6vw; margin: 1.2vh 0 .4vh; font-size: 1.8vh; }
+  .radio-volume { display: flex; align-items: center; gap: .4vw; margin: .8vh 0 .2vh; font-size: 1.5vh; }
   .radio-volume input { flex: 1; accent-color: var(--accent); }
-  .radio-chips { margin: .6vh 0 0; gap: .5vw; }
-  .radio-chips button { font-size: 1.75vh; padding: .6vh .8vw; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 20px; }
+  #radio-stazioni { display: flex; margin: .4vh 0 0; gap: .4vw; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+                    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .radio-chips::-webkit-scrollbar { display: none; }
+  .radio-chips button { flex: none; font-size: 1.55vh; padding: .45vh .6vw; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 20px; }
   .radio-chips button.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
 
   /* --- gatto --- */
@@ -445,7 +456,23 @@
   <!-- pixel art e indovinello del giorno + foto -->
   <div class="col" id="col-destra">
     <section class="card" id="card-gioco">
-      <canvas id="pixel" width="96" height="34" aria-label="Pixel art di Bologna con il meteo e l'ora di adesso"></canvas>
+      <div class="gioco-alto">
+        <div class="pixel-box">
+          <canvas id="pixel" width="96" height="34" aria-label="Pixel art di Bologna con il meteo, l'ora e la pioggia in arrivo"></canvas>
+          <div class="pioggia" id="pioggia"><span id="pioggia-testo"></span><div class="pioggia-barra" id="pioggia-barra"></div></div>
+        </div>
+        <div id="card-radio">
+          <div class="radio-testa">Radio <span id="radio-stato" class="pillola">spenta</span></div>
+          <div class="radio-ora">
+            <button type="button" id="radio-play" aria-label="Accendi">▶</button>
+            <img id="radio-logo" alt="" hidden>
+            <div class="radio-testi"><b id="radio-nome"></b><span id="radio-titolo"></span></div>
+            <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="radio-volume"><span>🔈</span><input type="range" id="radio-volume" min="0" max="100" aria-label="Volume"><span>🔊</span></div>
+          <div class="chips radio-chips" id="radio-stazioni"></div>
+        </div>
+      </div>
       <div class="gioco-box">
         <div class="gioco-tipo" id="gioco-tipo"></div>
         <div class="gioco-testo" id="gioco-testo"></div>
@@ -489,15 +516,6 @@
       <button class="btn-pieno" id="rete-misura">Misura velocità</button>
       <div class="nota-txt rete-nota">Nome della rete e segnale non sono leggibili da una pagina web: il browser li blocca per sicurezza.</div>
     </section>
-    <section class="card" id="card-tablet">
-      <h2>Tablet <span id="tab-stato" class="pillola">…</span></h2>
-      <div class="tab-numeri">
-        <div><span class="n" id="tab-batt">–</span><span class="u">%</span><small id="tab-carica">batteria</small></div>
-        <div><span class="n" id="tab-temp">–</span><span class="u">°C</span><small>temperatura</small></div>
-      </div>
-      <dl class="rete-dati" id="tab-dati"></dl>
-      <div class="nota-txt" id="tab-nota"></div>
-    </section>
     </div>
     <div class="col-cielo">
     <section class="card" id="card-disp">
@@ -505,17 +523,6 @@
       <ul class="disp-lista" id="disp-lista"></ul>
       <button class="btn-piccolo" id="disp-altri" hidden></button>
       <div class="nota-txt" id="disp-stato"></div>
-    </section>
-    <section class="card" id="card-radio">
-      <h2>Radio <span id="radio-stato" class="pillola">spenta</span></h2>
-      <div class="radio-ora">
-        <button type="button" id="radio-play" aria-label="Accendi">▶</button>
-        <img id="radio-logo" alt="" hidden>
-        <div class="radio-testi"><b id="radio-nome"></b><span id="radio-titolo"></span></div>
-        <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-      </div>
-      <div class="radio-volume"><span>🔈</span><input type="range" id="radio-volume" min="0" max="100" aria-label="Volume"><span>🔊</span></div>
-      <div class="chips radio-chips" id="radio-stazioni"></div>
     </section>
     </div>
     <div class="col-cielo">
@@ -790,10 +797,13 @@ function icona(t) {
 function meteo() {
   var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
     "&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min" +
+    "&minutely_15=precipitation&past_minutely_15=1&forecast_minutely_15=9" +   // pioggia: ora e prossime 2 ore
     "&timezone=Europe%2FRome&forecast_days=5";
   fetch(url).then(function (r) { return r.json(); }).then(function (j) {
     var t = tipo(j.current.weather_code);
     window.meteoAdesso = t[0];   // per la pixel art
+    window.pioggia = j.minutely_15 ? j.minutely_15.time.map(function (x, k) { return { t: new Date(x).getTime(), mm: j.minutely_15.precipitation[k] || 0 }; }) : null;
+    if (window.disegnaPioggia) disegnaPioggia();
     $("icona").innerHTML = icona(t[0]);
     $("temp").textContent = Math.round(j.current.temperature_2m) + "°";
     $("descr").textContent = t[1] + " · " + Math.round(j.daily.temperature_2m_min[0]) + "° / " + Math.round(j.daily.temperature_2m_max[0]) + "°";
@@ -1363,7 +1373,7 @@ avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }
 sincronizzaFoto(); setInterval(sincronizzaFoto, 60 * 1000);
 setInterval(orologio, 10000);
-setInterval(meteo, 30 * 60 * 1000);
+setInterval(meteo, 10 * 60 * 1000);
 setInterval(controllaTimer, 1000);
 setInterval(tieniAcceso, 60 * 1000);
 setInterval(function () { if (!document.querySelector(".scuro.on")) disegnaTurni(); }, 60 * 1000);

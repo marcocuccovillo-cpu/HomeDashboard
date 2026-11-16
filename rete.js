@@ -168,6 +168,7 @@ function durata(s) {
   return g ? g + (g === 1 ? " giorno " : " giorni ") + h + " h" : h ? h + " h " + m + " min" : m + " min";
 }
 function disegnaTablet() {
+  if (!$("card-tablet")) return;   // riquadro tolto dalla dashboard
   var t = dispDati && dispDati.tablet && dispDati.tablet.batteria != null ? dispDati.tablet : null;
   var extra = dispDati && dispDati.tablet ? dispDati.tablet : {};
   var batt = t ? t.batteria : battBrowser ? Math.round(battBrowser.level * 100) : null;
