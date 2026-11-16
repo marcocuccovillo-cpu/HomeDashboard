@@ -24,6 +24,9 @@ import json
 import os
 import shutil
 import subprocess
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 import sys
 import time
 import urllib.error
@@ -362,6 +365,11 @@ def prova(c):
     """Legge il router una volta, stampa la lista e controlla la password di casa."""
     modello, lista = asyncio.run(leggi_router(c))
     stampa(modello, lista)
+    try:
+        n = len(aerei(44.4949, 11.3426, 17).get("ac") or [])
+        print(f"Aerei: {n} entro 30 km da Bologna (il lettore li passerà alla dashboard)")
+    except Exception as e:
+        print(f"Aerei: non riesco a leggerli ({e})")
     t = stato_tablet()
     if "batteria" in t:
         print(f"Tablet: batteria {t['batteria']}% · {t.get('temperatura')} °C · {t.get('stato')} · salute {t.get('salute')}")
@@ -420,8 +428,92 @@ def impronta_tablet(t):
     return (t.get("batteria"), t.get("stato"), t.get("presa"), t.get("salute"), None if temp is None else round(temp / 2))
 
 
+# ---------------------------------------------------------------- aerei per la dashboard
+# Alcuni servizi ADS-B non permettono a una pagina web di un altro sito di leggere i dati (CORS).
+# Il lettore li chiede lui e li passa alla dashboard da http://127.0.0.1:8789 (solo dal tablet stesso).
+PORTA_AEREI = 8789
+_aerei_cache = {"chiave": None, "quando": 0, "dati": None}
+
+
+def _scarica_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "homedashboard", "Accept": "application/json"})
+    with urllib.request.urlopen(req, timeout=8) as r:
+        return json.loads(r.read())
+
+
+def aerei(lat, lon, nm):
+    chiave = (round(lat, 3), round(lon, 3), nm)
+    if _aerei_cache["chiave"] == chiave and time.time() - _aerei_cache["quando"] < 10:
+        return _aerei_cache["dati"]
+    dati, errori = None, []
+    for url in (f"https://api.adsb.lol/v2/point/{lat}/{lon}/{nm}", f"https://api.airplanes.live/v2/point/{lat}/{lon}/{nm}"):
+        try:
+            dati = _scarica_json(url)
+            break
+        except Exception as e:
+            errori.append(f"{url.split('/')[2]}: {e}")
+    if dati is None:   # OpenSky: stati → stesso formato
+        try:
+            d = nm * 1.852 / 111
+            j = _scarica_json(f"https://opensky-network.org/api/states/all?lamin={lat-d}&lomin={lon-d*1.4}&lamax={lat+d}&lomax={lon+d*1.4}")
+            dati = {"ac": [{"hex": s[0], "flight": s[1], "lat": s[6], "lon": s[5],
+                            "alt_baro": "ground" if s[8] else (s[7] / 0.3048 if s[7] is not None else None),
+                            "gs": s[9] * 1.94384 if s[9] is not None else None, "track": s[10]} for s in (j.get("states") or [])]}
+        except Exception as e:
+            errori.append(f"opensky: {e}")
+    if dati is None:
+        raise RuntimeError(" · ".join(errori))
+    _aerei_cache.update(chiave=chiave, quando=time.time(), dati=dati)
+    return dati
+
+
+class _Aerei(BaseHTTPRequestHandler):
+    def _intestazioni(self, stato, tipo="application/json"):
+        self.send_response(stato)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Private-Network", "true")   # Chrome: pagina internet → tablet
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "*")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
+    def do_OPTIONS(self):
+        self._intestazioni(204)
+
+    def do_GET(self):
+        u = urlparse(self.path)
+        if u.path != "/aerei":
+            self._intestazioni(404)
+            return
+        q = parse_qs(u.query)
+        try:
+            lat, lon = float(q["lat"][0]), float(q["lon"][0])
+            nm = max(1, min(60, int(q.get("nm", ["17"])[0])))
+            corpo = json.dumps(aerei(lat, lon, nm)).encode()
+            self._intestazioni(200)
+            self.wfile.write(corpo)
+        except Exception as e:
+            self._intestazioni(502)
+            self.wfile.write(json.dumps({"errore": str(e)}).encode())
+
+    def log_message(self, *a):   # niente righe nel registro per ogni richiesta
+        pass
+
+
+def avvia_servizio_aerei():
+    try:
+        srv = ThreadingHTTPServer(("127.0.0.1", PORTA_AEREI), _Aerei)
+    except OSError as e:
+        print(f"{ora()}  servizio aerei non avviato (porta {PORTA_AEREI} occupata?): {e}")
+        return
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    print(f"{ora()}  servizio aerei per la dashboard su http://127.0.0.1:{PORTA_AEREI}")
+
+
 def corri(c):
     """Continua a leggere il router e a pubblicare la lista cifrata."""
+    avvia_servizio_aerei()
     while True:   # all'accensione la rete può non esserci ancora
         try:
             c["_chiave"], c["_token"] = apri_cassaforte(c)

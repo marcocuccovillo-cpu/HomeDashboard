@@ -184,19 +184,47 @@ function avviaISS() {
 }
 
 // ---------------------------------------------------------------- aerei sopra casa
+// Fonti degli aerei, in ordine. Alcune non permettono a una pagina di un altro sito di leggere i dati (CORS):
+// l'ultima è il lettore in Termux sul tablet stesso, che li chiede lui e li passa alla pagina.
+var PORTA_LETTORE = 8789;
+function fontiAerei(nm) {
+  var d = 0.35;   // ~30 km in gradi, per OpenSky che vuole un riquadro
+  return [
+    { nome: "adsb.lol", url: "https://api.adsb.lol/v2/point/" + CASA.lat + "/" + CASA.lon + "/" + nm },
+    { nome: "airplanes.live", url: "https://api.airplanes.live/v2/point/" + CASA.lat + "/" + CASA.lon + "/" + nm },
+    { nome: "OpenSky", url: "https://opensky-network.org/api/states/all?lamin=" + (CASA.lat - d) + "&lomin=" + (CASA.lon - d * 1.4) + "&lamax=" + (CASA.lat + d) + "&lomax=" + (CASA.lon + d * 1.4) },
+    { nome: "lettore sul tablet", url: "http://127.0.0.1:" + PORTA_LETTORE + "/aerei?lat=" + CASA.lat + "&lon=" + CASA.lon + "&nm=" + nm }
+  ];
+}
+function daOpenSky(j) {   // stati OpenSky → stesso formato di adsb.lol
+  return { ac: (j.states || []).map(function (s) {
+    return { hex: s[0], flight: s[1], lat: s[6], lon: s[5], alt_baro: s[8] ? "ground" : (s[7] != null ? s[7] / 0.3048 : null),
+      gs: s[9] != null ? s[9] * 1.94384 : null, track: s[10] };
+  }) };
+}
 function leggiAerei() {
-  var nm = Math.ceil(RAGGIO_KM / 1.852);
-  function da(url) { return fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); }
-  return da("https://api.adsb.lol/v2/point/" + CASA.lat + "/" + CASA.lon + "/" + nm)
-    .catch(function () { return da("https://api.airplanes.live/v2/point/" + CASA.lat + "/" + CASA.lon + "/" + nm); })
+  var nm = Math.ceil(RAGGIO_KM / 1.852), fonti = fontiAerei(nm), errori = [];
+  var ordine = fonti.slice().sort(function (a, b) { return (b.nome === cielo.fonte) - (a.nome === cielo.fonte); });
+  function prova(i) {
+    if (i >= ordine.length) return Promise.reject(new Error(errori.join(" · ")));
+    var f = ordine[i], ctrl = window.AbortController ? new AbortController() : null;
+    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 7000);
+    return fetch(f.url, { cache: "no-store", signal: ctrl ? ctrl.signal : undefined }).then(function (r) {
+      clearTimeout(t); if (!r.ok) throw new Error(r.status); return r.json();
+    }).then(function (j) { cielo.fonte = f.nome; return f.nome === "OpenSky" ? daOpenSky(j) : j; }, function (e) {
+      clearTimeout(t); errori.push(f.nome + ": " + (e && e.message === "Failed to fetch" ? "bloccato" : (e && e.message) || "errore"));
+      return prova(i + 1);
+    });
+  }
+  return prova(0)
     .then(function (j) {
       cielo.aerei = (j.ac || j.aircraft || []).filter(function (a) { return typeof a.lat === "number"; }).map(function (a) {
         var p = { lat: a.lat, lon: a.lon }, quota = a.alt_baro === "ground" ? 0 : (a.alt_geom || a.alt_baro);
         return { nome: (a.flight || a.r || a.hex || "").trim(), tipo: a.t || "", quota: typeof quota === "number" ? quota * 0.3048 : null,
           vel: a.gs ? a.gs * 1.852 : null, rotta: a.track, km: distanzaKm(CASA, p), dir: rotta(CASA, p) };
       }).filter(function (a) { return a.km <= RAGGIO_KM; }).sort(function (a, b) { return a.km - b.km; });
-      cielo.erroreAerei = false;
-    }, function () { cielo.erroreAerei = true; })
+      cielo.erroreAerei = "";
+    }, function (e) { cielo.erroreAerei = e.message || "errore"; })
     .then(disegnaRadar);
 }
 function disegnaRadar() {
@@ -210,21 +238,24 @@ function disegnaRadar() {
   svg.appendChild(svgEl("rect", { x: b[0] - 1.6, y: b[1] - 1.6, width: 3.2, height: 3.2, class: "blq-p" }));
   svg.appendChild(svgEl("circle", { cx: 0, cy: 0, r: 2.6, class: "casa" }));
   var lista = $("aerei"); lista.innerHTML = "";
-  if (cielo.erroreAerei) { lista.innerHTML = '<li class="vuoto">Dati degli aerei non disponibili, riprovo.</li>'; return; }
+  if (cielo.erroreAerei) {   // con il dettaglio delle fonti provate, per capire cosa non va
+    lista.innerHTML = '<li class="vuoto">Dati degli aerei non disponibili, riprovo.<small></small></li>';
+    lista.querySelector("small").textContent = cielo.erroreAerei; $("aerei-conta").textContent = ""; return;
+  }
   if (!cielo.aerei) return;
   cielo.aerei.forEach(function (a, i) {
     var p = pos(a.km, a.dir), g = svgEl("g", { transform: "translate(" + p[0].toFixed(1) + " " + p[1].toFixed(1) + ") rotate(" + (a.rotta || 0) + ")" });
     g.appendChild(svgEl("path", { d: "M0 -6L4 5L0 2.5L-4 5Z", class: "aereo" + (i < 3 ? " vicino" : "") }));
     svg.appendChild(g);
   });
-  if (!cielo.aerei.length) { lista.innerHTML = '<li class="vuoto">Nessun aereo entro ' + RAGGIO_KM + ' km in questo momento.</li>'; return; }
+  if (!cielo.aerei.length) { lista.innerHTML = '<li class="vuoto">Nessun aereo entro ' + RAGGIO_KM + ' km in questo momento.</li>'; $("aerei-conta").textContent = cielo.fonte; return; }
   cielo.aerei.slice(0, 4).forEach(function (a) {
     var li = el("li"), n = el("b"), d = el("span");
     n.textContent = a.nome || "?";
     d.textContent = [a.tipo, a.quota != null ? (a.quota < 30 ? "a terra" : numero(a.quota) + " m") : "", a.km.toFixed(0) + " km " + puntoCardinale(a.dir)].filter(Boolean).join(" · ");
     li.appendChild(n); li.appendChild(d); lista.appendChild(li);
   });
-  $("aerei-conta").textContent = cielo.aerei.length + (cielo.aerei.length === 1 ? " aereo" : " aerei");
+  $("aerei-conta").textContent = cielo.aerei.length + (cielo.aerei.length === 1 ? " aereo" : " aerei") + " · " + cielo.fonte;
 }
 
 function avviaCielo() {
