@@ -701,8 +701,8 @@
 
     <h3>Nomi</h3>
     <div class="riga">
-      <input type="text" id="nome0" placeholder="Persona 1">
-      <input type="text" id="nome1" placeholder="Persona 2">
+      <input type="text" autocomplete="off" name="x-nome0" id="nome0" placeholder="Persona 1">
+      <input type="text" autocomplete="off" name="x-nome1" id="nome1" placeholder="Persona 2">
     </div>
 
     <h3>Turni</h3>
@@ -733,11 +733,11 @@
     <div class="cmd"><label>Diagnosi (se qualcosa non va)</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --diagnosi"><button class="btn-piccolo" type="button">Copia</button></div></div>
 
     <h3>Casa → lavoro</h3>
-    <div class="campo-imp"><label>Indirizzo di casa</label><input type="text" id="tr-casa" placeholder="es. Via Indipendenza 10, Bologna"></div>
+    <div class="campo-imp"><label>Indirizzo di casa</label><input type="text" autocomplete="off" name="x-tr-casa" id="tr-casa" placeholder="es. Via Indipendenza 10, Bologna"></div>
     <div class="campo-imp"><label id="tr-lab0">Lavoro</label>
-      <div class="riga"><input type="text" id="tr-lav0" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz0"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav0" id="tr-lav0" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz0"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
     <div class="campo-imp"><label id="tr-lab1">Lavoro</label>
-      <div class="riga"><input type="text" id="tr-lav1" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz1"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav1" id="tr-lav1" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz1"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
     <div class="campo-imp"><label>Chiave TomTom per il traffico in tempo reale (facoltativa)</label><input type="text" id="tr-chiave" placeholder="incolla qui la chiave" autocomplete="off"></div>
     <div class="riga"><button class="btn-piccolo" id="tr-salva">Salva e trova gli indirizzi</button><span class="stato" id="tr-stato"></span></div>
     <div class="nota-txt">Senza chiave i tempi sono calcolati con OpenStreetMap, senza traffico. Per il traffico dal vivo create un account gratuito su <a href="https://developer.tomtom.com" target="_blank" rel="noopener" style="color:var(--accent)">developer.tomtom.com</a> e copiate qui la chiave «API key»: il piano gratuito basta e avanza. Indirizzi e chiave sono cifrati come i turni.</div>
@@ -777,15 +777,15 @@
   </div>
 </div>
 
-<script src="comune.js?v=20"></script>
-<script src="rete.js?v=20"></script>
-<script src="giorno.js?v=20"></script>
-<script src="radio.js?v=20"></script>
-<script src="forza4.js?v=20"></script>
-<script src="ricette.js?v=20"></script>
+<script src="comune.js?v=21"></script>
+<script src="rete.js?v=21"></script>
+<script src="giorno.js?v=21"></script>
+<script src="radio.js?v=21"></script>
+<script src="forza4.js?v=21"></script>
+<script src="ricette.js?v=21"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=20"></script>
-<script src="gatto.js?v=20"></script>
+<script src="tragitti.js?v=21"></script>
+<script src="gatto.js?v=21"></script>
 <script>
 
 // ================= orologio =================

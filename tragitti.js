@@ -18,22 +18,26 @@ function trCfg() {
 }
 
 // ---------------------------------------------------------------- indirizzi → coordinate
-function trova(indirizzo) {
-  var t = trCfg();
-  if (t.chiave) {
-    return fetch("https://api.tomtom.com/search/2/geocode/" + encodeURIComponent(indirizzo) + ".json?limit=1&countrySet=IT&lat=" + LAT + "&lon=" + LON + "&key=" + t.chiave)
-      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(function (j) {
-        var x = j.results && j.results[0]; if (!x) throw new Error("non trovato");
-        return { ind: indirizzo, lat: x.position.lat, lon: x.position.lon, nome: x.address.freeformAddress };
-      });
-  }
+function trovaOsm(indirizzo) {
   return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=it&viewbox=10.9,44.7,11.8,44.3&q=" + encodeURIComponent(indirizzo))
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
     .then(function (j) {
       var x = j[0]; if (!x) throw new Error("non trovato");
       return { ind: indirizzo, lat: +x.lat, lon: +x.lon, nome: x.display_name.split(",").slice(0, 3).join(",") };
     });
+}
+function trova(indirizzo) {
+  var t = trCfg();
+  // "8/3" o altre barre nel testo rompono l'indirizzo della richiesta: le tolgo (il civico 8 basta per la mappa)
+  var pulito = indirizzo.replace(/(\d+)\s*\/\s*[\w]+/g, "$1").replace(/[\/\\#?]/g, " ").replace(/\s+/g, " ").trim();
+  if (!t.chiave) return trovaOsm(pulito).then(function (x) { x.ind = indirizzo; return x; });
+  return fetch("https://api.tomtom.com/search/2/geocode/" + encodeURIComponent(pulito) + ".json?limit=1&countrySet=IT&language=it-IT&lat=" + LAT + "&lon=" + LON + "&key=" + t.chiave)
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (j) {
+      var x = j.results && j.results[0]; if (!x) throw new Error("non trovato");
+      return { ind: indirizzo, lat: x.position.lat, lon: x.position.lon, nome: x.address.freeformAddress };
+    })
+    .catch(function () { return trovaOsm(pulito).then(function (x) { x.ind = indirizzo; return x; }); });   // riserva: OpenStreetMap
 }
 
 // ---------------------------------------------------------------- percorso e tempo
@@ -80,14 +84,17 @@ function trMappa() {
 }
 function trSfondo() {   // sfondo chiaro di giorno, scuro di notte; sopra, il traffico se c'è la chiave
   var m = TR.mappa; if (!m) return;
-  var notte = document.body.classList.contains("notte"), stile = notte ? "dark_all" : "rastertiles/voyager";
+  var notte = document.body.classList.contains("notte"), chiave = trCfg().chiave;
+  var stile = chiave ? (notte ? "tt-notte" : "tt-giorno") + chiave : "osm";
   if (!TR.sfondo || TR.sfondo.stile !== stile) {
     if (TR.sfondo) m.removeLayer(TR.sfondo);
-    TR.sfondo = L.tileLayer("https://{s}.basemaps.cartocdn.com/" + stile + "/{z}/{x}/{y}{r}.png",
-      { subdomains: "abcd", maxZoom: 19, attribution: "© OpenStreetMap · © CARTO" }).addTo(m);
-    TR.sfondo.stile = stile; TR.sfondo.bringToBack();
+    TR.sfondo = chiave
+      ? L.tileLayer("https://api.tomtom.com/map/1/tile/basic/" + (notte ? "night" : "main") + "/{z}/{x}/{y}.png?key=" + chiave,
+          { maxZoom: 19, attribution: "© TomTom · © OpenStreetMap" })
+      : L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" });
+    TR.sfondo.addTo(m); TR.sfondo.stile = stile; TR.sfondo.bringToBack();
   }
-  var chiave = trCfg().chiave, voluto = chiave ? chiave + (notte ? "n" : "g") : "";
+  var voluto = chiave ? chiave + (notte ? "n" : "g") : "";
   if ((TR.traffico && TR.traffico.voluto) !== voluto) {
     if (TR.traffico) { m.removeLayer(TR.traffico); TR.traffico = null; }
     if (chiave) {
