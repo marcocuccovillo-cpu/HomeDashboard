@@ -1,7 +1,8 @@
 // Service worker: fa funzionare la dashboard anche senza rete e la rende installabile.
 // Pagina e icone: prima la rete (così gli aggiornamenti arrivano subito), poi la copia salvata.
 // Font Google: prima la copia salvata. Meteo: sempre dalla rete.
-var CACHE = "homedashboard-v17";
+// Ad ogni rilascio: alzare la versione qui e il ?v= degli script in index.html e telefono.html.
+var CACHE = "homedashboard-v18";
 var BASE = ["./", "./index.html", "./manifest.webmanifest", "./comune.js", "./rete.js", "./giorno.js", "./radio.js", "./gatto.js", "./forza4.js", "./ricette.js", "./telefono.html", "./telefono.webmanifest", "./icone/icona-192.png", "./icone/icona-512.png", "./icone/icona-180.png"];
 
 self.addEventListener("install", function (e) {
@@ -16,7 +17,7 @@ self.addEventListener("fetch", function (e) {
   var req = e.request, url = new URL(req.url);
   if (req.method !== "GET") return;
   if (url.origin === location.origin) {
-    e.respondWith(fetch(req).then(function (r) {
+    e.respondWith(fetch(req, { cache: "no-cache" }).then(function (r) {   // no-cache: chiede sempre al server se il file è cambiato
       if (r.ok) { var copia = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, copia); }); }
       return r;
     }).catch(function () {
