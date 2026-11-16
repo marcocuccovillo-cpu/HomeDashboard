@@ -40,6 +40,17 @@
   input, textarea { -webkit-user-select: text; user-select: text; font-family: inherit; }
   button { font-family: inherit; cursor: pointer; }
 
+  /* --- schermate da scorrere a destra e sinistra, come la home di un telefono --- */
+  #pagine { height: 100%; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+            scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  #pagine::-webkit-scrollbar { display: none; }
+  .pagina { flex: 0 0 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow-y: auto; }
+  #punti { position: fixed; left: 50%; bottom: 4px; transform: translateX(-50%); display: flex; gap: 2px; z-index: 9; }
+  #punti button { border: 0; background: none; padding: 6px 5px; }
+  #punti button::after { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--done); opacity: .6; }
+  #punti button.on::after { background: var(--accent); opacity: 1; }
+  .griglia2 { height: 100%; display: grid; gap: 14px; padding: 14px; grid-template-columns: 1fr 1fr 1fr; align-items: start; }
+
   #griglia {
     height: 100%; display: grid; gap: 14px; padding: 14px;
     grid-template-columns: 1.5fr 1fr; grid-template-rows: auto auto minmax(0, 1fr);
@@ -114,8 +125,23 @@
   .adesso-p.lavoro i { background: #6a9e55; box-shadow: 0 0 0 .5vh rgba(106,158,85,.2); }
   .adesso-p.dopo i, .adesso-p.altro i { background: var(--accent); }
 
+  /* --- riquadro rete --- */
+  .pillola { font-size: 1.8vh; font-weight: 500; padding: .5vh 1vw; border-radius: 20px; background: var(--line); color: var(--muted); }
+  .pillola.ok { background: rgba(106,158,85,.18); color: #4f8a3c; } .pillola.no { background: var(--accent-soft); color: var(--accent); }
+  .rete-numeri { display: flex; gap: 2vw; margin: .6vh 0 1.2vh; }
+  .rete-numeri > div { flex: 1; }
+  .rete-numeri .n { font-size: 7vh; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+  .rete-numeri .u { font-size: 2vh; color: var(--muted); margin-left: .4vw; }
+  .rete-numeri small { display: block; font-size: 1.8vh; color: var(--muted); margin-top: .4vh; }
+  .rete-barre { display: flex; align-items: flex-end; gap: 2px; height: 5vh; margin-bottom: 1.4vh; }
+  .rete-barre i { flex: 1; background: var(--accent); opacity: .55; border-radius: 2px 2px 0 0; min-height: 2px; }
+  .rete-barre i.persa { background: var(--done); opacity: .5; height: 100% !important; }
+  .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: .9vh 1.4vw; margin: 0 0 1.6vh; font-size: 2.1vh; }
+  .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+  .rete-nota { margin-top: 1.4vh; }
+
   /* --- promemoria: foglietti attaccati sopra tutta la pagina --- */
-  #lavagna { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
+  #lavagna { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
   .nota { position: absolute; width: 19vh; height: 19vh; pointer-events: auto; touch-action: none; -webkit-touch-callout: none;
           padding: 2.4vh 1.5vh 1.2vh; color: #3b3224; border: 0; text-align: left; cursor: grab;
           font-family: "Caveat", "Segoe Print", "Comic Sans MS", cursive; font-weight: 500; font-size: 3.1vh; line-height: 1.05;
@@ -164,7 +190,7 @@
 
   /* --- carosello foto --- */
   #card-foto { padding: 0; overflow: hidden; }
-  #carosello { position: relative; flex: 1; min-height: 0; background: var(--line); cursor: pointer; }
+  #carosello { position: relative; flex: 1; min-height: 0; background: var(--line); }
   #carosello img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.2s; }
   #carosello img.vis { opacity: 1; }
   #car-vuoto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
@@ -174,13 +200,6 @@
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
   .livello.on { display: block; }
-  #foto { background: #000; z-index: 20; }
-  #foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.5s; }
-  #foto img.vis { opacity: 1; }
-  #foto-info { position: absolute; left: 28px; bottom: 22px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
-  #foto-ora { font-size: 11vh; font-weight: 300; line-height: 1; }
-  #foto-timer { font-size: 3vh; margin-top: 6px; }
-
   #allarme { background: var(--accent); color: #fff; z-index: 40; text-align: center;
              display: none; flex-direction: column; justify-content: center; align-items: center;
              animation: pulsa 1s infinite alternate; }
@@ -249,6 +268,8 @@
 </style>
 </head>
 <body>
+<div id="pagine">
+<div class="pagina" id="pagina-1">
 <div id="griglia">
   <!-- barra in alto: ora + meteo -->
   <section class="card" id="barra">
@@ -290,14 +311,35 @@
   </div>
 </div>
 
-<!-- promemoria attaccati sopra la pagina -->
+<!-- promemoria attaccati sopra la prima schermata -->
 <div id="lavagna"></div>
-
-<!-- foto a rotazione -->
-<div id="foto" class="livello">
-  <img id="fotoA" alt=""><img id="fotoB" alt="">
-  <div id="foto-info"><div id="foto-ora"></div><div id="foto-timer"></div></div>
 </div>
+
+<!-- seconda schermata: si apre scorrendo verso sinistra -->
+<div class="pagina" id="pagina-2">
+  <div class="griglia2">
+    <section class="card" id="card-rete">
+      <h2>Rete <span id="rete-stato" class="pillola">…</span></h2>
+      <div class="rete-numeri">
+        <div><span class="n" id="rete-down">–</span><span class="u">Mbps</span><small>download misurato</small></div>
+        <div><span class="n" id="rete-ping">–</span><span class="u">ms</span><small>latenza</small></div>
+      </div>
+      <div class="rete-barre" id="rete-barre" aria-label="Latenza nell'ultima ora"></div>
+      <dl class="rete-dati">
+        <dt>Connessione</dt><dd id="rete-tipo">–</dd>
+        <dt>Stima del browser</dt><dd id="rete-stima">–</dd>
+        <dt>IP pubblico</dt><dd id="rete-ip">–</dd>
+        <dt>Operatore</dt><dd id="rete-isp">–</dd>
+        <dt>Zona</dt><dd id="rete-zona">–</dd>
+        <dt>Velocità misurata</dt><dd id="rete-quando">mai</dd>
+      </dl>
+      <button class="btn-pieno" id="rete-misura">Misura velocità</button>
+      <div class="nota-txt rete-nota">Nome della rete, segnale e dispositivi connessi non sono leggibili da una pagina web: il browser li blocca per sicurezza. Per vedere i dispositivi serve il pannello del router o un'app sul tablet.</div>
+    </section>
+  </div>
+</div>
+</div>
+<div id="punti"><button data-p="0" aria-label="Dashboard"></button><button data-p="1" aria-label="Rete"></button></div>
 
 <!-- allarme timer -->
 <div id="allarme" class="livello">
@@ -448,17 +490,18 @@
       <label>Cambia foto ogni</label>
       <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
     </div>
-    <div class="nota-txt">Le foto girano nel riquadro a destra; toccandolo si vedono a tutto schermo per un minuto, poi torna la dashboard. Se il tablet è collegato, si possono caricare anche dal telefono e arrivano qui da sole.</div>
+    <div class="nota-txt">Le foto girano nel riquadro a destra. Se il tablet è collegato, si possono caricare anche dal telefono e arrivano qui da sole.</div>
   </div>
 </div>
 
 <script src="comune.js"></script>
+<script src="rete.js"></script>
 <script>
 
 // ================= orologio =================
 function orologio() {
   var d = new Date(), hhmm = due(d.getHours()) + ":" + due(d.getMinutes());
-  $("ora").textContent = hhmm; $("foto-ora").textContent = hhmm;
+  $("ora").textContent = hhmm;
   var gg = GIORNI[d.getDay()];
   $("data").textContent = gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];
   document.body.classList.toggle("notte", isNotte());
@@ -793,7 +836,6 @@ function disegnaTimer(forza) {   // ricostruisce la lista solo se cambia, altrim
     });
   }
   [].forEach.call(box.children, function (d, k) { d.children[0].textContent = fmt(timers[k].fine - now); });
-  $("foto-timer").textContent = timers.length ? "⏱ " + (timers[0].nome ? timers[0].nome + " " : "") + fmt(timers[0].fine - now) : "";
 }
 function beep() {
   if (!audio) return;
@@ -814,7 +856,7 @@ function controllaTimer() {
     salva("cucina_timers", timers);
     $("allarme-titolo").textContent = allarmeAttivo.nome ? allarmeAttivo.nome + "!" : "Tempo scaduto!";
     $("allarme-nome").textContent = (allarmeAttivo.nome ? "Finito il timer da " : "Timer da ") + allarmeAttivo.min + " min";
-    chiudiFoto(); $("allarme").classList.add("on");
+    $("allarme").classList.add("on");
     beep(); beepInt = setInterval(beep, 1500);
   }
   disegnaTimer();
@@ -919,27 +961,12 @@ function sincronizzaFoto() {   // scarica le foto nuove caricate dal telefono e 
   }).catch(function () {}).then(function () { fotoSyncInCorso = false; caricaChiavi(); });
 }
 
-var fotoAperte = 0, fotoIdx = 0, fotoTimer = null, fotoUrl = [null, null], fotoLato = 0;
-function mostraProssima() {
-  if (!fotoChiavi.length) return chiudiFoto();
-  var k = fotoChiavi[fotoIdx++ % fotoChiavi.length];
-  store("readonly").then(function (s) { return req(s.get(k)); }).then(function (blob) {
-    if (!blob) return;
-    fotoLato = 1 - fotoLato;
-    var img = fotoLato ? $("fotoB") : $("fotoA"), altra = fotoLato ? $("fotoA") : $("fotoB");
-    if (fotoUrl[fotoLato]) URL.revokeObjectURL(fotoUrl[fotoLato]);
-    fotoUrl[fotoLato] = URL.createObjectURL(blob);
-    img.onload = function () { img.classList.add("vis"); altra.classList.remove("vis"); };
-    img.src = fotoUrl[fotoLato];
-  });
-}
-// carosello nel riquadro a destra: stesse foto dello slideshow a schermo intero
+// carosello nel riquadro a destra
 var car = { idx: Math.floor(Math.random() * 1000), lato: 0, url: [null, null], timer: null };
 function carosello() {
   var vuoto = !fotoChiavi.length;
   $("car-vuoto").hidden = !vuoto;
   if (vuoto) { $("carA").classList.remove("vis"); $("carB").classList.remove("vis"); return; }
-  if (fotoTimer) return;   // a schermo intero ci pensa lo slideshow
   var k = fotoChiavi[car.idx++ % fotoChiavi.length];
   store("readonly").then(function (s) { return req(s.get(k)); }).then(function (blob) {
     if (!blob) return;
@@ -952,17 +979,6 @@ function carosello() {
   });
 }
 function avviaCarosello() { clearInterval(car.timer); car.timer = setInterval(carosello, Math.max(3, cfg.fotoOgni) * 1000); }
-$("carosello").onclick = function () { if (fotoChiavi.length) apriFoto(); };
-function apriFoto() {
-  fotoAperte = Date.now();
-  fotoIdx = Math.floor(Math.random() * fotoChiavi.length);
-  $("foto").classList.add("on"); mostraProssima();
-  fotoTimer = setInterval(mostraProssima, Math.max(3, cfg.fotoOgni) * 1000);
-}
-function chiudiFoto() { $("foto").classList.remove("on"); clearInterval(fotoTimer); fotoTimer = null; }
-$("foto").onclick = function () { chiudiFoto(); };
-// le foto a tutto schermo si aprono solo toccando il carosello e dopo un minuto torna la dashboard
-function controllaFoto() { if (fotoTimer && Date.now() - fotoAperte > 60 * 1000) chiudiFoto(); }
 
 // ================= impostazioni =================
 function aggiornaImpostazioni() {
@@ -1028,17 +1044,29 @@ $("installa").onclick = function () {
 };
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
 
+// ================= schermate =================
+function paginaAttuale() { var p = $("pagine"); return Math.round(p.scrollLeft / p.clientWidth); }
+function vaiPagina(i) { var p = $("pagine"); p.scrollTo({ left: i * p.clientWidth, behavior: "smooth" }); }
+function aggiornaPunti() {
+  var i = paginaAttuale();
+  [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
+  if (i === 1) reteVisibile();
+}
+var tPagine = null;
+$("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });
+[].forEach.call($("punti").children, function (b) { b.onclick = function () { vaiPagina(+b.getAttribute("data-p")); }; });
+window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaAttuale() * $("pagine").clientWidth; });
+
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello();
+tieniAcceso(); avviaCarosello(); aggiornaPunti(); avviaRete();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 sincronizzaFoto(); setInterval(sincronizzaFoto, 60 * 1000);
 setInterval(orologio, 10000);
 setInterval(meteo, 30 * 60 * 1000);
 setInterval(controllaTimer, 1000);
-setInterval(controllaFoto, 5000);
 setInterval(tieniAcceso, 60 * 1000);
 setInterval(function () { if (!document.querySelector(".scuro.on")) disegnaTurni(); }, 60 * 1000);
 // ricarica completa ogni notte alle 4 (evita rallentamenti dopo giorni accesa)
