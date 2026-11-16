@@ -1,7 +1,7 @@
 // Service worker: fa funzionare la dashboard anche senza rete e la rende installabile.
 // Pagina e icone: prima la rete (così gli aggiornamenti arrivano subito), poi la copia salvata.
 // Font Google: prima la copia salvata. Meteo: sempre dalla rete.
-var CACHE = "homedashboard-v14";
+var CACHE = "homedashboard-v15";
 var BASE = ["./", "./index.html", "./manifest.webmanifest", "./comune.js", "./rete.js", "./giorno.js", "./radio.js", "./gatto.js", "./forza4.js", "./ricette.js", "./telefono.html", "./telefono.webmanifest", "./icone/icona-192.png", "./icone/icona-512.png", "./icone/icona-180.png"];
 
 self.addEventListener("install", function (e) {

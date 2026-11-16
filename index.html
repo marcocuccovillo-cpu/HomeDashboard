@@ -163,20 +163,30 @@
   .pillola.ok { background: rgba(106,158,85,.18); color: #4f8a3c; } .pillola.no { background: var(--accent-soft); color: var(--accent); }
   .rete-numeri { display: flex; gap: 2vw; margin: .6vh 0 1.2vh; }
   .rete-numeri > div { flex: 1; }
-  .rete-numeri .n { font-size: 7vh; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+  .rete-numeri .n { font-size: 5.6vh; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
   .rete-numeri .u { font-size: 2vh; color: var(--muted); margin-left: .4vw; }
   .rete-numeri small { display: block; font-size: 1.8vh; color: var(--muted); margin-top: .4vh; }
-  .rete-barre { display: flex; align-items: flex-end; gap: 2px; height: 5vh; margin-bottom: 1.4vh; }
+  .rete-barre { display: flex; align-items: flex-end; gap: 2px; height: 3.6vh; margin-bottom: 1vh; }
   .rete-barre i { flex: 1; background: var(--accent); opacity: .55; border-radius: 2px 2px 0 0; min-height: 2px; }
   .rete-barre i.persa { background: var(--done); opacity: .5; height: 100% !important; }
-  .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: .9vh 1.4vw; margin: 0 0 1.6vh; font-size: 2.1vh; }
+  .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: .5vh 1.4vw; margin: 0 0 1.2vh; font-size: 2vh; }
   .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
-  .rete-wifi { border-top: 1px solid var(--line); margin-top: 1.8vh; padding-top: 1.6vh; }
+  .rete-wifi { border-top: 1px solid var(--line); margin-top: 1.4vh; padding-top: 1.2vh; }
   .rete-wifi h3 { margin: 0 0 1vh; font-size: 2.2vh; font-weight: 500; color: var(--muted); }
-  #card-rete { overflow-y: auto; }
+  .griglia2 > .col-cielo:first-child { height: 100%; }
+  #card-rete { flex: none; }
+  #card-cuccia { flex: 1; min-height: 24vh; display: flex; flex-direction: column; padding-bottom: 1.4vh; }
+  #card-cuccia h2 small { margin-left: auto; font-size: 1.8vh; color: var(--muted); font-weight: 400; }
+  .cuccia-scena { flex: 1; min-height: 0; position: relative; }
+  #cuccia { position: absolute; left: 0; bottom: 0; image-rendering: pixelated; }
+  .cuccia-livelli { display: flex; gap: 1.2vw; align-items: center; font-size: 1.7vh; color: var(--muted); margin-top: .8vh; white-space: nowrap; }
+  .cuccia-livelli i { display: inline-block; width: 4vw; height: .9vh; border-radius: 1vh; background: var(--line); vertical-align: middle; margin-left: .3vw; overflow: hidden; }
+  .cuccia-livelli b { display: block; height: 100%; border-radius: 1vh; background: #c98a4b; transition: width .3s; }
+  #liv-acqua { background: #4aa3d8; }
+  #cuccia-diario { margin-left: auto; overflow: hidden; text-overflow: ellipsis; }
   .col-cielo { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .ospiti { display: flex; gap: 1.2vw; align-items: center; }
-  #ospiti-qr { width: 20vh; height: 20vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
+  #ospiti-qr { width: 15vh; height: 15vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
   .ospiti-testo { display: flex; flex-direction: column; gap: .4vh; min-width: 0; font-size: 1.9vh; }
   .ospiti-testo b { font-weight: 500; font-size: 2.1vh; display: flex; align-items: center; gap: .6vw; }
   .ospiti-riga { color: var(--muted); overflow-wrap: anywhere; } .ospiti-riga strong { color: var(--ink); font-weight: 500; font-family: ui-monospace, Menlo, monospace; }
@@ -529,6 +539,15 @@
           <small>Inquadra il QR con la fotocamera del telefono per collegarti.</small>
         </div>
       </div>
+      </div>
+    </section>
+    <section class="card" id="card-cuccia">
+      <h2>L'angolo del gatto <small id="cuccia-stato"></small></h2>
+      <div class="cuccia-scena"><canvas id="cuccia" aria-label="Cuccia, ciotole e giochi del gatto"></canvas></div>
+      <div class="cuccia-livelli">
+        <span>Crocchette <i><b id="liv-cibo"></b></i></span>
+        <span>Acqua <i><b id="liv-acqua"></b></i></span>
+        <span id="cuccia-diario"></span>
       </div>
     </section>
     </div>
