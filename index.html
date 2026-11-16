@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root {
     --bg: #f4efe6; --card: #fffaf2; --ink: #2b261f; --muted: #8a7f70;
@@ -339,7 +340,26 @@
   body.notte .f4-griglia { background: #22426f; }
 
   /* --- ricetta del giorno --- */
-  #card-ricetta { flex: 1; min-height: 0; }
+  #card-ricetta { flex: none; }
+  .griglia2 > .col-cielo:last-child { height: 100%; }
+  /* --- tragitti casa → lavoro --- */
+  #card-tragitti { flex: 1; min-height: 30vh; display: flex; flex-direction: column; }
+  #card-tragitti h2 small { margin-left: auto; font-size: 1.7vh; color: var(--muted); font-weight: 400; }
+  #tr-mappa { flex: 1; min-height: 14vh; border-radius: 12px; overflow: hidden; background: var(--line); z-index: 0; }
+  #tr-mappa .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,.7); }
+  .tr-pin span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font: 700 13px/1 sans-serif;
+                 border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
+  .tr-righe { display: flex; flex-direction: column; gap: .6vh; margin-top: 1vh; }
+  .tr-riga { display: flex; align-items: center; gap: .8vw; }
+  .tr-mezzo { border: 0; width: 4.6vh; height: 4.6vh; border-radius: 50%; font-size: 2.4vh; background: var(--line); cursor: pointer; flex: none;
+              box-shadow: inset 0 0 0 2px var(--pc, var(--line)); }
+  .tr-riga.p0 { --pc: var(--p0); } .tr-riga.p1 { --pc: var(--p1); }
+  .tr-chi { font-size: 1.9vh; font-weight: 500; color: var(--pc); min-width: 7vw; }
+  .tr-testi { display: flex; flex-direction: column; min-width: 0; }
+  .tr-tempo { font-size: 2.6vh; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .tr-tempo em { font-style: normal; font-size: 1.6vh; color: #c0392b; }
+  .tr-info { font-size: 1.55vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #tr-vuoto { margin-top: 1vh; }
   .ricetta-titolo { display: flex; align-items: baseline; gap: .8vw; flex-wrap: wrap; margin-bottom: .4vh; }
   .ricetta-titolo b { font-size: 2.4vh; font-weight: 500; } .ricetta-titolo span { font-size: 1.7vh; color: var(--muted); }
   .ricetta-ingr { font-size: 1.7vh; color: var(--muted); line-height: 1.35; margin-bottom: .8vh; }
@@ -386,6 +406,10 @@
   .cmd { margin-bottom: 1vh; }
   .cmd label { display: block; font-size: 1.8vh; margin-bottom: .4vh; }
   .cmd .riga { flex-wrap: nowrap; margin: 0; }
+  .campo-imp { margin-bottom: 10px; }
+  .campo-imp > label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  .campo-imp > input { width: 100%; box-sizing: border-box; }
+  .campo-imp .riga { margin: 0; flex-wrap: nowrap; }
   .cmd input { flex: 1; font-family: ui-monospace, "Roboto Mono", Menlo, monospace; font-size: 1.8vh !important; color: var(--muted) !important; }
   .nota-txt { font-size: 1.85vh; color: var(--muted); margin: 4px 0 8px; line-height: 1.4; }
   .btn-rosso { color: #b4412f; border-color: #e5b7ad; }
@@ -571,6 +595,12 @@
         <div class="ricetta-ingr" id="ricetta-ingr"></div>
         <ol class="ricetta-passi" id="ricetta-passi"></ol>
       </section>
+      <section class="card" id="card-tragitti">
+        <h2>Casa → lavoro <small id="tr-fonte"></small></h2>
+        <div id="tr-mappa"></div>
+        <div class="tr-righe" id="tr-righe"></div>
+        <div class="nota-txt" id="tr-vuoto">Impostate casa e lavori per vedere percorsi e tempi. <button class="btn-piccolo" id="tr-imposta">Imposta</button></div>
+      </section>
     </div>
   </div>
 </div>
@@ -702,6 +732,16 @@
     <div class="cmd"><label>Ultime righe del registro</label><div class="riga"><input type="text" readonly value="tail -n 20 ~/homedashboard/registro.txt"><button class="btn-piccolo" type="button">Copia</button></div></div>
     <div class="cmd"><label>Diagnosi (se qualcosa non va)</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --diagnosi"><button class="btn-piccolo" type="button">Copia</button></div></div>
 
+    <h3>Casa → lavoro</h3>
+    <div class="campo-imp"><label>Indirizzo di casa</label><input type="text" id="tr-casa" placeholder="es. Via Indipendenza 10, Bologna"></div>
+    <div class="campo-imp"><label id="tr-lab0">Lavoro</label>
+      <div class="riga"><input type="text" id="tr-lav0" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz0"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+    <div class="campo-imp"><label id="tr-lab1">Lavoro</label>
+      <div class="riga"><input type="text" id="tr-lav1" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz1"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+    <div class="campo-imp"><label>Chiave TomTom per il traffico in tempo reale (facoltativa)</label><input type="text" id="tr-chiave" placeholder="incolla qui la chiave" autocomplete="off"></div>
+    <div class="riga"><button class="btn-piccolo" id="tr-salva">Salva e trova gli indirizzi</button><span class="stato" id="tr-stato"></span></div>
+    <div class="nota-txt">Senza chiave i tempi sono calcolati con OpenStreetMap, senza traffico. Per il traffico dal vivo create un account gratuito su <a href="https://developer.tomtom.com" target="_blank" rel="noopener" style="color:var(--accent)">developer.tomtom.com</a> e copiate qui la chiave «API key»: il piano gratuito basta e avanza. Indirizzi e chiave sono cifrati come i turni.</div>
+
     <h3>Gatto di casa</h3>
     <div class="riga">
       <label>Mostra il gatto</label>
@@ -737,13 +777,15 @@
   </div>
 </div>
 
-<script src="comune.js?v=19"></script>
-<script src="rete.js?v=19"></script>
-<script src="giorno.js?v=19"></script>
-<script src="radio.js?v=19"></script>
-<script src="forza4.js?v=19"></script>
-<script src="ricette.js?v=19"></script>
-<script src="gatto.js?v=19"></script>
+<script src="comune.js?v=20"></script>
+<script src="rete.js?v=20"></script>
+<script src="giorno.js?v=20"></script>
+<script src="radio.js?v=20"></script>
+<script src="forza4.js?v=20"></script>
+<script src="ricette.js?v=20"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="tragitti.js?v=20"></script>
+<script src="gatto.js?v=20"></script>
 <script>
 
 // ================= orologio =================
@@ -1317,7 +1359,9 @@ function aggiornaImpostazioni() {
   seg("seg-corrente", quale(new Date()));
   seg("seg-schermo", cfg.schermoAcceso ? "si" : "no"); statoSchermo();
   seg("seg-gatto", leggi("gatto_acceso", true) ? "si" : "no");
+  if (window.trApriImpostazioni) trApriImpostazioni();
 }
+function apriImpostazioni() { $("ingranaggio").onclick(); }
 $("ingranaggio").onclick = function () { aggiornaImpostazioni(); caricaChiavi(); mostraStatoSync(); apri("impostazioni"); };
 function cambiaNome(i, v) { cfg.nomi[i] = v.trim() || ("Persona " + (i + 1)); salvaCfg(); disegnaTurni(); }
 $("nome0").oninput = function () { cambiaNome(0, this.value); };
@@ -1402,9 +1446,9 @@ $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPag
 window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaAttuale() * $("pagine").clientWidth; });
 
 // ================= avvio =================
-function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); }
+function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); avviaTragitti(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

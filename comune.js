@@ -164,6 +164,12 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
   spesa.forEach(function (v, i) { f["spesa." + v.id] = { testo: v.testo, fatto: !!v.fatto, pos: i }; });
   viaggi.forEach(function (v) { f["viaggio." + v.id] = { nome: v.nome, paese: v.paese || "", lat: v.lat, lon: v.lon, stato: v.stato, data: v.data || "" }; });
   if (cfg.forza4) f["gioco.forza4"] = cfg.forza4;
+  if (cfg.tragitti) {   // casa, lavori, mezzi e chiave TomTom: ognuno per conto suo, così due modifiche non si pestano
+    var tr = cfg.tragitti;
+    if (tr.casa) f["tragitto.casa"] = tr.casa;
+    [0, 1].forEach(function (p) { if (tr.lavoro && tr.lavoro[p]) f["tragitto.lavoro." + p] = tr.lavoro[p]; if (tr.mezzo) f["tragitto.mezzo." + p] = tr.mezzo[p]; });
+    if (tr.chiave) f["tragitto.chiave"] = tr.chiave;
+  }
   return f;
 }
 function predefinito(k, v) { return (k === "nomi.0" && v === NOMI_DEF[0]) || (k === "nomi.1" && v === NOMI_DEF[1]) || (k.indexOf("turni.") === 0 && v === ""); }
@@ -217,6 +223,8 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   cfg.eccezioni = {};
   var nn = [], ss = [], vv = [];
   if (val("gioco.forza4")) cfg.forza4 = val("gioco.forza4").v;
+  var tv = function (k) { var e = val("tragitto." + k); return e ? e.v : null; };
+  cfg.tragitti = { casa: tv("casa"), lavoro: [tv("lavoro.0"), tv("lavoro.1")], mezzo: [tv("mezzo.0") || "auto", tv("mezzo.1") || "auto"], chiave: tv("chiave") || "" };
   Object.keys(reg).forEach(function (k) {
     var e = val(k); if (!e) return;
     if (k.indexOf("ecc.") === 0) cfg.eccezioni[k.slice(4)] = e.v;

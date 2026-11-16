@@ -1,59 +1,143 @@
 // HomeDashboard — riquadro del giorno (prima schermata, a destra):
-// pixel art di Bologna che segue ora, Sole, Luna e meteo + indovinello o curiosità del giorno.
+// pixel art di Bologna che segue ora, Sole, Luna e meteo + indovinello del giorno o "Accadde oggi" (a giorni alterni).
 
 // ---------------------------------------------------------------- indovinelli e curiosità
 var DEL_GIORNO = [
   { t: "i", q: "Più è grande, meno si vede. Che cos'è?", r: "Il buio." },
-  { t: "c", q: "La luce del Sole impiega circa 8 minuti e 20 secondi ad arrivare fino a noi: quando guardi il tramonto, il Sole è già un po' più in basso di come lo vedi." },
   { t: "i", q: "Ha i tasti ma non apre porte, ha lo spazio ma non c'è posto, puoi entrare ma non uscire. Che cos'è?", r: "La tastiera del computer (Invio, Spazio, Esc)." },
-  { t: "c", q: "La Torre degli Asinelli è alta circa 97 metri e per arrivare in cima ci sono 498 gradini." },
   { t: "i", q: "Cosa si rompe appena lo nomini?", r: "Il silenzio." },
-  { t: "c", q: "La Stazione Spaziale fa un giro della Terra in circa 90 minuti: gli astronauti vedono 16 albe e 16 tramonti al giorno." },
   { t: "i", q: "Una mazza e una palla costano in tutto 1,10 €. La mazza costa 1 € più della palla. Quanto costa la palla?", r: "5 centesimi (la mazza 1,05 €). Quasi tutti rispondono 10!" },
-  { t: "c", q: "Il primo \"bug\" informatico documentato era una vera falena, trovata nel 1947 dentro un relè del computer Harvard Mark II. Fu incollata sul registro di bordo." },
   { t: "i", q: "Ha un collo ma non ha la testa. Che cos'è?", r: "La bottiglia." },
-  { t: "c", q: "I portici di Bologna sono patrimonio UNESCO dal 2021: in tutto il comune sono più di 60 km." },
   { t: "i", q: "Una lumaca è in fondo a un pozzo di 10 metri. Di giorno sale 3 metri, di notte scivola giù di 2. In quanti giorni esce?", r: "8 giorni: dopo 7 giorni è a 7 metri, l'ottavo giorno sale di 3 ed è fuori prima di scivolare." },
-  { t: "c", q: "Un fulmine arriva a circa 30.000 °C: è più o meno cinque volte più caldo della superficie del Sole." },
   { t: "i", q: "Più ne togli, più diventa grande. Che cos'è?", r: "La buca." },
-  { t: "c", q: "Su Venere un giorno (243 giorni terrestri) dura più di un anno (225 giorni terrestri)." },
   { t: "i", q: "Se 5 macchine fanno 5 pezzi in 5 minuti, quanto ci mettono 100 macchine a fare 100 pezzi?", r: "5 minuti: ogni macchina fa un pezzo in 5 minuti." },
-  { t: "c", q: "Il QR code è stato inventato nel 1994 in Giappone, alla Denso Wave, per tenere traccia dei pezzi delle automobili in fabbrica." },
   { t: "i", q: "Ha i denti ma non morde. Che cos'è?", r: "Il pettine." },
-  { t: "c", q: "\"Wi-Fi\" non è l'abbreviazione di niente: è un nome di fantasia inventato da un'agenzia di marketing nel 1999." },
   { t: "i", q: "Mi trovi una volta in un minuto, due volte in un momento e mai in cento anni. Chi sono?", r: "La lettera M." },
-  { t: "c", q: "La Luna si allontana dalla Terra di circa 3,8 centimetri all'anno." },
   { t: "i", q: "In un lago le ninfee raddoppiano ogni giorno e in 48 giorni coprono tutto il lago. In quanti giorni ne coprono metà?", r: "In 47 giorni: il giorno dopo raddoppiano e lo coprono tutto." },
-  { t: "c", q: "Il primo SMS della storia fu inviato nel 1992 e diceva \"Merry Christmas\"." },
   { t: "i", q: "Corre sempre ma non si stanca, ha un letto ma non dorme mai. Che cos'è?", r: "Il fiume." },
-  { t: "c", q: "Gli orologi Unix a 32 bit andranno in tilt il 19 gennaio 2038 alle 3:14:07 UTC: i secondi dal 1970 non ci staranno più." },
   { t: "i", q: "Ti segue dappertutto ma sparisce al buio. Che cos'è?", r: "L'ombra." },
-  { t: "c", q: "Il polpo ha tre cuori e il sangue blu." },
   { t: "i", q: "Quante volte puoi sottrarre 5 da 25?", r: "Una volta sola: dopo è 20, non più 25." },
-  { t: "c", q: "Le banane, dal punto di vista botanico, sono bacche. Le fragole invece no." },
   { t: "i", q: "Si bagna mentre asciuga. Che cos'è?", r: "L'asciugamano." },
-  { t: "c", q: "Il primo sito web della storia, del 1991, è ancora online: info.cern.ch." },
   { t: "i", q: "Ci sono 10 tipi di persone: quelle che capiscono il sistema binario e quelle che no. Quante persone sono?", r: "Due: 10 in binario vale 2." },
-  { t: "c", q: "Gli squali esistono da più tempo degli alberi: circa 450 milioni di anni contro circa 385." },
   { t: "i", q: "Ha una testa e una coda ma niente corpo. Che cos'è?", r: "La moneta." },
-  { t: "c", q: "La Terra non è una sfera perfetta: all'equatore il diametro è circa 43 km più grande che da polo a polo." },
   { t: "i", q: "Sei in una stanza buia con un solo fiammifero. Ci sono una candela, una lampada a olio e un camino. Cosa accendi per primo?", r: "Il fiammifero." },
-  { t: "c", q: "Il cervello consuma circa il 20% dell'energia di tutto il corpo, pur pesando circa il 2%." },
   { t: "i", q: "Ha un pollice e quattro dita ma non è viva. Che cos'è?", r: "Il guanto." },
-  { t: "c", q: "Per un computer 0,1 + 0,2 fa 0,30000000000000004: colpa di come i numeri con la virgola vengono scritti in binario." },
   { t: "i", q: "Cosa sale e non scende mai?", r: "L'età." },
-  { t: "c", q: "Un anno luce è circa 9.460 miliardi di chilometri. La stella più vicina dopo il Sole è a circa 4,2 anni luce." },
   { t: "i", q: "Ha 13 cuori ma nessun altro organo. Che cos'è?", r: "Un mazzo di carte francesi." },
-  { t: "c", q: "Una tazza di caffè americano contiene più caffeina di un espresso: l'espresso è più concentrato ma molto più piccolo." },
-  { t: "i", q: "Ha le foglie ma non è un albero, ha il dorso ma non è un animale. Che cos'è?", r: "Il libro." },
-  { t: "c", q: "La Garisenda, la torre più bassa delle Due Torri, è alta circa 48 metri: in origine era più alta, ma fu accorciata nel Trecento perché pendeva troppo." }
+  { t: "i", q: "Ha le foglie ma non è un albero, ha il dorso ma non è un animale. Che cos'è?", r: "Il libro." }
 ];
-function disegnaGiorno() {
+
+// "Accadde oggi": scienza, spazio, informatica e videogiochi. [mese, giorno, anno, testo]
+// Se oggi non c'è niente, si mostra il prossimo anniversario in arrivo.
+var ACCADDE = [
+  [1, 1, 1983, "ARPANET passa al protocollo TCP/IP: è considerato il compleanno di Internet."],
+  [1, 7, 1610, "Galileo punta il cannocchiale su Giove e scopre tre delle sue lune (la quarta pochi giorni dopo)."],
+  [1, 8, 1942, "Nasce a Oxford Stephen Hawking."],
+  [1, 9, 2007, "Steve Jobs presenta il primo iPhone: «un iPod, un telefono e un comunicatore Internet»."],
+  [1, 15, 2001, "Nasce Wikipedia."],
+  [1, 24, 1984, "Esce il primo Macintosh, lanciato con lo spot «1984»."],
+  [1, 31, 1958, "Parte Explorer 1, il primo satellite americano: scopre le fasce di radiazione di Van Allen."],
+  [2, 4, 2004, "Mark Zuckerberg lancia «TheFacebook» dalla sua stanza di Harvard."],
+  [2, 10, 1996, "Il computer Deep Blue di IBM batte per la prima volta Kasparov in una partita a scacchi."],
+  [2, 11, 1847, "Nasce Thomas Edison."],
+  [2, 14, 1990, "Voyager 1, a 6 miliardi di km, si volta e fotografa la Terra: il «pallido puntino azzurro»."],
+  [2, 15, 1564, "Nasce a Pisa Galileo Galilei."],
+  [2, 18, 1930, "Clyde Tombaugh scopre Plutone confrontando due lastre fotografiche."],
+  [2, 21, 1986, "Esce in Giappone il primo The Legend of Zelda."],
+  [2, 27, 1996, "Escono in Giappone Pokémon Rosso e Verde per Game Boy."],
+  [2, 28, 1953, "Watson e Crick capiscono che il DNA è una doppia elica."],
+  [3, 3, 2017, "Esce la Nintendo Switch."],
+  [3, 4, 2000, "Esce in Giappone la PlayStation 2, la console più venduta di sempre."],
+  [3, 10, 1876, "Prima telefonata della storia: «Signor Watson, venga qui, ho bisogno di lei»."],
+  [3, 12, 1989, "Tim Berners-Lee presenta al CERN la proposta che diventerà il World Wide Web."],
+  [3, 14, 1879, "Nasce Albert Einstein. Ed è anche il Pi Greco Day: 3/14!"],
+  [3, 18, 1965, "Aleksej Leonov esce dalla capsula: è la prima passeggiata nello spazio."],
+  [3, 21, 2006, "Jack Dorsey scrive il primo tweet: «just setting up my twttr»."],
+  [4, 1, 1976, "Steve Jobs e Steve Wozniak fondano Apple."],
+  [4, 3, 1973, "Martin Cooper di Motorola fa la prima chiamata da un cellulare, per strada a New York."],
+  [4, 4, 1975, "Bill Gates e Paul Allen fondano Microsoft."],
+  [4, 10, 2019, "Viene mostrata la prima foto di un buco nero, al centro della galassia M87."],
+  [4, 12, 1961, "Jurij Gagarin è il primo essere umano nello spazio: un'orbita in 108 minuti."],
+  [4, 21, 1989, "Esce in Giappone il Game Boy, insieme a Tetris."],
+  [4, 24, 1990, "Lo Space Shuttle Discovery porta in orbita il telescopio spaziale Hubble."],
+  [4, 25, 1953, "Esce su Nature l'articolo di Watson e Crick sulla struttura del DNA."],
+  [4, 30, 1993, "Il CERN rende il World Wide Web libero e gratuito per tutti."],
+  [5, 5, 1961, "Alan Shepard è il primo americano nello spazio."],
+  [5, 11, 1997, "Deep Blue vince l'intera sfida contro Kasparov: un computer batte il campione del mondo di scacchi."],
+  [5, 14, 1796, "Edward Jenner fa la prima vaccinazione contro il vaiolo."],
+  [5, 22, 1980, "Esce in Giappone Pac-Man."],
+  [5, 25, 1977, "Esce nei cinema americani il primo Star Wars."],
+  [6, 6, 1984, "Aleksej Pažitnov, a Mosca, finisce la prima versione di Tetris."],
+  [6, 16, 1963, "Valentina Tereškova è la prima donna nello spazio."],
+  [6, 19, 1623, "Nasce Blaise Pascal, che a 19 anni costruirà una delle prime calcolatrici meccaniche."],
+  [6, 23, 1912, "Nasce Alan Turing, padre dell'informatica."],
+  [6, 29, 2007, "Il primo iPhone arriva nei negozi americani."],
+  [6, 30, 1908, "Esplosione di Tunguska: un oggetto spaziale abbatte 80 milioni di alberi in Siberia."],
+  [7, 4, 2012, "Il CERN annuncia la scoperta del bosone di Higgs."],
+  [7, 6, 2016, "Esce Pokémon GO: le strade si riempiono di allenatori."],
+  [7, 10, 1856, "Nasce Nikola Tesla."],
+  [7, 12, 2022, "Il telescopio James Webb mostra le sue prime immagini a colori."],
+  [7, 14, 2015, "La sonda New Horizons sorvola Plutone e ne vede il «cuore»."],
+  [7, 15, 1983, "Esce in Giappone il Famicom, il Nintendo a 8 bit."],
+  [7, 20, 1969, "Apollo 11: Neil Armstrong e Buzz Aldrin camminano sulla Luna."],
+  [7, 29, 1958, "Viene firmata la legge che crea la NASA."],
+  [8, 6, 1991, "Tim Berners-Lee annuncia al mondo il World Wide Web."],
+  [8, 6, 2012, "Il rover Curiosity atterra su Marte."],
+  [8, 12, 1981, "IBM presenta il suo primo Personal Computer, il modello 5150."],
+  [8, 24, 2006, "Plutone viene declassato a pianeta nano."],
+  [8, 25, 1991, "Linus Torvalds annuncia Linux: «solo un hobby, non sarà grande e professionale»."],
+  [8, 25, 2012, "Voyager 1 esce dal Sistema Solare ed entra nello spazio interstellare."],
+  [9, 4, 1998, "Larry Page e Sergey Brin fondano Google."],
+  [9, 5, 1977, "Parte la sonda Voyager 1, oggi l'oggetto umano più lontano di sempre."],
+  [9, 9, 1947, "Una falena trovata in un relè del computer Harvard Mark II diventa il primo «bug» documentato."],
+  [9, 12, 1940, "Quattro ragazzi e un cane scoprono le pitture della grotta di Lascaux."],
+  [9, 13, 1985, "Esce in Giappone Super Mario Bros."],
+  [9, 23, 1846, "Viene scoperto Nettuno, nel punto che i calcoli avevano previsto."],
+  [9, 27, 1983, "Richard Stallman annuncia il progetto GNU: nasce il software libero."],
+  [9, 28, 1928, "Alexander Fleming nota la muffa che lo porterà alla penicillina."],
+  [10, 1, 1958, "La NASA inizia ufficialmente a lavorare."],
+  [10, 4, 1957, "Lo Sputnik 1 è il primo satellite artificiale: inizia l'era spaziale."],
+  [10, 18, 1958, "«Tennis for Two», su un oscilloscopio, è uno dei primi videogiochi della storia."],
+  [10, 23, 2001, "Apple presenta l'iPod: «mille canzoni in tasca»."],
+  [10, 29, 1969, "Primo messaggio su ARPANET: doveva essere «LOGIN», arrivò solo «LO» prima del crash."],
+  [11, 3, 1957, "Parte lo Sputnik 2 con la cagnolina Laika."],
+  [11, 7, 1867, "Nasce Marie Curie, unica persona premiata con il Nobel in due scienze diverse."],
+  [11, 8, 1895, "Wilhelm Röntgen scopre i raggi X."],
+  [11, 12, 2014, "Il lander Philae della missione Rosetta si posa su una cometa."],
+  [11, 15, 2001, "Esce la prima Xbox."],
+  [11, 16, 1974, "Dal radiotelescopio di Arecibo parte un messaggio verso l'ammasso M13: arriverà tra 25.000 anni."],
+  [11, 20, 1985, "Esce Windows 1.0."],
+  [11, 24, 1859, "Darwin pubblica «L'origine delle specie»."],
+  [11, 29, 1972, "Atari mette in un bar della California il primo Pong da sala giochi."],
+  [12, 3, 1994, "Esce in Giappone la prima PlayStation."],
+  [12, 9, 1968, "Douglas Engelbart mostra mouse, finestre e videochiamate: «la madre di tutte le demo»."],
+  [12, 10, 1815, "Nasce Ada Lovelace, autrice del primo programma per computer."],
+  [12, 17, 1903, "I fratelli Wright fanno il primo volo a motore: 12 secondi."],
+  [12, 21, 1968, "Parte Apollo 8, il primo volo umano intorno alla Luna."],
+  [12, 23, 1947, "Ai Bell Labs funziona il primo transistor."],
+  [12, 24, 1968, "Dall'Apollo 8 viene scattata «Earthrise», la Terra che sorge dietro la Luna."],
+  [12, 25, 1642, "Nasce Isaac Newton."],
+  [12, 25, 2021, "Parte il telescopio spaziale James Webb."]
+];
+function accaddeDi(oggi) {   // gli eventi di oggi, altrimenti quelli del prossimo giorno che ne ha
+  for (var i = 0; i < 366; i++) {
+    var d = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate() + i);
+    var l = ACCADDE.filter(function (a) { return a[0] === d.getMonth() + 1 && a[1] === d.getDate(); });
+    if (l.length) return { giorni: i, d: d, e: l[Math.floor(oggi.getFullYear() + oggi.getDate()) % l.length] };
+  }
+  return null;
+}
+function disegnaGiorno() {   // un giorno l'indovinello, il giorno dopo "Accadde oggi"
   var oggi = new Date(), n = Math.floor((Date.UTC(oggi.getFullYear(), oggi.getMonth(), oggi.getDate())) / 864e5);
-  var x = DEL_GIORNO[n % DEL_GIORNO.length];
-  $("gioco-tipo").textContent = x.t === "i" ? "Indovinello del giorno" : "Lo sapevi?";
-  $("gioco-testo").textContent = x.q;
-  $("gioco-sol").hidden = x.t !== "i"; $("gioco-risposta").hidden = true; $("gioco-risposta").textContent = x.r || "";
+  var a = n % 2 ? accaddeDi(oggi) : null, x = a ? null : DEL_GIORNO[Math.floor(n / 2) % DEL_GIORNO.length];
+  if (a) {
+    $("gioco-tipo").textContent = a.giorni === 0 ? "Accadde oggi" : a.giorni === 1 ? "Accadde domani" : "Accadde il " + a.d.getDate() + " " + MESI[a.d.getMonth()];
+    $("gioco-testo").textContent = a.e[2] + " · " + a.e[3];
+  } else {
+    $("gioco-tipo").textContent = "Indovinello del giorno";
+    $("gioco-testo").textContent = x.q;
+  }
+  $("gioco-sol").hidden = !x; $("gioco-risposta").hidden = true; $("gioco-risposta").textContent = x ? x.r : "";
   disegnaGiorno.n = n;
 }
 $("gioco-sol").onclick = function () { $("gioco-risposta").hidden = false; $("gioco-sol").hidden = true; };
