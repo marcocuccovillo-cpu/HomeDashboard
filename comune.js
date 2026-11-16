@@ -101,6 +101,23 @@ function statoAdesso(p, ora) {
   return { stato: "riposo", cosa: pre };
 }
 
+// ================= tempo per noi: giorni e serate libere per tutti e due =================
+var SERA_DA = 19 * 60 + 30, SERA_A = 23 * 60;   // "sera libera" = nessun turno tra le 19:30 e le 23
+function seraOccupata(d, p) {
+  var v = turno(d, p); if (!v) return false;
+  var f = fasceGiorno(d, p);
+  if (!f.length) return true;   // orario scritto a mano che non si legge: meglio non promettere la serata
+  return f.some(function (x) { return x[1] > SERA_DA && x[0] < SERA_A; });
+}
+function insieme(d) {   // "giorno" se liberi tutto il giorno, "sera" se liberi la sera, altrimenti ""
+  if (!turno(d, 0) && !turno(d, 1)) return "giorno";
+  return !seraOccupata(d, 0) && !seraOccupata(d, 1) ? "sera" : "";
+}
+function prossimoGiornoInsieme(da) {   // fino a 8 settimane avanti (i turni si ripetono ogni 2)
+  for (var i = 0; i < 56; i++) { var d = piuGiorni(da, i); if (insieme(d) === "giorno") return d; }
+  return null;
+}
+
 // ================= promemoria e spesa (dati) =================
 var COLORI_HEX = { giallo: "#fbe38b", rosa: "#f7c4cf", verde: "#c9e5ad", azzurro: "#bcdcf0", arancio: "#fbcd9c", lilla: "#d9cbf0" };
 var note = leggi("cucina_note", null);

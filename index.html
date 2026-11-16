@@ -134,6 +134,9 @@
   .tturni th.oggi::before { content: "OGGI"; display: block; font-size: 1.5vh; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
   .tturni tr:last-child td.oggi, .tturni tr.fine-sett td.oggi { border-radius: 0 0 10px 10px; }
   .tturni .passato { opacity: .38; }
+  .cuore { color: #d9466f; font-size: 1.9vh; margin-left: .25vw; vertical-align: .35vh; }
+  .cuore.sera { font-size: 1.8vh; }
+  #insieme { color: #b43a5e; }
   .fascia { display: block; margin: .3vh 0; padding: .5vh 0 .5vh .25vw; border-radius: 7px; font-variant-numeric: tabular-nums;
             font-size: 1.65vh; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; position: relative; }
   tr.p0 .fascia { background: var(--p0-soft); box-shadow: inset 3px 0 0 var(--p0); }
@@ -401,7 +404,7 @@
 
   <!-- turni -->
   <section class="card" id="card-turni">
-    <h2>Turni <small>tocca una casella o un nome per modificarlo</small></h2>
+    <h2>Turni <small id="insieme" title="Tocca una casella o un nome per modificarlo"></small></h2>
     <div id="adesso"></div>
     <table class="tturni" id="tab-turni"></table>
   </section>
@@ -735,6 +738,9 @@ function meteo() {
     $("temp").textContent = Math.round(j.current.temperature_2m) + "°";
     $("descr").textContent = t[1] + " · " + Math.round(j.daily.temperature_2m_min[0]) + "° / " + Math.round(j.daily.temperature_2m_max[0]) + "°";
     var html = "";
+    window.meteoGiorni = {};
+    j.daily.time.forEach(function (t, k) { meteoGiorni[t] = { tipo: tipo(j.daily.weather_code[k])[0], max: Math.round(j.daily.temperature_2m_max[k]) }; });
+    if (window.disegnaInsieme) disegnaInsieme();
     for (var i = 1; i < 5; i++) {
       var d = new Date(j.daily.time[i] + "T12:00:00");
       html += '<div class="giorno">' + GIORNI[d.getDay()].slice(0, 3) + icona(tipo(j.daily.weather_code[i])[0]) +
@@ -783,7 +789,7 @@ $("ed-chiedi").querySelector("form").onsubmit = function (e) {
 
 // ================= turni bisettimanali =================
 function disegnaTurni() {
-  disegnaAdesso();
+  disegnaAdesso(); disegnaInsieme();
   var tab = $("tab-turni"), lun = lunedi(new Date()), adesso = new Date(), oggi = iso(adesso);
   var minuti = adesso.getHours() * 60 + adesso.getMinutes();
   tab.innerHTML = '<colgroup><col class="c-nome"><col><col><col><col><col><col><col></colgroup>';
@@ -798,8 +804,13 @@ function disegnaTurni() {
       var d = piuGiorni(l, g), cls = [];
       if (iso(d) === oggi) cls.push("oggi"); else if (iso(d) < oggi) cls.push("passato");
       if (g >= 5) cls.push("weekend");
-      var h = el("th", cls.join(" "));
+      var h = el("th", cls.join(" ")), ins = insieme(d);
       h.innerHTML = GIORNI_LUN[g] + "<b>" + d.getDate() + "</b>";
+      if (ins) {   // ♥ giorno libero insieme · ♡ serata libera insieme
+        var cu = el("span", "cuore " + ins); cu.textContent = ins === "giorno" ? "♥" : "♡";
+        cu.title = ins === "giorno" ? "Giorno libero per tutti e due" : "Sera libera per tutti e due";
+        h.querySelector("b").appendChild(cu);
+      }
       tr.appendChild(h);
     }
     tab.appendChild(tr);
@@ -830,6 +841,20 @@ function disegnaTurni() {
       tab.appendChild(r);
     });
   });
+}
+function disegnaInsieme() {   // riga sotto il titolo: prossimo giorno libero insieme e serate della settimana
+  var oggi = new Date(), d = prossimoGiornoInsieme(new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate()));
+  var lun = lunedi(oggi), sere = 0;
+  for (var g = 0; g < 7; g++) { var x = piuGiorni(lun, g); if (iso(x) >= iso(oggi) && insieme(x)) sere++; }
+  var testo = "";
+  if (d) {
+    var diff = Math.round((d - new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate())) / 864e5);
+    testo = "♥ Liberi insieme " + (diff === 0 ? "oggi" : diff === 1 ? "domani" : GIORNI[d.getDay()] + " " + d.getDate() + (diff > 6 ? " " + MESI[d.getMonth()].slice(0, 3) : ""));
+    var m = window.meteoGiorni && meteoGiorni[iso(d)];
+    if (m) testo += " · " + ({ sole: "☀", poco: "⛅", nuvole: "☁", pioggia: "🌧", neve: "❄", temporale: "⛈", nebbia: "🌫" }[m.tipo] || "") + " " + m.max + "°";
+  } else testo = "Nessun giorno libero insieme nelle prossime 8 settimane";
+  testo += " · " + (sere === 1 ? "1 serata insieme" : sere + " serate insieme") + " questa settimana";
+  $("insieme").textContent = testo;
 }
 function minuti_(hhmm) { var x = hhmm.split(":"); return +x[0] * 60 + +x[1]; }
 function disegnaAdesso() {
