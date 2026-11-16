@@ -37,6 +37,7 @@ Si riavvia da solo quando il tablet si accende.
 - Rifare le impostazioni: `python ~/homedashboard/dispositivi.py --configura`
 - Provare senza pubblicare: `python ~/homedashboard/dispositivi.py --prova`
 - Vedere cosa è successo: `tail ~/homedashboard/registro.txt`
+- Registro dettagliato della conversazione con il router (senza password): `python ~/homedashboard/dispositivi.py --diagnosi`
 
 ## Privacy
 

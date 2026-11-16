@@ -61,6 +61,17 @@ def chiedi(testo, predefinito="", segreto=False):
     return valore or predefinito
 
 
+def salva_strategia(nome):
+    try:
+        with open(CONFIG, encoding="utf-8") as f:
+            c = json.load(f)
+        c["strategia"] = nome
+        with open(CONFIG, "w", encoding="utf-8") as f:
+            json.dump(c, f, indent=1)
+    except OSError:
+        pass
+
+
 def configura():
     vecchia = {}
     if os.path.exists(CONFIG):
@@ -82,37 +93,86 @@ def configura():
 
 
 # ---------------------------------------------------------------- router
-async def leggi_router(c):
-    """Restituisce (modello, [dispositivi]) leggendo la Vodafone Station."""
+# Modi diversi di tenere la sessione con il router: alcuni firmware della Vodafone Station
+# rimandano al login se i cookie vengono "ritoccati" o se si passa da https a http.
+# Si provano in ordine e quello che funziona viene ricordato nella configurazione.
+STRATEGIE = [
+    {"nome": "normale"},
+    {"nome": "cookie-grezzi", "grezzi": True, "pausa": 1},
+    {"nome": "http", "grezzi": True, "pausa": 1, "schema": "http"},
+    {"nome": "https", "grezzi": True, "pausa": 1, "schema": "https"},
+]
+
+
+class RouterNonLegge(Exception):
+    """Login riuscito ma il router non dà la lista: si prova la strategia successiva."""
+
+
+async def _leggi_con(c, s):
     import aiohttp
     from aiovodafone.exceptions import AlreadyLogged, CannotAuthenticate, CannotConnect, GenericLoginError, ModelNotSupported
     from aiovodafone.models import get_device_type, init_device_class
 
-    # unsafe=True: serve per tenere i cookie di sessione con un indirizzo IP (192.168.1.1)
-    async with aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True)) as sessione:
+    def barattolo():   # unsafe=True: serve per tenere i cookie con un indirizzo IP (192.168.1.1)
+        return aiohttp.CookieJar(unsafe=True, quote_cookie=not s.get("grezzi"))
+
+    async with aiohttp.ClientSession(cookie_jar=barattolo()) as prova:
         try:
-            modello, url = await get_device_type(c["router"], sessione)
+            modello, url = await get_device_type(c["router"], prova)
         except CannotConnect:
             raise RuntimeError(f"Non raggiungo il router {c['router']}: sei sulla rete di casa?")
         except ModelNotSupported:
             raise RuntimeError("Il router risponde ma il modello non è riconosciuto da aiovodafone.")
+    if s.get("schema"):
+        url = url.with_scheme(s["schema"])
+
+    # sessione nuova e pulita per l'accesso vero e proprio
+    async with aiohttp.ClientSession(cookie_jar=barattolo()) as sessione:
         api = init_device_class(url, modello, {"username": c["utente"], "password": c["password"]}, sessione)
         try:
             try:
                 entrato = await api.login()
-            except AlreadyLogged:   # qualcuno ha il pannello del router aperto: chiudo quella sessione
+            except AlreadyLogged:   # una sessione è rimasta aperta (pannello o tentativo precedente): la chiudo
                 entrato = await api.login(force_logout=True)
             if not entrato:
                 raise RuntimeError("Il router ha rifiutato utente o password.")
         except (CannotAuthenticate, GenericLoginError):
             raise RuntimeError("Il router ha rifiutato utente o password (prova l'utente 'vodafone' o 'admin').")
         try:
-            dati = await api.get_devices_data()
+            if s.get("pausa"):
+                await asyncio.sleep(s["pausa"])
+            try:
+                dati = await api.get_devices_data()
+            except CannotAuthenticate as e:
+                raise RouterNonLegge(str(e))
         finally:
             try:
                 await api.logout()   # libera la sessione: il pannello del router resta usabile
             except Exception:
                 pass
+    return str(modello), dati
+
+
+async def leggi_router(c):
+    """Restituisce (modello, [dispositivi]) leggendo la Vodafone Station."""
+    preferita = c.get("strategia")
+    ordine = sorted(STRATEGIE, key=lambda s: s["nome"] != preferita)
+    ultimo = None
+    for s in ordine:
+        try:
+            modello, dati = await _leggi_con(c, s)
+        except RouterNonLegge as e:
+            ultimo = e
+            print(f"   (modo '{s['nome']}': il router chiede di nuovo il login, provo un altro modo)")
+            await asyncio.sleep(2)
+            continue
+        if s["nome"] != preferita:
+            c["strategia"] = s["nome"]
+            salva_strategia(s["nome"])
+        break
+    else:
+        raise RuntimeError("Il router accetta la password ma poi non dà la lista dei dispositivi. "
+                           "Lancia  python dispositivi.py --diagnosi  e manda la foto del risultato.")
 
     lista = []
     for d in dati.values():
@@ -247,11 +307,15 @@ def main():
     p = argparse.ArgumentParser(description="Lettore dispositivi Vodafone Station per HomeDashboard")
     p.add_argument("--configura", action="store_true", help="chiede le impostazioni e le salva")
     p.add_argument("--prova", action="store_true", help="legge una volta e stampa, senza pubblicare")
+    p.add_argument("--diagnosi", action="store_true", help="come --prova ma salva un registro dettagliato in diagnosi.txt")
     a = p.parse_args()
     if a.configura:
         configura()
         return
     c = leggi_config()
+    if a.diagnosi:
+        diagnosi(c)
+        return
     if a.prova:
         try:
             prova(c)
@@ -259,6 +323,37 @@ def main():
             sys.exit(f"\n{e}\n")
         return
     corri(c)
+
+
+def diagnosi(c):
+    """Registro dettagliato della conversazione con il router (senza password) in diagnosi.txt."""
+    import logging
+    percorso = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diagnosi.txt")
+
+    class SenzaSegreti(logging.Filter):
+        def filter(self, r):
+            testo = r.getMessage()
+            for segreto in (c.get("password"), c.get("segreto")):
+                if segreto:
+                    testo = testo.replace(segreto, "***")
+            r.msg, r.args = testo, ()
+            return True
+
+    h = logging.FileHandler(percorso, mode="w", encoding="utf-8")
+    h.addFilter(SenzaSegreti())
+    h.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    for nome in ("aiovodafone", "aiohttp.client"):
+        lg = logging.getLogger(nome)
+        lg.setLevel(logging.DEBUG)
+        lg.addHandler(h)
+    import aiovodafone
+    print(f"aiovodafone {aiovodafone.__version__}, Python {sys.version.split()[0]}")
+    try:
+        prova(c)
+    except Exception as e:
+        print(f"\n{type(e).__name__}: {e}\n")
+    print(f"Registro salvato in {percorso}")
+    print("Per vedere le ultime righe:  tail -n 40 " + percorso)
 
 
 def prova(c):
