@@ -48,12 +48,12 @@ mkdir -p "$HOME/.termux/boot"
 cat > "$HOME/.termux/boot/homedashboard" <<FINE
 #!/data/data/com.termux/files/usr/bin/sh
 termux-wake-lock
-cd "$CARTELLA" && exec python dispositivi.py >> "$CARTELLA/registro.txt" 2>&1
+cd "$CARTELLA" && exec python -u dispositivi.py >> "$CARTELLA/registro.txt" 2>&1
 FINE
 chmod +x "$HOME/.termux/boot/homedashboard"
 
 echo "-> Avvio il lettore adesso…"
-pkill -f "python dispositivi.py" 2>/dev/null || true
+pkill -f "dispositivi.py" 2>/dev/null || true
 nohup sh "$HOME/.termux/boot/homedashboard" >/dev/null 2>&1 &
 
 echo
