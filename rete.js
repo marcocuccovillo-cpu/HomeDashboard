@@ -114,8 +114,17 @@ function leggiDispositivi() {
     });
   }).catch(function () { if (!dispDati) dispStato = "errore"; }).then(disegnaDispositivi);
 }
+function disegnaOspiti() {   // rete Wi-Fi ospiti letta dal lettore in Termux, con il QR già pronto
+  var o = dispDati && dispDati.ospiti, box = $("ospiti"); if (!box) return;
+  if (!o || !o.ssid) { box.hidden = true; return; }
+  box.hidden = false; box.classList.toggle("spenta", !o.attivo);
+  if (o.qr) $("ospiti-qr").src = "data:image/png;base64," + o.qr;
+  $("ospiti-qr").hidden = !o.qr;
+  $("ospiti-ssid").textContent = o.ssid; $("ospiti-pw").textContent = o.password || "(non letta)";
+  $("ospiti-stato").textContent = o.attivo ? "accesa" : "spenta"; $("ospiti-stato").className = "pillola" + (o.attivo ? " ok" : "");
+}
 function disegnaDispositivi() {
-  disegnaTablet();
+  disegnaTablet(); disegnaOspiti();
   var ul = $("disp-lista"), st = $("disp-stato"), conta = $("disp-conta"), altri = $("disp-altri");
   ul.innerHTML = ""; altri.hidden = true; st.innerHTML = "";
   if (!dispDati) {

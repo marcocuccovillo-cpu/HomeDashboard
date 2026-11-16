@@ -106,23 +106,45 @@
   .passi { font-size: 2.3vh; line-height: 1.7; margin: 0; padding-left: 1.4em; }
   .stato { font-size: 2vh; } .stato.ok { color: #4f8a3c; } .stato.no { color: var(--accent); }
 
-  /* --- griglia turni --- */
-  #card-turni { grid-column: 1; grid-row: 2 / 4; }
-  .tturni { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 2.5vh; }
-  .tturni col.c-nome { width: 15%; }
-  .tturni th { font-weight: 400; color: var(--muted); font-size: 2vh; padding: .5vh .2vw; text-align: center; white-space: nowrap; }
-  .tturni th b { color: var(--ink); font-weight: 500; }
-  .tturni tr.sett th:first-child { text-align: left; color: var(--accent); font-weight: 500; }
-  .tturni tr.sett.seconda th { padding-top: 1.6vh; }
-  .tturni td { padding: .9vh .2vw; text-align: center; border-top: 1px solid var(--line);
-               white-space: pre-line; line-height: 1.2; cursor: pointer; height: 10vh; }
-  .tturni td.nome { text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* --- timer (striscia sopra i turni) e griglia turni --- */
+  #card-timer { grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 1vh .6vw; padding: 1.2vh 1.4vw; }
+  #card-timer h2 { margin: 0 .6vw 0 0; }
+  #card-timer #timer-altro { flex: 0 0 auto; width: auto; padding: .9vh 1vw; font-size: 1.9vh; }
+  #card-turni { grid-column: 1; grid-row: 3; }
+  :root { --p0: #c4622d; --p0-soft: rgba(196,98,45,.13); --p1: #3f8a86; --p1-soft: rgba(63,138,134,.14); }
+  #card-turni h2 small { flex: 1; }
+  .tturni { width: 100%; flex: 1; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 2.2vh; }
+  .tturni col.c-nome { width: 16%; }
+  .tturni tr.sett { height: 1px; }
+  .tturni th { font-weight: 400; color: var(--muted); font-size: 1.9vh; padding: .6vh .2vw .5vh; text-align: center; white-space: nowrap; vertical-align: bottom; }
+  .tturni th b { display: block; color: var(--ink); font-weight: 500; font-size: 2.5vh; line-height: 1.1; }
+  .tturni th.weekend { color: var(--done); } .tturni th.weekend b { color: var(--muted); }
+  .tturni tr.sett th:first-child { text-align: left; vertical-align: bottom; white-space: normal; }
+  .tturni .settimana { display: block; white-space: pre-line; font-size: 1.55vh; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; line-height: 1.25; }
+  .tturni .lettera { display: inline-block; margin-top: .3vh; font-size: 1.8vh; font-weight: 600; color: #fff; background: var(--ink);
+                     border-radius: 6px; padding: 0 .55vw; letter-spacing: 0; }
+  .tturni tr.sett.seconda th { padding-top: 1.8vh; }
+  .tturni td { padding: .45vh .25vw; text-align: center; vertical-align: middle; cursor: pointer; border-top: 1px solid var(--line); }
+  .tturni td.nome { text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; font-size: 2vh; }
+  .tturni td.nome i { display: inline-flex; align-items: center; justify-content: center; width: 3vh; height: 3vh; border-radius: 50%;
+                      color: #fff; font-style: normal; font-size: 1.7vh; font-weight: 600; margin-right: .4vw; vertical-align: middle; }
+  .tturni tr.p0 td.nome i { background: var(--p0); } .tturni tr.p1 td.nome i { background: var(--p1); }
   .tturni .oggi { background: var(--accent-soft); }
-  .tturni th.oggi { border-radius: 8px 8px 0 0; color: var(--ink); }
-  .tturni .passato { opacity: .4; }
-  .tturni td.riposo { color: var(--muted); font-style: italic; font-size: 2vh; }
-  .tturni td.eccezione { color: var(--accent); font-weight: 500; }
-  .tturni td:active { background: var(--line); }
+  .tturni th.oggi { border-radius: 10px 10px 0 0; color: var(--accent); }
+  .tturni th.oggi::before { content: "OGGI"; display: block; font-size: 1.5vh; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+  .tturni tr:last-child td.oggi, .tturni tr.fine-sett td.oggi { border-radius: 0 0 10px 10px; }
+  .tturni .passato { opacity: .38; }
+  .fascia { display: block; margin: .3vh 0; padding: .5vh 0 .5vh .25vw; border-radius: 7px; font-variant-numeric: tabular-nums;
+            font-size: 1.65vh; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; position: relative; }
+  tr.p0 .fascia { background: var(--p0-soft); box-shadow: inset 3px 0 0 var(--p0); }
+  tr.p1 .fascia { background: var(--p1-soft); box-shadow: inset 3px 0 0 var(--p1); }
+  .fascia.testo { white-space: normal; font-size: 1.8vh; }
+  .eccezione .fascia { outline: 1.5px dashed var(--accent); outline-offset: -1.5px; }
+  .fascia.ora::after { content: ""; position: absolute; top: -.4vh; right: -.3vh; width: 1.3vh; height: 1.3vh; border-radius: 50%;
+                       background: #6a9e55; box-shadow: 0 0 0 0 rgba(106,158,85,.6); animation: battito 1.6s infinite; }
+  @keyframes battito { 70% { box-shadow: 0 0 0 1vh rgba(106,158,85,0); } 100% { box-shadow: 0 0 0 0 rgba(106,158,85,0); } }
+  .riposo-x { color: var(--done); font-size: 1.8vh; font-style: italic; }
+  .tturni td:active .fascia { filter: brightness(.95); }
 
   /* --- adesso: chi lavora in questo momento --- */
   #adesso { display: flex; gap: 1vw; margin: 0 0 1.6vh; }
@@ -173,6 +195,13 @@
   #aerei li span { color: var(--muted); }
   #aerei li.vuoto { color: var(--muted); border: 0; }
   #aerei li.vuoto small { display: block; font-size: 1.5vh; margin-top: .5vh; opacity: .8; }
+  .ospiti { display: flex; gap: 1vw; align-items: center; margin-top: 1.4vh; padding-top: 1.2vh; border-top: 1px solid var(--line); }
+  #ospiti-qr { width: 15vh; height: 15vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
+  .ospiti-testo { display: flex; flex-direction: column; gap: .4vh; min-width: 0; font-size: 1.9vh; }
+  .ospiti-testo b { font-weight: 500; font-size: 2.1vh; display: flex; align-items: center; gap: .6vw; }
+  .ospiti-riga { color: var(--muted); overflow-wrap: anywhere; } .ospiti-riga strong { color: var(--ink); font-weight: 500; font-family: ui-monospace, Menlo, monospace; }
+  .ospiti-testo small { color: var(--muted); font-size: 1.6vh; }
+  .ospiti.spenta #ospiti-qr { opacity: .25; }
   .tab-numeri { display: flex; gap: 2vw; margin: .2vh 0 1vh; }
   .tab-numeri > div { flex: 1; }
   .tab-numeri .n { font-size: 5.5vh; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -213,14 +242,15 @@
 
   /* --- colonna destra: timer + spesa --- */
   #col-destra { grid-column: 2; grid-row: 2 / 4; }
-  .preset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .preset button { font-size: 2.2vh; padding: 1.2vh 0; border-radius: 12px; border: 1px solid var(--line);
+  .preset { display: flex; gap: .5vw; flex-wrap: wrap; }
+  .preset button { font-size: 1.9vh; padding: .9vh .55vw; border-radius: 12px; border: 1px solid var(--line);
                    background: var(--bg); color: var(--ink); }
   .preset button:active { background: var(--accent-soft); }
-  #timer-lista { margin-top: 8px; max-height: 22vh; overflow-y: auto; }
-  .timer { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 12px;
-           background: var(--accent-soft); margin-bottom: 6px; }
-  .timer .t { font-size: 3.8vh; font-variant-numeric: tabular-nums; }
+  #timer-lista { display: flex; flex-wrap: wrap; gap: .6vw; flex: 1 1 100%; }
+  #timer-lista:empty { display: none; }
+  .timer { display: flex; align-items: center; gap: .6vw; padding: .4vh .4vw .4vh .9vw; border-radius: 12px;
+           background: var(--accent-soft); }
+  .timer .t { font-size: 3vh; font-variant-numeric: tabular-nums; }
   .timer .n { color: var(--muted); font-size: 1.9vh; flex: 1; line-height: 1.2; }
   .timer .n b { display: block; color: var(--ink); font-weight: 500; font-size: 2.4vh; }
   .timer .n i { display: block; font-style: normal; color: var(--accent); font-size: 2vh; }
@@ -247,6 +277,15 @@
   #car-vuoto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
                color: var(--muted); font-size: 2.2vh; line-height: 1.5; padding: 2vw; }
   body.notte #carosello img { filter: brightness(.7); }
+
+  /* --- pixel art e indovinello del giorno --- */
+  #card-gioco { padding: 0; overflow: hidden; }
+  #pixel { width: 100%; aspect-ratio: 96 / 34; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .gioco-box { padding: 1.2vh 1.4vw 1.4vh; }
+  .gioco-tipo { font-size: 1.7vh; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .4vh; }
+  .gioco-testo { font-size: 2.2vh; line-height: 1.35; }
+  #gioco-sol { margin-top: .8vh; }
+  .gioco-risposta { margin-top: .8vh; font-size: 2.1vh; font-weight: 500; color: var(--accent); }
 
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
@@ -349,6 +388,14 @@
     </button>
   </section>
 
+  <!-- timer, in striscia sopra i turni -->
+  <section class="card" id="card-timer">
+    <h2>Timer</h2>
+    <div class="preset" id="preset"></div>
+    <button class="btn-piccolo" id="timer-altro">Altro…</button>
+    <div id="timer-lista"></div>
+  </section>
+
   <!-- turni -->
   <section class="card" id="card-turni">
     <h2>Turni <small>tocca una casella o un nome per modificarlo</small></h2>
@@ -356,12 +403,16 @@
     <table class="tturni" id="tab-turni"></table>
   </section>
 
-  <!-- timer + spesa -->
+  <!-- pixel art e indovinello del giorno + foto -->
   <div class="col" id="col-destra">
-    <section class="card">
-      <h2>Timer <button class="btn-piccolo" id="timer-altro">Altro…</button></h2>
-      <div class="preset" id="preset"></div>
-      <div id="timer-lista"></div>
+    <section class="card" id="card-gioco">
+      <canvas id="pixel" width="96" height="34" aria-label="Pixel art di Bologna con il meteo e l'ora di adesso"></canvas>
+      <div class="gioco-box">
+        <div class="gioco-tipo" id="gioco-tipo"></div>
+        <div class="gioco-testo" id="gioco-testo"></div>
+        <button class="btn-piccolo" id="gioco-sol" hidden>Mostra la soluzione</button>
+        <div class="gioco-risposta" id="gioco-risposta" hidden></div>
+      </div>
     </section>
     <section class="card riempi" id="card-foto">
       <div id="carosello">
@@ -424,6 +475,15 @@
         <div class="radar-box">
           <svg id="radar" viewBox="-100 -100 200 200" aria-label="Radar degli aerei"></svg>
           <ul id="aerei"></ul>
+        </div>
+        <div class="ospiti" id="ospiti" hidden>
+          <img id="ospiti-qr" alt="QR code della rete Wi-Fi ospiti">
+          <div class="ospiti-testo">
+            <b>Wi‑Fi ospiti <span id="ospiti-stato" class="pillola"></span></b>
+            <span class="ospiti-riga">Rete <strong id="ospiti-ssid"></strong></span>
+            <span class="ospiti-riga">Password <strong id="ospiti-pw"></strong></span>
+            <small>Inquadra il QR con la fotocamera del telefono per collegarti.</small>
+          </div>
         </div>
       </section>
     </div>
@@ -579,6 +639,7 @@
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="cielo.js"></script>
+<script src="giorno.js"></script>
 <script>
 
 // ================= orologio =================
@@ -664,6 +725,7 @@ function meteo() {
     "&timezone=Europe%2FRome&forecast_days=5";
   fetch(url).then(function (r) { return r.json(); }).then(function (j) {
     var t = tipo(j.current.weather_code);
+    window.meteoAdesso = t[0];   // per la pixel art
     $("icona").innerHTML = icona(t[0]);
     $("temp").textContent = Math.round(j.current.temperature_2m) + "°";
     $("descr").textContent = t[1] + " · " + Math.round(j.daily.temperature_2m_min[0]) + "° / " + Math.round(j.daily.temperature_2m_max[0]) + "°";
@@ -717,31 +779,46 @@ $("ed-chiedi").querySelector("form").onsubmit = function (e) {
 // ================= turni bisettimanali =================
 function disegnaTurni() {
   disegnaAdesso();
-  var tab = $("tab-turni"), lun = lunedi(new Date()), oggi = iso(new Date());
+  var tab = $("tab-turni"), lun = lunedi(new Date()), adesso = new Date(), oggi = iso(adesso);
+  var minuti = adesso.getHours() * 60 + adesso.getMinutes();
   tab.innerHTML = '<colgroup><col class="c-nome"><col><col><col><col><col><col><col></colgroup>';
   [0, 1].forEach(function (w) {
     var l = piuGiorni(lun, 7 * w), tr = el("tr", "sett" + (w ? " seconda" : "")), th = el("th");
-    th.textContent = (w ? "Prossima" : "Questa") + " · " + quale(l);
+    var fine = piuGiorni(l, 6);
+    th.innerHTML = '<span class="settimana"></span><span class="lettera"></span>';
+    th.firstChild.textContent = (w ? "Prossima" : "Questa") + "\n" + l.getDate() + "–" + fine.getDate() + " " + MESI[fine.getMonth()].slice(0, 3);
+    th.lastChild.textContent = quale(l);
     tr.appendChild(th);
     for (var g = 0; g < 7; g++) {
-      var d = piuGiorni(l, g), h = el("th", iso(d) === oggi ? "oggi" : (iso(d) < oggi ? "passato" : ""));
-      h.innerHTML = GIORNI_LUN[g] + " <b>" + d.getDate() + "</b>";
+      var d = piuGiorni(l, g), cls = [];
+      if (iso(d) === oggi) cls.push("oggi"); else if (iso(d) < oggi) cls.push("passato");
+      if (g >= 5) cls.push("weekend");
+      var h = el("th", cls.join(" "));
+      h.innerHTML = GIORNI_LUN[g] + "<b>" + d.getDate() + "</b>";
       tr.appendChild(h);
     }
     tab.appendChild(tr);
     [0, 1].forEach(function (p) {
-      var r = el("tr"), n = el("td", "nome");
-      n.textContent = cfg.nomi[p];
+      var r = el("tr", "p" + p + (p === 1 ? " fine-sett" : "")), n = el("td", "nome"), iniz = el("i");
+      iniz.textContent = (cfg.nomi[p] || "?").charAt(0).toUpperCase();
+      n.appendChild(iniz); n.appendChild(document.createTextNode(cfg.nomi[p]));
       n.onclick = function () { modificaNome(p); };
       r.appendChild(n);
       for (var g = 0; g < 7; g++) {
-        var d = piuGiorni(l, g), t = turno(d, p), c = el("td");
-        var cls = [];
-        if (!t) cls.push("riposo");
+        var d = piuGiorni(l, g), t = turno(d, p), c = el("td"), cls = [];
         if (haEccezione(d, p)) cls.push("eccezione");
         if (iso(d) === oggi) cls.push("oggi"); else if (iso(d) < oggi) cls.push("passato");
         c.className = cls.join(" ");
-        c.textContent = t ? ordinato(t).replace(/\s*\/\s*/g, "\n") : "Riposo";
+        var fasce = leggiFasce(t);
+        if (!t) { var rx = el("span", "riposo-x"); rx.textContent = "riposo"; c.appendChild(rx); }
+        else if (!fasce.length) { var tx = el("span", "fascia testo"); tx.textContent = t; c.appendChild(tx); }
+        else fasce.forEach(function (f) {   // un'etichetta per ogni fascia; pallino se è in corso adesso
+          var e = el("span", "fascia"), a = minuti_(f[0]), b = minuti_(f[1]);
+          e.textContent = scriviFasce([f]);
+          if (iso(d) === oggi && (b > a ? minuti >= a && minuti < b : minuti >= a || minuti < b)) { e.classList.add("ora"); e.title = "al lavoro adesso"; }
+          c.appendChild(e);
+        });
+        if (haEccezione(d, p)) c.title = "Cambio solo per questo giorno";
         (function (d) { c.onclick = function () { modificaTurno(d, p); }; })(d);
         r.appendChild(c);
       }
@@ -749,6 +826,7 @@ function disegnaTurni() {
     });
   });
 }
+function minuti_(hhmm) { var x = hhmm.split(":"); return +x[0] * 60 + +x[1]; }
 function disegnaAdesso() {
   var box = $("adesso"); box.innerHTML = "";
   [0, 1].forEach(function (p) {
@@ -1181,7 +1259,7 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaCielo(); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaCielo(); avviaGiorno(); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }
