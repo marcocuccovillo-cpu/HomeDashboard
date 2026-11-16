@@ -208,7 +208,7 @@ function leggiAerei() {
   function prova(i) {
     if (i >= ordine.length) return Promise.reject(new Error(errori.join(" · ")));
     var f = ordine[i], ctrl = window.AbortController ? new AbortController() : null;
-    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, 7000);
+    var t = setTimeout(function () { if (ctrl) ctrl.abort(); }, f.nome === "lettore sul tablet" ? 25000 : 7000);   // il lettore può provare più fonti
     return fetch(f.url, { cache: "no-store", signal: ctrl ? ctrl.signal : undefined }).then(function (r) {
       clearTimeout(t); if (!r.ok) throw new Error(r.status); return r.json();
     }).then(function (j) { cielo.fonte = f.nome; return f.nome === "OpenSky" ? daOpenSky(j) : j; }, function (e) {

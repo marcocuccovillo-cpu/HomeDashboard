@@ -478,7 +478,7 @@ _aerei_cache = {"chiave": None, "quando": 0, "dati": None}
 
 def _scarica_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": "homedashboard", "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=8) as r:
+    with urllib.request.urlopen(req, timeout=5) as r:
         return json.loads(r.read())
 
 
@@ -531,20 +531,31 @@ class _Aerei(BaseHTTPRequestHandler):
         try:
             lat, lon = float(q["lat"][0]), float(q["lon"][0])
             nm = max(1, min(60, int(q.get("nm", ["17"])[0])))
-            corpo = json.dumps(aerei(lat, lon, nm)).encode()
-            self._intestazioni(200)
-            self.wfile.write(corpo)
+            corpo, stato = json.dumps(aerei(lat, lon, nm)).encode(), 200
         except Exception as e:
-            self._intestazioni(502)
-            self.wfile.write(json.dumps({"errore": str(e)}).encode())
+            corpo, stato = json.dumps({"errore": str(e)}).encode(), 502
+        try:
+            self._intestazioni(stato)
+            self.wfile.write(corpo)
+        except (BrokenPipeError, ConnectionResetError):
+            pass   # la pagina ha smesso di aspettare (ricaricata o chiusa): niente di grave
 
     def log_message(self, *a):   # niente righe nel registro per ogni richiesta
         pass
 
 
+class _ServizioAerei(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def handle_error(self, request, client_address):   # connessioni chiuse dalla pagina: non sporcano il registro
+        e = sys.exc_info()[1]
+        if not isinstance(e, (BrokenPipeError, ConnectionResetError, TimeoutError)):
+            super().handle_error(request, client_address)
+
+
 def avvia_servizio_aerei():
     try:
-        srv = ThreadingHTTPServer(("127.0.0.1", PORTA_AEREI), _Aerei)
+        srv = _ServizioAerei(("127.0.0.1", PORTA_AEREI), _Aerei)
     except OSError as e:
         print(f"{ora()}  servizio aerei non avviato (porta {PORTA_AEREI} occupata?): {e}")
         return
