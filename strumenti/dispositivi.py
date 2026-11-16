@@ -560,6 +560,34 @@ def aerei(lat, lon, nm):
     return dati
 
 
+# ---------------------------------------------------------------- radio: titolo in onda e ponte audio
+_titoli = {}
+
+
+def titolo_in_onda(url):
+    """'Artista - Canzone' dai metadati ICY dello stream (se la radio li manda)."""
+    c = _titoli.get(url)
+    if c and time.time() - c[0] < 15:
+        return c[1]
+    req = urllib.request.Request(url, headers={"Icy-MetaData": "1", "User-Agent": "homedashboard"})
+    titolo = ""
+    with urllib.request.urlopen(req, timeout=8) as r:
+        ogni = int(r.headers.get("icy-metaint") or 0)
+        if ogni:
+            r.read(ogni)
+            lung = r.read(1)[0] * 16
+            meta = r.read(lung).decode("utf-8", errors="ignore") if lung else ""
+            for pezzo in meta.split(";"):
+                if pezzo.startswith("StreamTitle="):
+                    titolo = pezzo[len("StreamTitle="):].strip("'\" \0")
+    _titoli[url] = (time.time(), titolo)
+    return titolo
+
+
+def _url_valido(u):
+    return isinstance(u, str) and u.startswith(("http://", "https://")) and len(u) < 1000
+
+
 class _Aerei(BaseHTTPRequestHandler):
     def _intestazioni(self, stato, tipo="application/json"):
         self.send_response(stato)
@@ -574,12 +602,48 @@ class _Aerei(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self._intestazioni(204)
 
+    def _radio(self, q):   # ponte per le radio solo http (una pagina https non può riprodurle)
+        url = q.get("url", [""])[0]
+        if not _url_valido(url):
+            self._intestazioni(400)
+            return
+        try:
+            up = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "homedashboard"}), timeout=15)
+        except Exception:
+            self._intestazioni(502)
+            return
+        try:
+            self._intestazioni(200, up.headers.get("Content-Type", "audio/mpeg"))
+            while True:
+                pezzo = up.read(16384)
+                if not pezzo:
+                    break
+                self.wfile.write(pezzo)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass   # radio spenta o pagina chiusa
+        finally:
+            up.close()
+
     def do_GET(self):
         u = urlparse(self.path)
+        q = parse_qs(u.query)
+        if u.path == "/radio":
+            return self._radio(q)
+        if u.path == "/titolo":
+            url = q.get("url", [""])[0]
+            try:
+                corpo = json.dumps({"titolo": titolo_in_onda(url) if _url_valido(url) else ""}).encode()
+            except Exception:
+                corpo = json.dumps({"titolo": ""}).encode()
+            try:
+                self._intestazioni(200)
+                self.wfile.write(corpo)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            return
         if u.path != "/aerei":
             self._intestazioni(404)
             return
-        q = parse_qs(u.query)
         try:
             lat, lon = float(q["lat"][0]), float(q["lon"][0])
             nm = max(1, min(60, int(q.get("nm", ["17"])[0])))
