@@ -173,45 +173,8 @@
   .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
   .rete-nota { margin-top: 1.4vh; }
   .col-cielo { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-  .mappa-box { position: relative; }
-  #iss-mappa { width: 100%; max-height: 21vh; border-radius: 10px; display: block; background: #cfe0e8; }
-  .mappa-zoom { position: absolute; bottom: .5vh; right: .4vw; background: rgba(255,250,242,.88); border-radius: 7px; }
-  #mappa-zoom button { font-size: 1.35vh; padding: .2vh .45vw; line-height: 1.3; }
-  #iss-mappa .reg { fill: #e9dfc9; stroke: #fffaf2; stroke-width: .7; stroke-linejoin: round; }
-  #iss-mappa .reg.casa-reg { fill: #f2cfa6; }
-  #iss-mappa .reg-nome { font-size: 7.5px; fill: #8a7a62; text-anchor: middle; font-family: sans-serif; }
-  #iss-mappa .reg-nome.casa-reg { fill: #b5612a; font-weight: 700; }
-  #iss-mappa .raggio { fill: rgba(106,158,85,.08); stroke: #6a9e55; stroke-width: .6; stroke-dasharray: 2 2; }
-  #iss-mappa .aereo-mappa { fill: #2b261f; }
-  #iss-mappa .freccia path { fill: var(--accent); } #iss-mappa .freccia text { font-size: 7px; fill: var(--accent); font-family: sans-serif; font-weight: 600; }
-  body.notte #iss-mappa .reg { fill: #3a342b; stroke: #2a251f; } body.notte #iss-mappa .reg.casa-reg { fill: #57432d; }
-  body.notte #iss-mappa .aereo-mappa { fill: #e2d8c8; }
-  #iss-mappa .mare { fill: #cfe0e8; } #iss-mappa .terra { fill: #e9dfc9; stroke: #cdbf9f; stroke-width: .3; }
-  #iss-mappa .notte { fill: rgba(20,24,40,.32); }
-  #iss-mappa .traccia { fill: none; stroke: var(--accent); stroke-width: 1.1; } #iss-mappa .traccia.passata { stroke-dasharray: 2 2; opacity: .6; }
-  #iss-mappa .iss { fill: var(--accent); stroke: #fff; stroke-width: 1; } #iss-mappa .iss-alone { fill: var(--accent); opacity: .22; }
-  #iss-mappa .casa, #radar .casa { fill: #2b261f; stroke: #fff; stroke-width: .8; }
-  body.notte #iss-mappa .mare { fill: #1f2a33; } body.notte #iss-mappa .terra { fill: #3a342b; stroke: #4a4336; }
-  .cielo-riga { font-size: 1.85vh; color: var(--muted); margin: 1vh 0 .4vh; }
-  .cielo-riga .iss-nome { color: var(--ink); font-weight: 500; }
-  .iss-passaggio { font-size: 1.9vh; background: var(--bg); border-radius: 10px; padding: .9vh .8vw; line-height: 1.35; }
-  .iss-passaggio b { display: block; font-weight: 500; font-size: 1.75vh; color: var(--accent); }
-  .aerei-testa { font-size: 2vh; font-weight: 500; margin: 1.4vh 0 .6vh; display: flex; justify-content: space-between; }
-  .aerei-testa span { font-weight: 400; color: var(--muted); font-size: 1.8vh; }
-  .radar-box { display: flex; gap: 1vw; align-items: center; }
-  #radar { width: 17vh; height: 17vh; flex: none; background: radial-gradient(circle, rgba(106,158,85,.10), rgba(106,158,85,.02) 70%); border-radius: 50%; }
-  #radar .anello { fill: none; stroke: var(--line); stroke-width: 1; }
-  #radar .nord { font-size: 11px; fill: var(--muted); text-anchor: middle; }
-  #radar .blq { font-size: 10px; fill: var(--muted); } #radar .blq-p { fill: var(--muted); }
-  #radar .aereo { fill: var(--muted); } #radar .aereo.vicino { fill: var(--accent); }
-  #aerei { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; }
-  #aerei li { font-size: 1.75vh; padding: .45vh 0; border-bottom: 1px solid var(--line); line-height: 1.25; }
-  #aerei li b { display: block; font-weight: 500; font-size: 1.95vh; }
-  #aerei li span { color: var(--muted); }
-  #aerei li.vuoto { color: var(--muted); border: 0; }
-  #aerei li.vuoto small { display: block; font-size: 1.5vh; margin-top: .5vh; opacity: .8; }
-  .ospiti { display: flex; gap: 1vw; align-items: center; margin-top: 1.4vh; padding-top: 1.2vh; border-top: 1px solid var(--line); }
-  #ospiti-qr { width: 15vh; height: 15vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
+  .ospiti { display: flex; gap: 1.2vw; align-items: center; }
+  #ospiti-qr { width: 20vh; height: 20vh; flex: none; background: #fff; padding: .8vh; border-radius: 10px; image-rendering: pixelated; }
   .ospiti-testo { display: flex; flex-direction: column; gap: .4vh; min-width: 0; font-size: 1.9vh; }
   .ospiti-testo b { font-weight: 500; font-size: 2.1vh; display: flex; align-items: center; gap: .6vw; }
   .ospiti-riga { color: var(--muted); overflow-wrap: anywhere; } .ospiti-riga strong { color: var(--ink); font-weight: 500; font-family: ui-monospace, Menlo, monospace; }
@@ -373,18 +336,6 @@
   .ricetta-timer { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 10px;
                    font-size: 1.65vh; padding: .1vh .5vw; margin: 0 .3vw; white-space: nowrap; }
 
-  /* --- viaggi sulla mappa --- */
-  #card-cielo h2 { white-space: nowrap; }
-  .cielo-testa { display: flex; align-items: center; gap: .5vw; min-width: 0; }
-  .cielo-testa .pillola { font-size: 1.55vh; white-space: nowrap; }
-  #viaggio-aggiungi { padding: .3vh .6vw; }
-  #iss-mappa .viaggio { font-size: 7px; text-anchor: middle; } #iss-mappa .viaggio.fatto { fill: #d9466f; } #iss-mappa .viaggio.sogno { fill: #e0a100; }
-  #iss-mappa .rotta { fill: none; stroke: #2b261f; stroke-width: .7; stroke-dasharray: 1.5 1.5; opacity: .7; }
-  #iss-mappa .aereo-rotta { fill: #2b261f; }
-  body.notte #iss-mappa .rotta { stroke: #e2d8c8; } body.notte #iss-mappa .aereo-rotta { fill: #e2d8c8; }
-  .viaggio-riga { font-size: 1.85vh; color: #b43a5e; margin: .2vh 0 .6vh; }
-  .ev-lista { list-style: none; margin: 1vh 0 0; padding: 0; max-height: 30vh; overflow-y: auto; }
-  .ev-lista li { display: flex; justify-content: space-between; align-items: center; padding: .7vh 0; border-bottom: 1px solid var(--line); font-size: 2vh; }
 
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
@@ -586,24 +537,13 @@
     </section>
     </div>
     <div class="col-cielo">
-      <section class="card" id="card-cielo">
-        <h2>Cielo sopra casa <span class="cielo-testa"><button class="btn-piccolo" id="viaggio-aggiungi" title="I vostri viaggi sulla mappa">✈ +</button><span id="iss-stato" class="pillola">ISS</span></span></h2>
-        <div class="mappa-box">
-          <svg id="iss-mappa" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet" aria-label="Mappa: casa, Stazione Spaziale, aerei e viaggi"></svg>
-          <div class="seg mappa-zoom" id="mappa-zoom"><button type="button" data-v="casa">Casa</button><button type="button" data-v="italia">Italia</button><button type="button" data-v="mondo">Mondo</button></div>
-        </div>
-        <div class="cielo-riga"><span class="iss-nome">Stazione Spaziale</span> <span id="iss-dati">calcolo l'orbita…</span></div>
-        <div class="viaggio-riga" id="viaggio-riga"></div>
-        <div class="iss-passaggio" id="iss-passaggio"></div>
-        <div class="aerei-testa">Aerei entro 30 km <span id="aerei-conta"></span></div>
-        <div class="radar-box">
-          <svg id="radar" viewBox="-100 -100 200 200" aria-label="Radar degli aerei"></svg>
-          <ul id="aerei"></ul>
-        </div>
+      <section class="card" id="card-wifi">
+        <h2>Wi‑Fi di casa</h2>
+        <div class="nota-txt" id="wifi-vuoto">Il QR arriva dal lettore in Termux, che legge la rete dalla Vodafone Station una volta l'ora.</div>
         <div class="ospiti" id="ospiti" hidden>
           <img id="ospiti-qr" alt="QR code della rete Wi-Fi di casa">
           <div class="ospiti-testo">
-            <b>Wi‑Fi di casa <span id="ospiti-stato" class="pillola"></span></b>
+            <b><span id="ospiti-stato" class="pillola"></span></b>
             <span class="ospiti-riga">Rete <strong id="ospiti-ssid"></strong></span>
             <span class="ospiti-riga" id="ospiti-5-riga" hidden>5 GHz <strong id="ospiti-ssid5"></strong></span>
             <span class="ospiti-riga">Password <strong id="ospiti-pw"></strong></span>
@@ -704,21 +644,6 @@
   </div>
 </div>
 
-<!-- viaggi sulla mappa -->
-<div id="ed-viaggi" class="livello scuro modale">
-  <form class="finestra">
-    <h3>I vostri viaggi</h3>
-    <div class="riga">
-      <div class="seg" id="ev-stato"><button type="button" data-v="fatto">♥ Ci siamo stati</button><button type="button" data-v="sogno">☆ Ci vogliamo andare</button></div>
-    </div>
-    <div class="riga"><input type="text" id="ev-luogo" placeholder="Città o luogo (es. Lisbona)" autocomplete="off" style="flex:1"><button class="btn-pieno">Aggiungi</button></div>
-    <div class="riga" id="ev-data-riga"><label>Quando partite (facoltativo)</label><input type="date" id="ev-data"></div>
-    <div class="nota-txt" id="ev-msg"></div>
-    <ul class="ev-lista" id="ev-lista"></ul>
-    <div class="riga fine"><button type="button" class="btn-piccolo annulla">Chiudi</button></div>
-  </form>
-</div>
-
 <!-- impostazioni -->
 <div id="impostazioni" class="livello scuro pannello">
   <div class="dentro">
@@ -788,9 +713,6 @@
 
 <script src="comune.js"></script>
 <script src="rete.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="cielo.js"></script>
 <script src="giorno.js"></script>
 <script src="radio.js"></script>
 <script src="forza4.js"></script>
@@ -1438,7 +1360,6 @@ function aggiornaPunti() {
   var i = paginaAttuale();
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
-  if (window.cieloVisibile) cieloVisibile(i === 1);
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });
@@ -1446,9 +1367,9 @@ $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPag
 window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaAttuale() * $("pagine").clientWidth; });
 
 // ================= avvio =================
-function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.aggiornaISS) aggiornaISS(); }
+function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaCielo(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); avviaViaggi(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

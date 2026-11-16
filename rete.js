@@ -116,6 +116,7 @@ function leggiDispositivi() {
 }
 function disegnaOspiti() {   // rete Wi-Fi di casa letta dal lettore in Termux, con il QR già pronto
   var o = dispDati && (dispDati.wifi || dispDati.ospiti), box = $("ospiti"); if (!box) return;
+  if ($("wifi-vuoto")) $("wifi-vuoto").hidden = !!(o && o.ssid);
   if (!o || !o.ssid) { box.hidden = true; return; }
   box.hidden = false; box.classList.toggle("spenta", !o.attivo);
   if (o.qr) $("ospiti-qr").src = "data:image/png;base64," + o.qr;

@@ -196,8 +196,6 @@
   <section class="scheda" id="s-oggi">
     <div class="oggi-data" id="oggi-data"></div>
     <div id="oggi-turni"></div>
-    <div class="titolo"><h2>Promemoria</h2><button class="link" id="oggi-nuova">+ Nuovo</button></div>
-    <div class="note-griglia" id="note-oggi"></div>
     <div class="titolo"><h2>Forza 4</h2><span class="spiega" style="margin:0">tocca una colonna</span></div>
     <div class="f4-info" id="f4-info"></div>
     <div class="f4-griglia" id="f4-griglia"></div>
@@ -511,11 +509,10 @@ function disegnaOggi() {
     box.appendChild(b);
   });
 }
-$("oggi-nuova").onclick = function () { modificaNota(null); };
 
 // ================= promemoria =================
 function inclinazione(id) { return (((id % 997) * 7919) % 9 - 4) * 0.5; }
-function disegnaNote() { disegnaNoteIn($("note")); disegnaNoteIn($("note-oggi")); }
+function disegnaNote() { disegnaNoteIn($("note")); }
 function disegnaNoteIn(b) {
   b.innerHTML = "";
   note.forEach(function (n) {
