@@ -114,13 +114,14 @@ function leggiDispositivi() {
     });
   }).catch(function () { if (!dispDati) dispStato = "errore"; }).then(disegnaDispositivi);
 }
-function disegnaOspiti() {   // rete Wi-Fi ospiti letta dal lettore in Termux, con il QR già pronto
-  var o = dispDati && dispDati.ospiti, box = $("ospiti"); if (!box) return;
+function disegnaOspiti() {   // rete Wi-Fi di casa letta dal lettore in Termux, con il QR già pronto
+  var o = dispDati && (dispDati.wifi || dispDati.ospiti), box = $("ospiti"); if (!box) return;
   if (!o || !o.ssid) { box.hidden = true; return; }
   box.hidden = false; box.classList.toggle("spenta", !o.attivo);
   if (o.qr) $("ospiti-qr").src = "data:image/png;base64," + o.qr;
   $("ospiti-qr").hidden = !o.qr;
   $("ospiti-ssid").textContent = o.ssid; $("ospiti-pw").textContent = o.password || "(non letta)";
+  $("ospiti-5-riga").hidden = !o.ssid5; $("ospiti-ssid5").textContent = o.ssid5 || "";
   $("ospiti-stato").textContent = o.attivo ? "accesa" : "spenta"; $("ospiti-stato").className = "pillola" + (o.attivo ? " ok" : "");
 }
 function disegnaDispositivi() {

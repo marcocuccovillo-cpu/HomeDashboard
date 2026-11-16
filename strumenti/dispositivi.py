@@ -113,30 +113,28 @@ class RouterNonLegge(Exception):
     """Login riuscito ma il router non dà la lista: si prova la strategia successiva."""
 
 
-# Rete Wi-Fi ospiti (nome, password, QR) per il riquadro della dashboard: letta al massimo una volta l'ora.
-_ospiti = {"quando": 0, "dati": None}
+# Rete Wi-Fi di casa (nome, password, QR) per il riquadro della dashboard: letta al massimo una volta l'ora.
+_wifi_casa = {"quando": 0, "dati": None}
 
 
-async def leggi_ospiti(api):
+async def leggi_wifi(api):
+    """Rete principale: nome, password e QR da inquadrare (lo stesso formato del QR ospiti del router)."""
     from aiovodafone.const import WIFI_DATA, WifiBand, WifiType
-    w = await api.get_wifi_data()
-    info = (w.get(WIFI_DATA) or w).get("guest") or {}
+    w = await api.get_wifi_data()   # decifra anche le impostazioni Wi-Fi del router
+    reti = w.get(WIFI_DATA) or w
+    info = reti.get("main") or {}
     if not info:
         return None
     o = {"ssid": info.get("ssid", ""), "attivo": bool(int(info.get("on", 0) or 0))}
-    try:   # la password non è nel risultato ma nei dati appena decifrati dalla libreria
-        frmt = await api._get_wifi_format(WifiType.GUEST, WifiBand.BAND_2_4_GHZ)
-        piano = getattr(api, "_wifi_plain_data", {}) or {}
-        o["password"] = piano.get(f"wifi_password{frmt}", "")
-        o["sicurezza"] = piano.get(f"wifi_protection{frmt}", "")
-    except Exception:
-        pass
-    qr = info.get("qr_code")
-    if qr is not None:
-        try:
-            o["qr"] = base64.b64encode(qr.getvalue()).decode()
-        except Exception:
-            pass
+    if (reti.get("main-5ghz") or {}).get("ssid") not in (None, "", o["ssid"]):
+        o["ssid5"] = reti["main-5ghz"]["ssid"]   # nome diverso per la rete a 5 GHz
+    piano = getattr(api, "_wifi_plain_data", {}) or {}
+    frmt = await api._get_wifi_format(WifiType.MAIN, WifiBand.BAND_2_4_GHZ)
+    o["password"] = piano.get(f"wifi_password{frmt}", "")
+    o["sicurezza"] = piano.get(f"wifi_protection{frmt}", "")
+    if o["password"]:
+        qr = await api._generate_guest_qr_code(o["ssid"], o["password"], o["sicurezza"])
+        o["qr"] = base64.b64encode(qr.getvalue()).decode()
     return o
 
 
@@ -179,11 +177,11 @@ async def _leggi_con(c, s):
                 raise RouterNonLegge(str(e))
             if c.get("_vuoi_wifi"):
                 try:
-                    _ospiti["dati"] = await leggi_ospiti(api)
-                    _ospiti["quando"] = time.time()
+                    _wifi_casa["dati"] = await leggi_wifi(api)
+                    _wifi_casa["quando"] = time.time()
                 except Exception as e:   # non indispensabile: riprovo tra un'ora
-                    _ospiti["quando"] = time.time()
-                    print(f"{ora()}  rete ospiti non letta: {type(e).__name__}: {e}")
+                    _wifi_casa["quando"] = time.time()
+                    print(f"{ora()}  rete Wi-Fi non letta: {type(e).__name__}: {e}")
         finally:
             try:
                 await api.logout()   # libera la sessione: il pannello del router resta usabile
@@ -400,12 +398,12 @@ def prova(c):
     c["_vuoi_wifi"] = True
     modello, lista = asyncio.run(leggi_router(c))
     stampa(modello, lista)
-    o = _ospiti["dati"]
+    o = _wifi_casa["dati"]
     if o:
-        print(f"Rete ospiti: {o.get('ssid')} ({'accesa' if o.get('attivo') else 'spenta'}), "
+        print(f"Wi-Fi di casa: {o.get('ssid')} ({'accesa' if o.get('attivo') else 'spenta'}), "
               f"password {'letta' if o.get('password') else 'non letta'}, QR {'pronto' if o.get('qr') else 'assente'}")
     else:
-        print("Rete ospiti: non letta (il QR non comparirà nella dashboard)")
+        print("Wi-Fi di casa: non letta (il QR non comparirà nella dashboard)")
     try:
         n = len(aerei(44.4949, 11.3426, 17).get("ac") or [])
         print(f"Aerei: {n} entro 30 km da Bologna (il lettore li passerà alla dashboard)")
@@ -583,14 +581,14 @@ def corri(c):
     while True:
         try:
             tablet = stato_tablet()
-            c["_vuoi_wifi"] = time.time() - _ospiti["quando"] > 3600
+            c["_vuoi_wifi"] = time.time() - _wifi_casa["quando"] > 3600
             modello, lista = asyncio.run(leggi_router(c))
-            o = _ospiti["dati"] or {}
+            o = _wifi_casa["dati"] or {}
             impronta = (impronta_tablet(tablet), o.get("ssid"), o.get("password"), o.get("attivo"))
             cambiata = lista != ultima_lista or impronta != ultima_impronta
             if cambiata or time.time() - ultima_pubblicazione > BATTITO:
                 pubblica(c, {"aggiornato": ora(), "modello": modello, "ogni": c.get("ogni", 300),
-                             "dispositivi": lista, "errore": "", "tablet": tablet, "ospiti": _ospiti["dati"]})
+                             "dispositivi": lista, "errore": "", "tablet": tablet, "wifi": _wifi_casa["dati"]})
                 ultima_lista, ultima_impronta, ultima_pubblicazione = lista, impronta, time.time()
                 print(f"{ora()}  pubblicati {sum(d['attivo'] for d in lista)} dispositivi connessi")
             attesa_errore = 60
@@ -602,7 +600,7 @@ def corri(c):
             try:   # lo segnala anche alla dashboard, mantenendo l'ultima lista nota
                 pubblica(c, {"aggiornato": ora(), "modello": "", "ogni": c.get("ogni", 300),
                              "dispositivi": ultima_lista or [], "errore": str(e), "tablet": stato_tablet(),
-                             "ospiti": _ospiti["dati"]})
+                             "wifi": _wifi_casa["dati"]})
             except Exception:
                 pass
             time.sleep(attesa_errore)
