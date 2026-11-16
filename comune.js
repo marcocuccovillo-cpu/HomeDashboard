@@ -483,7 +483,7 @@ function mostraLucchetto() {
     "#lucchetto button{width:100%;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:17px;font-weight:500;padding:13px;margin-top:4px;cursor:pointer}" +
     "#lucchetto button:disabled{opacity:.6}#lucchetto .msg{min-height:20px;margin-top:10px;font-size:14px;color:var(--accent)}#lucchetto .msg.ok{color:var(--muted)}";
   var l = document.createElement("div"); l.id = "lucchetto";
-  l.innerHTML = '<div class="box"><h1>HomeDashboard</h1><p>Controllo…</p></div>';
+  l.innerHTML = '<div class="box"><h1>Home2Love</h1><p>Controllo…</p></div>';
   document.head.appendChild(st); document.body.appendChild(l);
   var box = l.firstChild;
   function campo(tipo, ph, auto) { var i = document.createElement("input"); i.type = tipo; i.placeholder = ph; i.autocomplete = auto; return i; }
@@ -497,7 +497,7 @@ function mostraLucchetto() {
     return { wrap: wrap, link: link, cod: cod, apri: function (t) { if (t) { wrap.querySelector("p") ? wrap.querySelector("p").textContent = t : wrap.insertAdjacentHTML("afterbegin", "<p>" + t + "</p>"); } wrap.hidden = false; link.hidden = true; cod.focus(); } };
   }
   function riprova(msg) {
-    box.innerHTML = "<h1>HomeDashboard</h1><p></p><button>Riprova</button>";
+    box.innerHTML = "<h1>Home2Love</h1><p></p><button>Riprova</button>";
     box.querySelector("p").textContent = msg;
     box.querySelector("button").onclick = function () { l.remove(); st.remove(); mostraLucchetto(); };
   }
@@ -506,7 +506,7 @@ function mostraLucchetto() {
     var f = document.createElement("form"), msg = document.createElement("div"); msg.className = "msg";
     var bottone = document.createElement("button");
     if (cassa) {   // ---- entra con la password
-      f.innerHTML = "<h1>HomeDashboard</h1><p>Inserisci la password di casa.</p>";
+      f.innerHTML = "<h1>Home2Love</h1><p>Inserisci la password di casa.</p>";
       var pw = campo("password", "Password", "current-password"); f.appendChild(pw);
       var sc = sezioneCodice(f, false); f.appendChild(sc.wrap);
       bottone.textContent = "Entra"; f.appendChild(bottone); f.appendChild(msg); f.appendChild(sc.link);

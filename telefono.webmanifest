@@ -1,14 +1,14 @@
 {
-  "name": "HomeDashboard",
-  "short_name": "HomeDashboard",
-  "description": "HomeDashboard dal telefono: turni, promemoria e spesa.",
+  "name": "Home2Love",
+  "short_name": "Home2Love",
+  "description": "Home2Love dal telefono: turni, promemoria, foto e Forza 4.",
   "lang": "it",
   "start_url": "./telefono.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4efe6",
-  "theme_color": "#1c1915",
+  "background_color": "#d7263d",
+  "theme_color": "#d7263d",
   "icons": [
     {
       "src": "icone/icona-192.png",

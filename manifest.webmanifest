@@ -1,18 +1,36 @@
 {
-  "name": "HomeDashboard",
-  "short_name": "HomeDashboard",
-  "description": "Dashboard di casa: ora, meteo, turni, timer, spesa e promemoria.",
+  "name": "Home2Love",
+  "short_name": "Home2Love",
+  "description": "Home2Love: la dashboard di casa con turni, promemoria, meteo, timer, foto e radio.",
   "lang": "it",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "orientation": "any",
-  "background_color": "#f4efe6",
-  "theme_color": "#1c1915",
+  "background_color": "#d7263d",
+  "theme_color": "#d7263d",
   "icons": [
-    { "src": "icone/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icone/icona-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone/icona-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone/icona-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

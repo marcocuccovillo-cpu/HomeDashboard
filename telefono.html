@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)">
-<title>HomeDashboard</title>
+<meta name="theme-color" content="#d7263d">
+<title>Home2Love</title>
 <link rel="manifest" href="telefono.webmanifest">
 <link rel="icon" href="icone/icona.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="HomeDashboard">
+<meta name="apple-mobile-web-app-title" content="Home2Love">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" rel="stylesheet">
@@ -36,6 +35,7 @@
   header { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; align-items: center;
            gap: 10px; padding: 14px 16px 10px; }
   header h1 { font-size: 22px; font-weight: 500; margin: 0; flex: 1; }
+  header h1 .due { color: #d7263d; font-weight: 700; }
   #stato { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
   #stato::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--done); }
   #stato.ok::before { background: var(--ok); } #stato.err { color: var(--accent); } #stato.err::before { background: var(--accent); }
@@ -184,7 +184,7 @@
 </head>
 <body>
 <header>
-  <h1>HomeDashboard</h1>
+  <h1>Home<span class="due">2</span>Love</h1>
   <span id="stato"></span>
   <button class="icona-btn" id="apri-imp" aria-label="Impostazioni">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
