@@ -249,6 +249,7 @@
   .msg small { display: block; text-align: right; font-size: 10.5px; opacity: .65; margin-top: 2px; }
   .msg.cuore, .msg.mio.cuore { background: none; box-shadow: none; font-size: 40px; padding: 0 4px; color: var(--accent); }
   .msg.cuore small { color: var(--muted); }
+  #chat-lista > :first-child { margin-top: auto; }   /* i messaggi stanno in fondo, vicino al campo, come in ogni chat */
   .giorno-chat { align-self: center; font-size: 11.5px; color: var(--muted); background: var(--soft); padding: 3px 10px; border-radius: 10px; margin: 8px 0 4px; }
   .chat-vuota { margin: auto; text-align: center; color: var(--muted); font-size: 14px; }
   #chat-form { display: flex; gap: 8px; padding: 8px 12px 12px; align-items: flex-end; }
@@ -393,8 +394,8 @@
   </div>
 </div>
 
-<script src="comune.js?v=27"></script>
-<script src="forza4.js?v=27"></script>
+<script src="comune.js?v=28"></script>
+<script src="forza4.js?v=28"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -792,8 +793,21 @@ function inviaChat(testo) {
   disegnaChat.prima = true; disegnaChat();
   sincronizza().then(disegnaChat);
 }
+// con la tastiera aperta il pannello occupa lo spazio che resta sopra di lei, e l'ultimo messaggio resta in vista
+function adattaChat() {
+  if (!chatAperta) return;
+  var v = window.visualViewport, p = $("chat").querySelector(".pannello"), box = $("chat-lista");
+  var alto = v ? v.height : innerHeight, sotto = v ? Math.max(0, innerHeight - v.height - v.offsetTop) : 0;
+  var tastiera = sotto > 80 || (v && screen.height - v.height > screen.height * 0.35 && document.activeElement === $("chat-testo"));
+  p.style.height = (tastiera ? alto - 8 : Math.min(alto * 0.78, 640)) + "px";
+  p.style.bottom = sotto + "px";
+  box.scrollTop = box.scrollHeight;
+}
+if (window.visualViewport) { visualViewport.addEventListener("resize", adattaChat); visualViewport.addEventListener("scroll", adattaChat); }
+$("chat-testo").addEventListener("focus", function () { setTimeout(adattaChat, 300); });
+$("chat-testo").addEventListener("blur", function () { setTimeout(adattaChat, 300); });
 function apriChat() {
-  chatAperta = true; disegnaChat.prima = true; $("chat").classList.add("on"); disegnaChat();
+  chatAperta = true; disegnaChat.prima = true; $("chat").classList.add("on"); disegnaChat(); adattaChat();
   sincronizza();
   clearInterval(apriChat.t); apriChat.t = setInterval(function () { if (document.visibilityState === "visible") sincronizza(); }, 4000);   // più svelta mentre è aperta
 }
