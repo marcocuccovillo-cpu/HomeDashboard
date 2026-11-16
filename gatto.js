@@ -2,7 +2,7 @@
 // Gira, si siede, dorme di notte e quando lavorate tutti e due, trema se fuori piove o nevica,
 // è felice nei giorni liberi insieme, fa le fusa se lo tocchi e salta quando suona un timer.
 
-var G = { attivita: null, W: 24, H: 18, S: 5, x: 200, y: 400, tx: 200, ty: 400, verso: 1, stato: "seduto", fino: 0, f: 0, coccole: 0, salto: 0 };
+var G = { preso: false, dondolo: 0, attivita: null, W: 24, H: 18, S: 5, x: 200, y: 400, tx: 200, ty: 400, verso: 1, stato: "seduto", fino: 0, f: 0, coccole: 0, salto: 0 };
 var COL = { O: "#e8913f", D: "#b8622a", W: "#fff1e0", K: "#2b1d14", P: "#f4a6ae" };
 
 function pix(g, c, x, y, w, h) { g.fillStyle = COL[c]; g.fillRect(x, y, w || 1, h || 1); }
@@ -14,6 +14,16 @@ function disegnaGatto(g, posa, f) {
     pix(g, "K", 14, 10, 2, 1); pix(g, "K", 17, 10, 1, 1); pix(g, "W", 15, 11, 3, 2);
     var r = f % 40 < 20 ? 0 : 1;   // respiro
     pix(g, "O", 5, 16 - r, 9, 1); pix(g, "W", 4, 15 - r, 2, 1);
+    return;
+  }
+  if (posa === "preso") {
+    var dz = f % 10 < 5 ? 0 : 1, cd = Math.round(Math.sin(f / 3) * 2);
+    pix(g, "O", 9, 0, 7, 6); pix(g, "O", 9, 0, 1, 1); pix(g, "O", 15, 0, 1, 1); pix(g, "P", 10, 1); pix(g, "P", 14, 1);
+    pix(g, "K", 11, 2, 1, 1); pix(g, "K", 14, 2, 1, 1); pix(g, "W", 12, 3, 3, 2); pix(g, "P", 13, 3);   // occhioni sorpresi
+    pix(g, "O", 10, 6, 5, 8); pix(g, "W", 11, 7, 3, 5); pix(g, "D", 10, 8, 1, 1); pix(g, "D", 14, 10, 1, 1);
+    pix(g, "O", 9, 7, 1, 3 + dz); pix(g, "W", 9, 10 + dz); pix(g, "O", 15, 7, 1, 3 + (1 - dz)); pix(g, "W", 15, 11 - dz);   // zampette davanti
+    pix(g, "O", 10, 14, 1, 2 + dz); pix(g, "W", 10, 16 + dz); pix(g, "O", 14, 14, 1, 3 - dz); pix(g, "W", 14, 17 - dz);   // zampe dietro
+    pix(g, "O", 12 + cd, 14, 1, 3); pix(g, "D", 12 + cd, 17);   // coda
     return;
   }
   if (posa === "seduto") {
@@ -162,6 +172,12 @@ function iniziaAttivita(ora, u) {
 }
 function passoGatto() {
   var u = umore(), ora = Date.now(), vis = cucciaVisibile(); G.f++;
+  if (G.preso) {   // in braccio: lo muove il dito, qui solo l'animazione
+    G.dondolo *= .85; mettiGatto(0, 0);
+    disegnaGatto($("gatto").getContext("2d"), "preso", G.f);
+    if (vis) { misuraCuccia(); aggiornaCiotole(); disegnaCuccia(); }
+    return;
+  }
   if (G.salto > 0) G.salto--;
   if (vis) { misuraCuccia(); aggiornaCiotole(); }
   if (G.attivita && !vis) { G.attivita = null; if (G.stato !== "dorme") { G.stato = "seduto"; G.fino = ora + 2000; } }
@@ -190,14 +206,61 @@ function passoGatto() {
   if (G.stato !== "dorme" && u.festa && G.f % 70 === 0) cuoricino();
   if (G.stato === "seduto" && u.freddo && G.f % 90 === 0) fumetto("brrr… piove");
   var tremo = G.stato === "seduto" && u.freddo && G.f % 4 < 2 ? 1 : 0;
-  var corpo = $("gatto"), salto = G.salto ? -Math.sin(G.salto / 10 * Math.PI) * 40 : 0;
-  corpo.style.transform = "translate(" + Math.round(G.x + tremo) + "px," + Math.round(G.y + salto) + "px) scaleX(" + G.verso + ")";
+  mettiGatto(tremo, G.salto ? -Math.sin(G.salto / 10 * Math.PI) * 40 : 0);
   $("gatto-zzz").hidden = G.stato !== "dorme";
   $("gatto-zzz").style.transform = "translate(" + Math.round(G.x + 70) + "px," + Math.round(G.y - 6) + "px)";
-  $("gatto-fumetto").style.transform = "translate(" + Math.round(G.x + 20) + "px," + Math.round(G.y - 34) + "px)";
   $("gatto").title = G.stato === "dorme" ? (G.attivita === "cuccia" ? "Dorme nella cuccia" : "Dorme: " + u.perche) : "Accarezzami";
   disegnaGatto($("gatto").getContext("2d"), G.stato, G.f);
   if (vis) { disegnaCuccia(); if (G.f % 5 === 0) scriviStatoCuccia(); }
+}
+function mettiGatto(tremo, salto) {
+  $("gatto").style.transform = "translate(" + Math.round(G.x + tremo) + "px," + Math.round(G.y + salto) + "px)" +
+    (G.preso ? " rotate(" + G.dondolo.toFixed(1) + "deg)" : "") + " scaleX(" + G.verso + ")";
+  $("gatto-fumetto").style.transform = "translate(" + Math.round(G.x + 20) + "px," + Math.round(G.y - 34) + "px)";
+}
+// ---------------------------------------------------------------- prenderlo in braccio e spostarlo
+// Un tocco = coccole. Tenendo premuto e trascinando lo si prende per la collottola, con dolcezza:
+// penzola e dondola, e lasciato giù si siede lì. Se lo lasci sulla cuccia, su una ciotola o sul gomitolo, ci va.
+function attivitaSotto(x, y) {
+  if (!cucciaVisibile()) return null;
+  var r = $("cuccia").getBoundingClientRect(), p = CU.pos;
+  if (x < r.left || x > r.right || y < r.top - 40 || y > r.bottom + 10) return null;
+  var lx = (x - r.left) / G.S;
+  return lx < p.cibo - 2 ? "cuccia" : lx < p.acqua - 1 ? "cibo" : lx < p.gomitolo - 2 ? "acqua" : "gioco";
+}
+function avviaPresa() {
+  var c = $("gatto"), giu = null;
+  c.style.touchAction = "none";
+  c.addEventListener("pointerdown", function (e) {
+    e.preventDefault(); e.stopPropagation();
+    giu = { x: e.clientX, y: e.clientY, t: Date.now(), ox: e.clientX - G.x, oy: e.clientY - G.y, ux: e.clientX };
+    try { c.setPointerCapture(e.pointerId); } catch (er) {}
+  });
+  c.addEventListener("pointermove", function (e) {
+    if (!giu) return;
+    if (!G.preso) {
+      if (Math.abs(e.clientX - giu.x) + Math.abs(e.clientY - giu.y) < 10) return;
+      G.preso = true; G.attivita = null; G.dondolo = 0; G.coccole = 0; c.style.cursor = "grabbing";
+      fumetto(G.stato === "dorme" ? "mrrp? mi hai svegliato" : ["mrrp?", "miao!", "dove andiamo?"][Math.floor(Math.random() * 3)], 2000);
+      $("gatto-zzz").hidden = true;
+    }
+    // la collottola resta sotto il dito; dondola nel verso opposto al movimento
+    G.x = e.clientX - 12 * G.S; G.y = e.clientY - 2 * G.S;
+    G.dondolo = Math.max(-25, Math.min(25, G.dondolo - (e.clientX - giu.ux) * .8)); giu.ux = e.clientX;
+    mettiGatto(0, 0);
+  });
+  function lascia(e) {
+    if (!giu) return;
+    var eraPreso = G.preso; giu = null; G.preso = false; c.style.cursor = "";
+    if (!eraPreso) { coccola(); return; }
+    var ora = Date.now(), a = attivitaSotto(e.clientX, e.clientY);
+    G.x = Math.max(0, Math.min(innerWidth - G.W * G.S, G.x)); G.y = Math.max(0, Math.min(innerHeight - G.H * G.S, G.y));
+    if (a) { vaiA(a); G.x = G.tx; G.y = G.ty; iniziaAttivita(ora, umore()); }
+    else { G.stato = "seduto"; G.fino = ora + 5000; G.salto = 4; fumetto("eccomi ♥", 1600); }
+    passoGatto();
+  }
+  c.addEventListener("pointerup", lascia);
+  c.addEventListener("pointercancel", lascia);
 }
 function coccola() {
   G.attivita = null; G.coccole = Date.now() + 6000; G.stato = "seduto"; G.fino = Date.now() + 6000;
@@ -212,6 +275,6 @@ function avviaGatto() {
   avviaGatto.fatto = true;
   var c = $("gatto"); c.width = G.W; c.height = G.H; c.style.width = G.W * G.S + "px"; c.style.height = G.H * G.S + "px";
   G.x = innerWidth * 0.6; G.y = innerHeight * 0.75; nuovaMeta(); G.fino = Date.now() + 2000;
-  c.addEventListener("click", coccola);
+  avviaPresa();
   setInterval(passoGatto, 100);
 }
