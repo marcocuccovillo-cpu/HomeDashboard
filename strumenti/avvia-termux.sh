@@ -10,6 +10,9 @@ if [ ! -f "$HOME/.homedashboard.json" ]; then
   exit 1
 fi
 
+echo "-> Strumenti per leggere la batteria (serve anche l'app Termux:API da F-Droid)…"
+pkg install -y termux-api >/dev/null 2>&1 || echo "   (non riesco a installare termux-api: la batteria non verrà letta)"
+
 echo "-> Aggiorno il lettore…"
 mkdir -p "$CARTELLA"
 curl -fsSL "$SITO/strumenti/dispositivi.py" -o "$CARTELLA/dispositivi.py"

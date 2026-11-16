@@ -13,7 +13,7 @@ echo
 
 echo "-> Installo Python e gli strumenti necessari…"
 pkg update -y
-pkg install -y python clang libffi openssl
+pkg install -y python clang libffi openssl termux-api
 
 # Le librerie di rete in versione "solo Python": niente da compilare, funziona anche su Android a 32 bit
 export AIOHTTP_NO_EXTENSIONS=1 MULTIDICT_NO_EXTENSIONS=1 YARL_NO_EXTENSIONS=1 FROZENLIST_NO_EXTENSIONS=1 PROPCACHE_NO_EXTENSIONS=1

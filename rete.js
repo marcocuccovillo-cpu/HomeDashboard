@@ -115,6 +115,7 @@ function leggiDispositivi() {
   }).catch(function () { if (!dispDati) dispStato = "errore"; }).then(disegnaDispositivi);
 }
 function disegnaDispositivi() {
+  disegnaTablet();
   var ul = $("disp-lista"), st = $("disp-stato"), conta = $("disp-conta"), altri = $("disp-altri");
   ul.innerHTML = ""; altri.hidden = true; st.innerHTML = "";
   if (!dispDati) {
@@ -146,7 +147,53 @@ function disegnaDispositivi() {
   else st.textContent = "Dalla Vodafone Station · controllato " + fraQuanto(quando);
 }
 
+// ---------------------------------------------------------------- salute del tablet
+// Dal lettore in Termux (con Termux:API): batteria, temperatura, salute, RAM, spazio, da quanto è acceso.
+// Senza Termux:API resta la batteria vista dal browser (percentuale e carica, senza temperatura).
+var battBrowser = null;
+var STATI_BATT = { CHARGING: "in carica", DISCHARGING: "a batteria", FULL: "carica completa", NOT_CHARGING: "collegato, non carica" };
+var SALUTE_BATT = { GOOD: "buona", OVERHEAT: "surriscaldata", DEAD: "esaurita", OVER_VOLTAGE: "sovratensione", COLD: "troppo fredda", UNSPECIFIED_FAILURE: "guasto", UNKNOWN: "sconosciuta" };
+function durata(s) {
+  var g = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return g ? g + (g === 1 ? " giorno " : " giorni ") + h + " h" : h ? h + " h " + m + " min" : m + " min";
+}
+function disegnaTablet() {
+  var t = dispDati && dispDati.tablet && dispDati.tablet.batteria != null ? dispDati.tablet : null;
+  var extra = dispDati && dispDati.tablet ? dispDati.tablet : {};
+  var batt = t ? t.batteria : battBrowser ? Math.round(battBrowser.level * 100) : null;
+  var inCarica = t ? t.presa && t.presa !== "UNPLUGGED" : battBrowser ? battBrowser.charging : null;
+  reteTesto("tab-batt", batt == null ? "–" : String(batt));
+  reteTesto("tab-carica", t ? (STATI_BATT[t.stato] || "batteria") : inCarica == null ? "batteria" : inCarica ? "in carica" : "a batteria");
+  var temp = t && typeof t.temperatura === "number" ? t.temperatura : null;
+  reteTesto("tab-temp", temp == null ? "–" : temp.toFixed(1));
+  $("tab-temp").className = "n" + (temp != null && temp >= 40 ? " caldo" : "");
+  var righe = [];
+  if (t && t.salute) righe.push(["Salute batteria", SALUTE_BATT[t.salute] || t.salute.toLowerCase()]);
+  if (extra.acceso_da) righe.push(["Acceso da", durata(extra.acceso_da)]);
+  if (extra.ram_totale) righe.push(["RAM libera", (extra.ram_libera / 1024).toFixed(1) + " di " + (extra.ram_totale / 1024).toFixed(1) + " GB"]);
+  if (extra.disco_totale) righe.push(["Spazio libero", extra.disco_libero + " di " + extra.disco_totale + " GB"]);
+  var dl = $("tab-dati"); dl.innerHTML = "";
+  righe.forEach(function (r) { var dt = el("dt"), dd = el("dd"); dt.textContent = r[0]; dd.textContent = r[1]; dl.appendChild(dt); dl.appendChild(dd); });
+  // avvisi
+  var st = $("tab-stato"), nota = "", livello = "ok", testo = "tutto ok";
+  if (temp != null && temp >= 42) { livello = "no"; testo = "caldo"; nota = "Si sta scaldando parecchio: allontanalo da fornelli, forno e sole diretto."; }
+  else if (t && t.salute && t.salute !== "GOOD") { livello = "no"; testo = "batteria"; nota = "Android segnala la batteria come \"" + (SALUTE_BATT[t.salute] || t.salute) + "\"."; }
+  else if (extra.pieno_da && Date.now() / 1000 - extra.pieno_da > 24 * 3600) {
+    livello = "no"; testo = "sempre al 100%";
+    nota = "In carica al 100% da " + durata(Date.now() / 1000 - extra.pieno_da) + ": se nelle impostazioni c'è \"Proteggi batteria\" o un limite di carica (85%), attivalo.";
+  } else if (batt != null && !inCarica && batt < 20) { livello = "no"; testo = "batteria bassa"; nota = "Il tablet non è in carica e la batteria è sotto il 20%."; }
+  if (!t) nota = (nota ? nota + " " : "") + "Per temperatura e salute della batteria installa l'app Termux:API da F-Droid.";
+  if (batt == null && !extra.acceso_da) { livello = ""; testo = "–"; }
+  st.textContent = testo; st.className = "pillola" + (livello ? " " + livello : "");
+  $("tab-nota").textContent = nota;
+}
+
 function avviaRete() {
+  if (navigator.getBattery) navigator.getBattery().then(function (b) {
+    battBrowser = b; disegnaTablet();
+    ["levelchange", "chargingchange"].forEach(function (e) { b.addEventListener(e, disegnaTablet); });
+  }).catch(function () {});
+  disegnaTablet();
   $("disp-altri").onclick = function () { dispTutti = !dispTutti; disegnaDispositivi(); };
   leggiDispositivi(); setInterval(function () { if (document.visibilityState === "visible") leggiDispositivi(); }, 60 * 1000);
   $("rete-misura").onclick = misuraVelocita;

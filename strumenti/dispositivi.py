@@ -22,6 +22,8 @@ import getpass
 import hashlib
 import json
 import os
+import shutil
+import subprocess
 import sys
 import time
 import urllib.error
@@ -360,8 +362,62 @@ def prova(c):
     """Legge il router una volta, stampa la lista e controlla la password di casa."""
     modello, lista = asyncio.run(leggi_router(c))
     stampa(modello, lista)
+    t = stato_tablet()
+    if "batteria" in t:
+        print(f"Tablet: batteria {t['batteria']}% · {t.get('temperatura')} °C · {t.get('stato')} · salute {t.get('salute')}")
+    else:
+        print("Tablet: batteria non leggibile (serve l'app Termux:API e  pkg install termux-api)")
     apri_cassaforte(c)   # se la password di casa è sbagliata qui si ferma con il messaggio
     print("Password di casa giusta: la lista arriverà alla dashboard.\n")
+
+
+# ---------------------------------------------------------------- salute del tablet
+_pieno_da = None
+
+
+def stato_tablet():
+    """Batteria (con l'app Termux:API), RAM, spazio e da quanto è acceso. Quello che manca si salta."""
+    global _pieno_da
+    t = {"quando": ora()}
+    if shutil.which("termux-battery-status"):
+        try:
+            b = json.loads(subprocess.run(["termux-battery-status"], capture_output=True, text=True, timeout=20).stdout)
+            t.update(batteria=b.get("percentage"), stato=b.get("status"), presa=b.get("plugged"),
+                     salute=b.get("health"), temperatura=b.get("temperature"))
+        except Exception:
+            pass
+    try:
+        mem = {}
+        with open("/proc/meminfo") as f:
+            for riga in f:
+                k, v = riga.split(":", 1)
+                mem[k] = int(v.split()[0])
+        t["ram_totale"], t["ram_libera"] = mem["MemTotal"] // 1024, mem.get("MemAvailable", mem.get("MemFree", 0)) // 1024
+    except Exception:
+        pass
+    try:
+        st = os.statvfs(os.path.expanduser("~"))
+        t["disco_totale"], t["disco_libero"] = round(st.f_blocks * st.f_frsize / 1e9, 1), round(st.f_bavail * st.f_frsize / 1e9, 1)
+    except Exception:
+        pass
+    try:
+        with open("/proc/uptime") as f:
+            t["acceso_da"] = int(float(f.read().split()[0]))
+    except Exception:
+        pass
+    in_presa = t.get("presa") not in (None, "UNPLUGGED")
+    if t.get("batteria") == 100 and in_presa:
+        _pieno_da = _pieno_da or time.time()
+        t["pieno_da"] = int(_pieno_da)
+    else:
+        _pieno_da = None
+    return t
+
+
+def impronta_tablet(t):
+    """Quello che conta per decidere se ripubblicare (la temperatura a passi di 2 gradi)."""
+    temp = t.get("temperatura")
+    return (t.get("batteria"), t.get("stato"), t.get("presa"), t.get("salute"), None if temp is None else round(temp / 2))
 
 
 def corri(c):
@@ -379,15 +435,16 @@ def corri(c):
             print(f"{ora()}  rete non pronta ({e}), riprovo tra un minuto")
             time.sleep(60)
     print(f"{ora()}  lettore avviato: leggo il router ogni {c.get('ogni', 300)} secondi")
-    ultima_lista, ultima_pubblicazione, attesa_errore = None, 0, 60
+    ultima_lista, ultima_impronta, ultima_pubblicazione, attesa_errore = None, None, 0, 60
     while True:
         try:
+            tablet = stato_tablet()
             modello, lista = asyncio.run(leggi_router(c))
-            cambiata = lista != ultima_lista
+            cambiata = lista != ultima_lista or impronta_tablet(tablet) != ultima_impronta
             if cambiata or time.time() - ultima_pubblicazione > BATTITO:
                 pubblica(c, {"aggiornato": ora(), "modello": modello, "ogni": c.get("ogni", 300),
-                             "dispositivi": lista, "errore": ""})
-                ultima_lista, ultima_pubblicazione = lista, time.time()
+                             "dispositivi": lista, "errore": "", "tablet": tablet})
+                ultima_lista, ultima_impronta, ultima_pubblicazione = lista, impronta_tablet(tablet), time.time()
                 print(f"{ora()}  pubblicati {sum(d['attivo'] for d in lista)} dispositivi connessi")
             attesa_errore = 60
             time.sleep(max(60, int(c.get("ogni", 300))))
@@ -397,7 +454,7 @@ def corri(c):
             print(f"{ora()}  errore: {e}")
             try:   # lo segnala anche alla dashboard, mantenendo l'ultima lista nota
                 pubblica(c, {"aggiornato": ora(), "modello": "", "ogni": c.get("ogni", 300),
-                             "dispositivi": ultima_lista or [], "errore": str(e)})
+                             "dispositivi": ultima_lista or [], "errore": str(e), "tablet": stato_tablet()})
             except Exception:
                 pass
             time.sleep(attesa_errore)
