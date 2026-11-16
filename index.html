@@ -212,7 +212,7 @@
   .tab-numeri small { display: block; font-size: 1.8vh; color: var(--muted); margin-top: .4vh; }
   .tab-numeri .caldo { color: var(--accent); }
   #tab-dati { margin-bottom: .6vh; }
-  #card-disp { max-height: calc(100vh - 28px); }
+  #card-disp { max-height: 44vh; }
   .disp-lista { list-style: none; margin: 0 0 1vh; padding: 0; overflow-y: auto; min-height: 0; }
   .disp-lista li { display: flex; align-items: center; gap: .9vw; padding: 1vh .2vw; border-bottom: 1px solid var(--line); font-size: 2.1vh; }
   .disp-lista li svg { width: 2.8vh; height: 2.8vh; flex: none; color: var(--muted); }
@@ -336,6 +336,43 @@
   .gatto-cuore { position: absolute; color: #d9466f; font-size: 2.6vh; animation: cuore 1.8s ease-out forwards; }
   @keyframes cuore { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
   body.notte #gatto { filter: drop-shadow(0 4px 3px rgba(0,0,0,.4)) brightness(.75); }
+
+  /* --- forza 4 --- */
+  .f4-info { display: flex; align-items: center; gap: .8vw; flex-wrap: wrap; font-size: 1.9vh; margin-bottom: .8vh; }
+  .f4-turno { font-weight: 500; } .f4-turno.p0 { color: var(--p0); } .f4-turno.p1 { color: var(--p1); }
+  .f4-punti { color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .f4-griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: .5vh; background: #2f5d9e; padding: .8vh; border-radius: 12px;
+                width: min(100%, 46vh); margin: 0 auto; }
+  .f4c { aspect-ratio: 1; border-radius: 50%; background: var(--bg); box-shadow: inset 0 2px 4px rgba(0,0,0,.35); cursor: pointer; }
+  .f4c.p0 { background: radial-gradient(circle at 35% 35%, #f0a070, var(--p0)); }
+  .f4c.p1 { background: radial-gradient(circle at 35% 35%, #8fd0c8, var(--p1)); }
+  .f4c.ultima { animation: caduta .35s ease-in; }
+  .f4c.vince { box-shadow: 0 0 0 3px #ffd75e, inset 0 2px 4px rgba(0,0,0,.2); }
+  @keyframes caduta { from { transform: translateY(-300%); } }
+  body.notte .f4-griglia { background: #22426f; }
+
+  /* --- ricetta del giorno --- */
+  #card-ricetta { flex: 1; min-height: 0; }
+  .ricetta-titolo { display: flex; align-items: baseline; gap: .8vw; flex-wrap: wrap; margin-bottom: .4vh; }
+  .ricetta-titolo b { font-size: 2.4vh; font-weight: 500; } .ricetta-titolo span { font-size: 1.7vh; color: var(--muted); }
+  .ricetta-ingr { font-size: 1.7vh; color: var(--muted); line-height: 1.35; margin-bottom: .8vh; }
+  .ricetta-passi { margin: 0; padding-left: 1.3em; font-size: 1.85vh; line-height: 1.4; overflow-y: auto; flex: 1; min-height: 0; }
+  .ricetta-passi li { display: list-item; margin-bottom: .6vh; padding: 0; border: 0; font-size: inherit; }
+  .ricetta-timer { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 10px;
+                   font-size: 1.65vh; padding: .1vh .5vw; margin: 0 .3vw; white-space: nowrap; }
+
+  /* --- viaggi sulla mappa --- */
+  #card-cielo h2 { white-space: nowrap; }
+  .cielo-testa { display: flex; align-items: center; gap: .5vw; min-width: 0; }
+  .cielo-testa .pillola { font-size: 1.55vh; white-space: nowrap; }
+  #viaggio-aggiungi { padding: .3vh .6vw; }
+  #iss-mappa .viaggio { font-size: 7px; text-anchor: middle; } #iss-mappa .viaggio.fatto { fill: #d9466f; } #iss-mappa .viaggio.sogno { fill: #e0a100; }
+  #iss-mappa .rotta { fill: none; stroke: #2b261f; stroke-width: .7; stroke-dasharray: 1.5 1.5; opacity: .7; }
+  #iss-mappa .aereo-rotta { fill: #2b261f; }
+  body.notte #iss-mappa .rotta { stroke: #e2d8c8; } body.notte #iss-mappa .aereo-rotta { fill: #e2d8c8; }
+  .viaggio-riga { font-size: 1.85vh; color: #b43a5e; margin: .2vh 0 .6vh; }
+  .ev-lista { list-style: none; margin: 1vh 0 0; padding: 0; max-height: 30vh; overflow-y: auto; }
+  .ev-lista li { display: flex; justify-content: space-between; align-items: center; padding: .7vh 0; border-bottom: 1px solid var(--line); font-size: 2vh; }
 
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
@@ -516,6 +553,12 @@
       <button class="btn-pieno" id="rete-misura">Misura velocità</button>
       <div class="nota-txt rete-nota">Nome della rete e segnale non sono leggibili da una pagina web: il browser li blocca per sicurezza.</div>
     </section>
+    <section class="card" id="card-ricetta">
+      <h2>Ricetta del giorno <button class="btn-piccolo" id="ricetta-altra">Un'altra</button></h2>
+      <div class="ricetta-titolo"><b id="ricetta-titolo"></b><span id="ricetta-tempo"></span></div>
+      <div class="ricetta-ingr" id="ricetta-ingr"></div>
+      <ol class="ricetta-passi" id="ricetta-passi"></ol>
+    </section>
     </div>
     <div class="col-cielo">
     <section class="card" id="card-disp">
@@ -524,12 +567,18 @@
       <button class="btn-piccolo" id="disp-altri" hidden></button>
       <div class="nota-txt" id="disp-stato"></div>
     </section>
+    <section class="card" id="card-forza4">
+      <h2>Forza 4 <small>tocca una colonna</small></h2>
+      <div class="f4-info" id="f4-info"></div>
+      <div class="f4-griglia" id="f4-griglia"></div>
+    </section>
     </div>
     <div class="col-cielo">
       <section class="card" id="card-cielo">
-        <h2>Cielo sopra casa <span id="iss-stato" class="pillola">ISS</span></h2>
+        <h2>Cielo sopra casa <span class="cielo-testa"><button class="btn-piccolo" id="viaggio-aggiungi" title="I vostri viaggi sulla mappa">✈ +</button><span id="iss-stato" class="pillola">ISS</span></span></h2>
         <svg id="iss-mappa" viewBox="0 0 360 180" preserveAspectRatio="xMidYMid meet" aria-label="Posizione della Stazione Spaziale"></svg>
         <div class="cielo-riga"><span class="iss-nome">Stazione Spaziale</span> <span id="iss-dati">calcolo l'orbita…</span></div>
+        <div class="viaggio-riga" id="viaggio-riga"></div>
         <div class="iss-passaggio" id="iss-passaggio"></div>
         <div class="aerei-testa">Aerei entro 30 km <span id="aerei-conta"></span></div>
         <div class="radar-box">
@@ -640,6 +689,21 @@
   </div>
 </div>
 
+<!-- viaggi sulla mappa -->
+<div id="ed-viaggi" class="livello scuro modale">
+  <form class="finestra">
+    <h3>I vostri viaggi</h3>
+    <div class="riga">
+      <div class="seg" id="ev-stato"><button type="button" data-v="fatto">♥ Ci siamo stati</button><button type="button" data-v="sogno">☆ Ci vogliamo andare</button></div>
+    </div>
+    <div class="riga"><input type="text" id="ev-luogo" placeholder="Città o luogo (es. Lisbona)" autocomplete="off" style="flex:1"><button class="btn-pieno">Aggiungi</button></div>
+    <div class="riga" id="ev-data-riga"><label>Quando partite (facoltativo)</label><input type="date" id="ev-data"></div>
+    <div class="nota-txt" id="ev-msg"></div>
+    <ul class="ev-lista" id="ev-lista"></ul>
+    <div class="riga fine"><button type="button" class="btn-piccolo annulla">Chiudi</button></div>
+  </form>
+</div>
+
 <!-- impostazioni -->
 <div id="impostazioni" class="livello scuro pannello">
   <div class="dentro">
@@ -714,6 +778,8 @@
 <script src="cielo.js"></script>
 <script src="giorno.js"></script>
 <script src="radio.js"></script>
+<script src="forza4.js"></script>
+<script src="ricette.js"></script>
 <script src="gatto.js"></script>
 <script>
 
@@ -1365,9 +1431,9 @@ $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPag
 window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaAttuale() * $("pagine").clientWidth; });
 
 // ================= avvio =================
-function ridisegna() { disegnaTurni(); disegnaNote(); }
+function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.aggiornaISS) aggiornaISS(); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaCielo(); avviaGiorno(); avviaRadio(); avviaGatto(); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaCielo(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaRicetta(); avviaViaggi(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

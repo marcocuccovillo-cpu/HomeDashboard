@@ -139,6 +139,7 @@ function disegnaMappa(ora, attuale) {
   }
   svg.appendChild(svgEl("path", { d: percorso(passato), class: "traccia passata" }));
   svg.appendChild(svgEl("path", { d: percorso(futuro), class: "traccia" }));
+  disegnaViaggiMappa(svg);
   var c = xy(CASA.lat, CASA.lon); svg.appendChild(svgEl("circle", { cx: c[0], cy: c[1], r: 2.2, class: "casa" }));
   var i = xy(attuale.lat, attuale.lon);
   svg.appendChild(svgEl("circle", { cx: i[0], cy: i[1], r: 9, class: "iss-alone" }));
@@ -266,4 +267,90 @@ function avviaCielo() {
 function cieloVisibile(visibile) {   // gli aerei si leggono solo mentre la schermata è aperta
   clearInterval(cielo.tAerei); cielo.tAerei = null;
   if (visibile) { leggiAerei(); cielo.tAerei = setInterval(function () { if (document.visibilityState === "visible") leggiAerei(); }, 20 * 1000); }
+}
+
+// ---------------------------------------------------------------- viaggi sulla mappa del mondo
+// ♥ posti dove siete stati · ☆ posti dove volete andare · rotta con l'aereo verso il prossimo viaggio
+function prossimoViaggio() {
+  var oggi = iso(new Date());
+  return viaggi.filter(function (v) { return v.stato === "sogno" && v.data && v.data >= oggi; })
+    .sort(function (a, b) { return a.data < b.data ? -1 : 1; })[0] || null;
+}
+function rottaVerso(v) {   // arco di cerchio massimo da Bologna (aeroporto) al viaggio
+  var a = [BLQ.lat * RAD, BLQ.lon * RAD], b = [v.lat * RAD, v.lon * RAD];
+  var d = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin((b[0] - a[0]) / 2), 2) + Math.cos(a[0]) * Math.cos(b[0]) * Math.pow(Math.sin((b[1] - a[1]) / 2), 2)));
+  var punti = [];
+  for (var k = 0; k <= 40; k++) {
+    var f = k / 40, A = Math.sin((1 - f) * d) / Math.sin(d || 1e-9), B = Math.sin(f * d) / Math.sin(d || 1e-9);
+    var x = A * Math.cos(a[0]) * Math.cos(a[1]) + B * Math.cos(b[0]) * Math.cos(b[1]);
+    var y = A * Math.cos(a[0]) * Math.sin(a[1]) + B * Math.cos(b[0]) * Math.sin(b[1]);
+    var z = A * Math.sin(a[0]) + B * Math.sin(b[0]);
+    punti.push([Math.atan2(z, Math.sqrt(x * x + y * y)) / RAD, Math.atan2(y, x) / RAD]);
+  }
+  return punti;
+}
+function disegnaViaggiMappa(svg) {
+  viaggi.forEach(function (v) {
+    var p = xy(v.lat, v.lon), t = svgEl("text", { x: p[0], y: p[1] + 2.4, class: "viaggio " + v.stato });
+    t.textContent = v.stato === "fatto" ? "♥" : "☆"; svg.appendChild(t);
+  });
+  var pv = prossimoViaggio(); cielo.rotta = pv ? rottaVerso(pv) : null;
+  if (cielo.rotta) {
+    svg.appendChild(svgEl("path", { d: percorso(cielo.rotta), class: "rotta" }));
+    var aereo = svgEl("path", { d: "M3 0L-2 -2.2L-1 0L-2 2.2Z", class: "aereo-rotta", id: "aereo-rotta" });
+    svg.appendChild(aereo);
+  }
+  var prox = pv ? Math.round((new Date(pv.data + "T00:00:00") - new Date(new Date().toDateString())) / 864e5) : null;
+  var fatti = viaggi.filter(function (v) { return v.stato === "fatto"; }).length, sogni = viaggi.length - fatti;
+  var r = $("viaggio-riga");
+  if (r) r.textContent = pv ? "✈ " + pv.nome + (prox === 0 ? " oggi!" : prox === 1 ? " domani!" : " tra " + prox + " giorni")
+    : viaggi.length ? "♥ " + fatti + (fatti === 1 ? " posto visto" : " posti visti") + " insieme · ☆ " + sogni + " da vedere" : "Aggiungi i vostri viaggi con ✈ +";
+}
+function animaAereo() {   // l'aereo percorre la rotta in 8 secondi, poi riparte
+  var a = document.getElementById("aereo-rotta"), r = cielo.rotta; if (!a || !r) return;
+  var f = (Date.now() % 8000) / 8000 * (r.length - 1), i = Math.floor(f), k = f - i, p = r[i], q = r[Math.min(i + 1, r.length - 1)];
+  var P = xy(p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k), Q = xy(q[0], q[1]);
+  var ang = Math.atan2(Q[1] - P[1], Q[0] - P[0]) / RAD;
+  if (Math.abs(q[1] - p[1]) > 180) return;   // salto della linea del cambio data
+  a.setAttribute("transform", "translate(" + P[0].toFixed(1) + " " + P[1].toFixed(1) + ") rotate(" + ang.toFixed(0) + ")");
+}
+setInterval(animaAereo, 80);
+
+// ---- aggiungere e togliere viaggi
+var nuovoViaggio = { stato: "fatto" };
+function disegnaListaViaggi() {
+  var ul = $("ev-lista"); ul.innerHTML = "";
+  if (!viaggi.length) { ul.innerHTML = '<li class="vuoto">Ancora nessun viaggio.</li>'; return; }
+  viaggi.slice().sort(function (a, b) { return a.stato === b.stato ? (a.data || "").localeCompare(b.data || "") : a.stato === "sogno" ? -1 : 1; }).forEach(function (v) {
+    var li = el("li"), t = el("span"), x = el("button");
+    t.textContent = (v.stato === "fatto" ? "♥ " : "☆ ") + v.nome + (v.paese ? ", " + v.paese : "") + (v.data ? " · " + v.data.split("-").reverse().join("/") : "");
+    x.type = "button"; x.className = "btn-piccolo"; x.textContent = "Togli";
+    x.onclick = function () { viaggi = viaggi.filter(function (y) { return y !== v; }); salva("cucina_viaggi", viaggi); disegnaListaViaggi(); aggiornaISS(); };
+    li.appendChild(t); li.appendChild(x); ul.appendChild(li);
+  });
+}
+function apriViaggi() {
+  $("ev-luogo").value = ""; $("ev-data").value = ""; $("ev-msg").textContent = "";
+  seg("ev-stato", nuovoViaggio.stato); $("ev-data-riga").hidden = nuovoViaggio.stato !== "sogno";
+  disegnaListaViaggi(); apri("ed-viaggi");
+}
+function avviaViaggi() {
+  if (!$("ed-viaggi")) return;
+  $("viaggio-aggiungi").onclick = apriViaggi;
+  $("ev-stato").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (!v) return; nuovoViaggio.stato = v; seg("ev-stato", v); $("ev-data-riga").hidden = v !== "sogno"; };
+  $("ed-viaggi").querySelector("form").onsubmit = function (e) {
+    e.preventDefault();
+    var q = $("ev-luogo").value.trim(); if (!q) return;
+    $("ev-msg").textContent = "Cerco " + q + "…";
+    fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&format=json&name=" + encodeURIComponent(q))
+      .then(function (r) { return r.json(); }).then(function (j) {
+        var x = j.results && j.results[0];
+        if (!x) { $("ev-msg").textContent = "Non trovo \"" + q + "\": prova a scriverlo diversamente."; return; }
+        viaggi.push({ id: nuovoId(), nome: x.name, paese: x.country || "", lat: +x.latitude.toFixed(3), lon: +x.longitude.toFixed(3),
+          stato: nuovoViaggio.stato, data: nuovoViaggio.stato === "sogno" ? $("ev-data").value : "" });
+        salva("cucina_viaggi", viaggi);
+        $("ev-msg").textContent = "Aggiunto: " + x.name + (x.country ? ", " + x.country : "");
+        $("ev-luogo").value = ""; disegnaListaViaggi(); aggiornaISS();
+      }, function () { $("ev-msg").textContent = "Non riesco a cercare il luogo, riprova tra poco."; });
+  };
 }

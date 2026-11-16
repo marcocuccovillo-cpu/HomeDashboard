@@ -13,7 +13,7 @@ var MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","ag
 var COLORI = ["giallo", "rosa", "verde", "azzurro", "arancio", "lilla"];
 
 function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
-var CONDIVISI = { cucina_cfg: 1, cucina_note: 1, cucina_spesa: 1 };   // dati che si sincronizzano
+var CONDIVISI = { cucina_cfg: 1, cucina_note: 1, cucina_spesa: 1, cucina_viaggi: 1 };   // dati che si sincronizzano
 function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} if (CONDIVISI[k]) cambiato(); }
 function nuovoId() { return Date.now() * 1000 + Math.floor(Math.random() * 1000); }
 function $(id) { return document.getElementById(id); }
@@ -129,6 +129,7 @@ if (!note) {   // recupera i vecchi promemoria a lista
 }
 var spesa = leggi("cucina_spesa", []);
 spesa.forEach(function (v, i) { if (!v.id) v.id = Date.now() * 1000 + i; });
+var viaggi = leggi("cucina_viaggi", []);   // [{id, nome, paese, lat, lon, stato: "fatto"|"sogno", data: "YYYY-MM-DD"|""}]
 
 // ================= sincronizzazione tra dispositivi (dati.json cifrato nel ramo "cassaforte" del repository) =================
 // Ogni dato è una voce separata con l'ora dell'ultima modifica: se due persone cambiano cose diverse
@@ -161,6 +162,8 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
     f["nota." + n.id] = v;
   });
   spesa.forEach(function (v, i) { f["spesa." + v.id] = { testo: v.testo, fatto: !!v.fatto, pos: i }; });
+  viaggi.forEach(function (v) { f["viaggio." + v.id] = { nome: v.nome, paese: v.paese || "", lat: v.lat, lon: v.lon, stato: v.stato, data: v.data || "" }; });
+  if (cfg.forza4) f["gioco.forza4"] = cfg.forza4;
   return f;
 }
 function predefinito(k, v) { return (k === "nomi.0" && v === NOMI_DEF[0]) || (k === "nomi.1" && v === NOMI_DEF[1]) || (k.indexOf("turni.") === 0 && v === ""); }
@@ -212,18 +215,21 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   if (val("ancora")) { cfg.ancora = val("ancora").v; cfg.ancoraAuto = false; }
   ["A", "B"].forEach(function (s) { for (var g = 0; g < 7; g++) for (var p = 0; p < 2; p++) { var e = val("turni." + s + "." + g + "." + p); cfg.turni[s][g][p] = e ? e.v : ""; } });
   cfg.eccezioni = {};
-  var nn = [], ss = [];
+  var nn = [], ss = [], vv = [];
+  if (val("gioco.forza4")) cfg.forza4 = val("gioco.forza4").v;
   Object.keys(reg).forEach(function (k) {
     var e = val(k); if (!e) return;
     if (k.indexOf("ecc.") === 0) cfg.eccezioni[k.slice(4)] = e.v;
     else if (k.indexOf("nota.") === 0) nn.push({ id: +k.slice(5), testo: e.v.testo, colore: e.v.colore, pos: e.v.pos, x: e.v.x, y: e.v.y });
     else if (k.indexOf("spesa.") === 0) ss.push({ id: +k.slice(6), testo: e.v.testo, fatto: e.v.fatto, pos: e.v.pos });
+    else if (k.indexOf("viaggio.") === 0) { var v = e.v; v.id = +k.slice(8); vv.push(v); }
   });
   function ordina(a, b) { return a.pos - b.pos || a.id - b.id; }
   note = nn.sort(ordina).map(function (n) { var o = { id: n.id, testo: n.testo, colore: n.colore }; if (typeof n.x === "number") { o.x = n.x; o.y = n.y; } return o; });
   spesa = ss.sort(ordina).map(function (v) { return { id: v.id, testo: v.testo, fatto: v.fatto }; });
   regPronto = false;   // salvataggi senza registrare: sono già nel registro
-  salvaCfg(); salva("cucina_note", note); salva("cucina_spesa", spesa);
+  viaggi = vv.sort(function (a, b) { return a.id - b.id; });
+  salvaCfg(); salva("cucina_note", note); salva("cucina_spesa", spesa); salva("cucina_viaggi", viaggi);
   base = piatto(); salva("cucina_base", base); regPronto = true;
   if (window.ridisegna) ridisegna();
 }
