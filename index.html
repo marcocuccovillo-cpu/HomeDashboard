@@ -139,6 +139,16 @@
   .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: .9vh 1.4vw; margin: 0 0 1.6vh; font-size: 2.1vh; }
   .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
   .rete-nota { margin-top: 1.4vh; }
+  #card-disp { max-height: calc(100vh - 28px); }
+  .disp-lista { list-style: none; margin: 0 0 1vh; padding: 0; overflow-y: auto; min-height: 0; }
+  .disp-lista li { display: flex; align-items: center; gap: .9vw; padding: 1vh .2vw; border-bottom: 1px solid var(--line); font-size: 2.1vh; }
+  .disp-lista li svg { width: 2.8vh; height: 2.8vh; flex: none; color: var(--muted); }
+  .disp-lista li .nome { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .disp-lista li .ip { color: var(--muted); font-size: 1.8vh; font-variant-numeric: tabular-nums; }
+  .disp-lista li .banda { font-size: 1.6vh; color: var(--muted); background: var(--bg); border-radius: 6px; padding: .2vh .5vw; }
+  .disp-lista li.spento { opacity: .45; }
+  .disp-lista li.spento .nome::after { content: " · non connesso"; color: var(--muted); font-size: 1.7vh; }
+  #disp-stato a { color: var(--accent); }
 
   /* --- promemoria: foglietti attaccati sopra tutta la pagina --- */
   #lavagna { position: absolute; inset: 0; z-index: 8; pointer-events: none; }
@@ -334,7 +344,13 @@
         <dt>Velocità misurata</dt><dd id="rete-quando">mai</dd>
       </dl>
       <button class="btn-pieno" id="rete-misura">Misura velocità</button>
-      <div class="nota-txt rete-nota">Nome della rete, segnale e dispositivi connessi non sono leggibili da una pagina web: il browser li blocca per sicurezza. Per vedere i dispositivi serve il pannello del router o un'app sul tablet.</div>
+      <div class="nota-txt rete-nota">Nome della rete e segnale non sono leggibili da una pagina web: il browser li blocca per sicurezza.</div>
+    </section>
+    <section class="card" id="card-disp">
+      <h2>Dispositivi <span id="disp-conta" class="pillola">…</span></h2>
+      <ul class="disp-lista" id="disp-lista"></ul>
+      <button class="btn-piccolo" id="disp-altri" hidden></button>
+      <div class="nota-txt" id="disp-stato"></div>
     </section>
   </div>
 </div>

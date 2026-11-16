@@ -89,11 +89,63 @@ function misuraVelocita() {   // scarica ~4 MB (tre copie in parallelo) e calcol
 }
 
 function reteVisibile() {   // quando si apre la schermata: misura da sola se l'ultima volta è di più di un'ora fa
-  disegnaRete();
+  disegnaRete(); leggiDispositivi();
   if (!reteVel || Date.now() - reteVel.quando > 60 * 60 * 1000) misuraVelocita();
 }
 
+// ---------------------------------------------------------------- dispositivi connessi
+// La lista la scrive strumenti/dispositivi.py (gira sul tablet in Termux) in dispositivi.json nel ramo "dati".
+var ICONE_DISP = {
+  wifi: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.3" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  cavo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="12" height="9" rx="1.5"/><path d="M9 3v3M12 3v3M15 3v3M12 12v4M8 21h8M12 16v5"/></svg>'
+};
+var dispDati = null, dispEtag = "", dispTutti = false, dispStato = "";
+var GUIDA_DISP = "https://github.com/marcocuccovillo-cpu/HomeDashboard/blob/main/strumenti/LEGGIMI.md";
+function leggiDispositivi() {
+  if (!token) { dispStato = "scollegato"; disegnaDispositivi(); return; }
+  gh("GET", "/contents/dispositivi.json?ref=" + RAMO, null, dispEtag ? { "If-None-Match": dispEtag } : null).then(function (r) {
+    if (r.status === 304) return;
+    if (r.status === 404) { dispStato = "manca"; dispDati = null; return; }
+    if (!r.ok) throw new Error(r.status);
+    dispEtag = r.headers.get("ETag") || "";
+    return r.json().then(function (j) { dispDati = JSON.parse(da64(j.content)); dispStato = "ok"; });
+  }).catch(function () { if (!dispDati) dispStato = "errore"; }).then(disegnaDispositivi);
+}
+function disegnaDispositivi() {
+  var ul = $("disp-lista"), st = $("disp-stato"), conta = $("disp-conta"), altri = $("disp-altri");
+  ul.innerHTML = ""; altri.hidden = true; st.innerHTML = "";
+  if (!dispDati) {
+    conta.textContent = "–"; conta.className = "pillola";
+    var testo = dispStato === "scollegato" ? "Collega prima il tablet in ⚙ → Condivisione, poi installa il lettore della Vodafone Station."
+      : dispStato === "errore" ? "Non riesco a leggere la lista, riprovo tra un minuto."
+      : "Per vedere qui i dispositivi della Vodafone Station installa il lettore sul tablet con Termux (10 minuti, una volta sola).";
+    st.textContent = testo + " ";
+    var a = document.createElement("a"); a.href = GUIDA_DISP; a.target = "_blank"; a.rel = "noopener"; a.textContent = "Istruzioni";
+    st.appendChild(a);
+    return;
+  }
+  var lista = dispDati.dispositivi || [], attivi = lista.filter(function (d) { return d.attivo; });
+  conta.textContent = attivi.length + " connessi"; conta.className = "pillola ok";
+  (dispTutti ? lista : attivi).forEach(function (d) {
+    var li = document.createElement("li"); if (!d.attivo) li.className = "spento";
+    li.innerHTML = ICONE_DISP[d.via === "cavo" ? "cavo" : "wifi"] + '<span class="nome"></span><span class="banda"></span><span class="ip"></span>';
+    li.querySelector(".nome").textContent = d.nome + (d.via === "ospiti" ? " (ospiti)" : "");
+    var banda = li.querySelector(".banda"); if (d.banda) banda.textContent = d.banda; else banda.remove();
+    li.querySelector(".ip").textContent = d.ip;
+    li.title = d.via === "cavo" ? "Collegato via cavo" : "Wi‑Fi";
+    ul.appendChild(li);
+  });
+  var spenti = lista.length - attivi.length;
+  if (spenti) { altri.hidden = false; altri.textContent = dispTutti ? "Solo i connessi" : "Mostra anche " + spenti + (spenti === 1 ? " non connesso" : " non connessi"); }
+  var quando = Date.parse(dispDati.aggiornato), vecchio = Date.now() - quando > Math.max(3 * (dispDati.ogni || 300) * 1000, 40 * 60 * 1000);
+  if (dispDati.errore) { st.textContent = "Il lettore sul tablet segnala: " + dispDati.errore; conta.className = "pillola no"; }
+  else if (vecchio) { st.textContent = "Il lettore sul tablet non aggiorna da " + fraQuanto(quando).replace(" fa", "") + ": controlla che Termux sia aperto."; conta.className = "pillola no"; }
+  else st.textContent = "Dalla Vodafone Station · controllato " + fraQuanto(quando);
+}
+
 function avviaRete() {
+  $("disp-altri").onclick = function () { dispTutti = !dispTutti; disegnaDispositivi(); };
+  leggiDispositivi(); setInterval(function () { if (document.visibilityState === "visible") leggiDispositivi(); }, 60 * 1000);
   $("rete-misura").onclick = misuraVelocita;
   window.addEventListener("online", function () { disegnaRete(); misuraLatenza(); });
   window.addEventListener("offline", disegnaRete);

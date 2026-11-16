@@ -1,0 +1,45 @@
+# Dispositivi connessi alla Vodafone Station
+
+La dashboard è una pagina web e il browser non le permette di parlare con il router.
+Per questo c'è un piccolo programma, `dispositivi.py`, che gira **sul tablet** dentro Termux:
+ogni 5 minuti entra nella Vodafone Station, legge la lista dei dispositivi e la pubblica in
+`dispositivi.json` nel ramo `dati` del repository. La dashboard la mostra nella seconda schermata.
+
+Per leggere il router usa [aiovodafone](https://github.com/chemelli74/aiovodafone), la stessa
+libreria dell'integrazione "Vodafone Station" di Home Assistant.
+
+## Cosa serve
+
+- La **password del router** (di solito sull'etichetta sotto la Vodafone Station, se non l'avete cambiata).
+- Il **codice GitHub** della dashboard: sul tablet ⚙ → Condivisione → "Collega un altro telefono" → Copia accanto a *Codice*.
+  Il tablet deve essere già collegato (così esiste il ramo `dati`).
+
+## Installazione (una volta sola, sul tablet)
+
+1. Installa **F-Droid** (https://f-droid.org) e da lì le app **Termux** e **Termux:Boot**.
+   Quelle del Play Store sono vecchie e non funzionano.
+2. Apri **Termux:Boot** una volta (serve ad attivarlo), poi apri **Termux**.
+3. In Termux incolla questo comando e premi Invio:
+
+   ```
+   curl -fsSLo installa.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/installa-termux.sh && bash installa.sh
+   ```
+
+4. Rispondi alle domande: indirizzo del router (Invio per `192.168.1.1`), utente (`vodafone`; se non va, `admin`),
+   password del router, codice GitHub.
+5. Nelle impostazioni di Android togli Termux dall'**ottimizzazione della batteria**, così non viene chiuso.
+
+Alla fine il programma legge il router una volta e mostra la lista: se la vedi, funziona.
+Si riavvia da solo quando il tablet si accende.
+
+## Se qualcosa non va
+
+- Rifare le impostazioni: `python ~/homedashboard/dispositivi.py --configura`
+- Provare senza pubblicare: `python ~/homedashboard/dispositivi.py --prova`
+- Vedere cosa è successo: `tail ~/homedashboard/registro.txt`
+
+## Privacy
+
+Il repository è pubblico: nomi e indirizzi IP dei dispositivi saranno visibili a chi conosce l'indirizzo.
+Gli indirizzi MAC **non** vengono pubblicati. Password del router e codice GitHub restano solo sul tablet,
+in `~/.homedashboard.json`, leggibile solo da Termux.
