@@ -3,6 +3,7 @@
 // ognuno muove dal proprio telefono quando tocca a lui. 2048 e Snake: si gioca da soli, i record vanno in classifica.
 
 var GIOCO = leggi("telefono_gioco", "tris");
+if (["tris", "dama", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
 
 function chiSono() { return window.io === null || window.io === undefined ? null : io; }
 function scegliChi(box, poi) {   // la prima volta: chi usa questo telefono? (lo stesso della chat)
@@ -276,41 +277,6 @@ function disegnaSnake(box) {
   setTimeout(snDisegnaCanvas, 0);
 }
 
-// ================================================================ console: il telefono diventa un joypad
-function disegnaConsoleTel(box) {
-  var c = el("div", "card jp-card");
-  c.innerHTML = '<div class="grande">🎮</div><h3 style="justify-content:center">Console di casa</h3>' +
-    '<p>Apri la <b>pagina 3</b> del tablet (scorri a destra due volte), poi collega il tuo telefono come joypad. Dovete essere sul Wi‑Fi di casa.</p>';
-  var chi = el("p"); chi.innerHTML = "Questo telefono è di <b></b> · "; chi.querySelector("b").textContent = cfg.nomi[io];
-  var cambia = el("a"); cambia.href = "#"; cambia.textContent = "cambia"; cambia.style.color = "var(--accent)";
-  cambia.onclick = function (e) { e.preventDefault(); io = 1 - io; salva("telefono_io", io); if (window.chiudiJoypad) chiudiJoypad(); disegnaGiochi(); };
-  chi.appendChild(cambia); c.appendChild(chi);
-  var b = el("button", "btn pieno"); b.type = "button"; b.textContent = "Collega il joypad"; b.onclick = collegaJoypad;
-  var st = el("p"); st.id = "jp-stato"; st.textContent = JP.stato || "";
-  var lan = el("button", "btn"); lan.type = "button"; lan.style.marginTop = "8px"; lan.textContent = "Non si collega? Usa il joypad via Wi‑Fi";
-  lan.onclick = function () {   // piano B: pagina joypad servita dal lettore in Termux del tablet
-    sincronizza().then(function () {
-      var l = window.consoleLan && consoleLan();
-      if (!l || !l.url) { JP.stato = "Apri la pagina 3 del tablet (con il lettore in Termux aggiornato) e riprova."; disegnaGiochi(); return; }
-      window.open(l.url + "&p=" + io + "&n=" + encodeURIComponent(cfg.nomi[io]), "_blank");
-    });
-  };
-  c.appendChild(b); c.appendChild(lan); c.appendChild(st);
-  if (JP.diagnosi) {   // il collegamento diretto non è riuscito: suggerimenti e un secondo tentativo
-    var aiuto = el("div"); aiuto.style.cssText = "text-align:left;font-size:13.5px;color:var(--muted);margin-top:6px";
-    aiuto.innerHTML = "<b>Prova così:</b><br>• stesso Wi‑Fi del tablet (non quello ospiti), dati mobili spenti per un attimo<br>• niente VPN o app che bloccano la pubblicità<br>• oppure il pulsante qui sotto: chiede il microfono solo per mostrare al tablet l'indirizzo di rete vero (non registra niente)";
-    var r = el("button", "btn"); r.type = "button"; r.style.marginTop = "10px"; r.textContent = "Riprova con il permesso del microfono";
-    r.onclick = function () { mostraIndirizzoVero().then(collegaJoypad, function () { JP.stato = "Permesso negato."; disegnaGiochi(); }); };
-    var d = el("p"); d.style.cssText = "font-size:11.5px;color:var(--muted);margin:10px 0 0"; d.textContent = JP.diagnosi;
-    aiuto.appendChild(r); aiuto.appendChild(d); c.appendChild(aiuto);
-  }
-  box.appendChild(c);
-  var r = el("div", "card");
-  r.innerHTML = "<h3>Giochi della console</h3>";
-  [["tron", "Tron a due"], ["tank", "Carri armati"], ["pong", "Pong a due"], ["serpi", "Serpenti"], ["sumo", "Sumo"]].forEach(function (x) { var d = el("div", "titolo"); d.style.margin = "6px 0"; var n = el("span"); n.textContent = x[1]; d.appendChild(n); r.appendChild(d); classifica(r, x[0]); });
-  box.appendChild(r);
-}
-
 // ================================================================ scheda
 function disegnaGiochi() {
   var box = $("giochi-box"); if (!box) return;
@@ -321,7 +287,6 @@ function disegnaGiochi() {
   if (GIOCO === "tris") disegnaTris(box);
   else if (GIOCO === "dama") disegnaDama(box);
   else if (GIOCO === "2048") disegna2048(box);
-  else if (GIOCO === "console") disegnaConsoleTel(box);
   else disegnaSnake(box);
 }
 function avviaGiochi() {

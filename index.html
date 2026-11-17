@@ -375,51 +375,20 @@
   .bus-niente { font-size: 1.8vh; color: var(--muted); }
 
 
-  /* --- console (pagina 3) --- */
-  #pagina-3 { padding: 14px 14px 22px; }
-  #card-console { height: 100%; padding: 1.2vh; background: #111; border-color: #222; display: grid; place-items: center; }
-  .crt { position: relative; height: 100%; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 2.2vh; overflow: hidden; background: #05060a;
-         box-shadow: inset 0 0 6vh rgba(0,0,0,.9), 0 0 0 .4vh #2a2a2a; }
-  #console-tela { width: 100%; height: 100%; display: block; image-rendering: pixelated; filter: saturate(1.25) contrast(1.05); }
-  .crt::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-                 background: repeating-linear-gradient(to bottom, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
-  .crt::after { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
-                background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.55) 100%); animation: sfarfallio 6s infinite; }
-  @keyframes sfarfallio { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .85; } }
-  body.in-console #gatto-strato, body.in-console #rientri { display: none; }
-  #card-console { position: relative; }
-  #console-qr-btn { position: absolute; top: 2.2vh; right: 2.2vw; z-index: 3; border: 0; border-radius: 2vh; padding: .7vh 1.2vw; background: rgba(255,255,255,.12);
-                    color: #e8f2ff; font: 600 1.7vh sans-serif; cursor: pointer; }
-  #console-qr { position: absolute; inset: 1.2vh; z-index: 4; border-radius: 2.2vh; background: rgba(5,6,10,.94); display: flex; flex-wrap: wrap; align-items: center;
-                justify-content: center; gap: 4vw; color: #e8f2ff; text-align: center; cursor: pointer; }
-  #console-qr[hidden] { display: none; }
-  #console-qr div { display: flex; flex-direction: column; gap: 1.2vh; align-items: center; font: 700 2.6vh sans-serif; }
-  #console-qr img { width: 30vh; height: 30vh; background: #fff; padding: .8vh; border-radius: 1.2vh; image-rendering: pixelated; }
-  #console-qr p { flex-basis: 100%; margin: 0; font-size: 1.8vh; color: #8aa0b8; }
-  #console-ip { position: absolute; bottom: 2.2vh; left: 50%; transform: translateX(-50%); z-index: 3; border: 0; border-radius: 2vh; padding: .9vh 1.6vw;
-                background: #ffd75e; color: #12141b; font: 600 1.8vh sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
-  /* party "Disegna e indovina": lavagna a sinistra, giocatori e risposte a destra */
-  #party { position: absolute; inset: 0; z-index: 0; display: flex; gap: 2%; padding: 2.4%; background: #05060a; color: #e8f2ff;
-           font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .py-sx { position: relative; height: 100%; aspect-ratio: 4 / 3; background: #0b0d13; border-radius: 1.6vh; box-shadow: inset 0 0 0 .3vh #2a3550; overflow: hidden; }
-  #party-tela { width: 100%; height: 100%; display: block; }
-  #party-sopra { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6vh; background: rgba(5,6,10,.88); text-align: center; padding: 2vh; }
-  #party-sopra img { width: 34vh; height: 34vh; image-rendering: pixelated; background: #fff; border-radius: 1.2vh; padding: .6vh; }
-  .py-titolo { font-size: 3.6vh; font-weight: 800; color: #ffd75e; }
-  .py-nota { font-size: 1.7vh; color: #8aa0b8; }
-  .py-dx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.4vh; }
-  .py-testa { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; }
-  .py-testa b { color: #ff3b5c; font-size: 2.4vh; }
-  #party-tempo { font-size: 5vh; font-weight: 800; color: #ffd75e; font-variant-numeric: tabular-nums; }
-  #party-lista { display: flex; flex-direction: column; gap: .6vh; }
-  .py-g { display: flex; align-items: center; gap: .8vw; font-size: 2.2vh; padding: .5vh .6vw; border-radius: .8vh; }
-  .py-g i { width: 1.6vh; height: 1.6vh; border-radius: 50%; flex: none; }
-  .py-g span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .py-g.disegna { background: #1c2a48; } .py-g.ok { background: rgba(125,255,154,.15); } .py-g.off { opacity: .4; }
-  #party-feed { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: .4vh; font-size: 1.8vh; }
-  .py-pulsanti { display: flex; gap: .8vw; }
-  .py-pulsanti button { flex: 1; border: 0; border-radius: 1vh; padding: 1.2vh; font: 700 2vh ui-monospace, Menlo, monospace; background: #ff3b5c; color: #fff; cursor: pointer; }
-  .py-pulsanti #party-esci { flex: none; background: #2a3550; }
+  /* --- "pensavo a te": cuore grande sul tablet --- */
+  #pensiero-tab { position: fixed; inset: 0; z-index: 11; display: none; place-items: center; align-content: center; background: rgba(215,38,61,.18);
+                  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); overflow: hidden; cursor: pointer; }
+  #pensiero-tab.on { display: grid; animation: compare .4s ease-out; }
+  #pensiero-tab .cuore-grande { font-size: 34vh; line-height: 1; color: #d7263d; text-shadow: 0 1vh 4vh rgba(215,38,61,.45); animation: batte 1s ease-in-out infinite; }
+  #pensiero-tab .testo { margin-top: 2vh; font-size: 4vh; font-weight: 600; color: var(--ink); background: var(--card); padding: 1.2vh 2.4vw; border-radius: 4vh; box-shadow: 0 1vh 3vh rgba(0,0,0,.2); }
+  .cuoricino-volante { position: absolute; bottom: -6vh; font-size: 5vh; color: #ff5f7a; animation: sale-cuore 3s ease-in forwards; }
+  @keyframes batte { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(.98); } 45% { transform: scale(1.1); } }
+  @keyframes compare { from { opacity: 0; } }
+  @keyframes sale-cuore { to { transform: translateY(-115vh) rotate(25deg); opacity: 0; } }
+
+  /* --- pagina 3: per ora vuota --- */
+  #pagina-3 { display: grid; place-items: center; }
+  .pagina-vuota { color: var(--muted); font-size: 2.2vh; text-align: center; opacity: .6; }
 
   /* --- chi sta tornando (dal telefono) --- */
   #rientri { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; flex-direction: column; gap: .8vh; align-items: center; pointer-events: none; }
@@ -662,14 +631,9 @@
     </div>
   </div>
 </div>
-<!-- terza schermata: la console di casa (i telefoni sono i joypad) -->
+<!-- terza schermata: per ora vuota -->
 <div class="pagina" id="pagina-3">
-  <section class="card" id="card-console">
-    <div class="crt"><canvas id="console-tela" aria-label="Console di casa"></canvas><div id="party" hidden></div></div>
-    <button type="button" id="console-ip" hidden>📶 Un telefono non si collega? Migliora il collegamento</button>
-    <button type="button" id="console-qr-btn" hidden>📱 Joypad via Wi‑Fi</button>
-    <div id="console-qr" hidden></div>
-  </section>
+  <div class="pagina-vuota">♥<br>Pagina libera</div>
 </div>
 </div>
 <!-- il gatto di casa, sopra tutta l'interfaccia -->
@@ -678,7 +642,7 @@
   <div id="gatto-zzz">z<small>z</small><small>z</small></div>
   <div id="gatto-fumetto" hidden></div>
 </div>
-<div id="punti"><button data-p="0" aria-label="Dashboard"></button><button data-p="1" aria-label="Rete"></button><button data-p="2" aria-label="Console"></button></div>
+<div id="punti"><button data-p="0" aria-label="Dashboard"></button><button data-p="1" aria-label="Rete"></button><button data-p="2" aria-label="Pagina 3"></button></div>
 
 <!-- allarme timer -->
 <div id="allarme" class="livello">
@@ -852,18 +816,16 @@
   </div>
 </div>
 
-<script src="comune.js?v=37"></script>
-<script src="rete.js?v=37"></script>
-<script src="giorno.js?v=37"></script>
-<script src="radio.js?v=37"></script>
-<script src="forza4.js?v=37"></script>
+<script src="comune.js?v=38"></script>
+<script src="rete.js?v=38"></script>
+<script src="giorno.js?v=38"></script>
+<script src="radio.js?v=38"></script>
+<script src="forza4.js?v=38"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=37"></script>
-<script src="bus.js?v=37"></script>
-<script src="telecomando.js?v=37"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="console.js?v=37"></script>
-<script src="gatto.js?v=37"></script>
+<script src="tragitti.js?v=38"></script>
+<script src="bus.js?v=38"></script>
+<script src="telecomando.js?v=38"></script>
+<script src="gatto.js?v=38"></script>
 <script>
 
 // ================= orologio =================
@@ -1522,7 +1484,6 @@ function aggiornaPunti() {
   var i = paginaAttuale();
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
-  if (window.consoleVisibile) consoleVisibile(i === 2);
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });

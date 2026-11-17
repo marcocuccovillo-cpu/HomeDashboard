@@ -23,7 +23,6 @@ import hashlib
 import json
 import os
 import re
-import socket
 import shutil
 import subprocess
 import threading
@@ -619,106 +618,6 @@ def bus(fermata, linea=""):
     return dati
 
 
-# ---------------------------------------------------------------- joypad via Wi-Fi (piano B della console)
-# Se il collegamento diretto WebRTC tra un telefono e il tablet non riesce, il telefono apre una pagina servita
-# da qui sulla rete di casa (http://<ip-del-tablet>:8788/joypad) e manda i tasti con normali richieste;
-# la dashboard li legge da 127.0.0.1. Serve un codice che la dashboard sceglie a ogni sessione.
-PORTA_LAN = 8788
-_joy = {"codice": None, "eventi": [], "n": 0, "cond": threading.Condition()}
-_TASTI = {"su", "giu", "sx", "dx", "a", "b", "menu"}
-
-
-def ip_locale():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("192.168.1.1", 80))   # nessun pacchetto parte davvero: serve solo a sapere da quale indirizzo uscirei
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except OSError:
-        return ""
-
-
-def joy_evento(p, t, k):
-    with _joy["cond"]:
-        _joy["n"] += 1
-        _joy["eventi"].append({"n": _joy["n"], "p": p, "t": t, "k": k})
-        _joy["eventi"] = _joy["eventi"][-200:]
-        _joy["cond"].notify_all()
-
-
-def joy_attendi(dopo, secondi=20):
-    fine = time.time() + secondi
-    with _joy["cond"]:
-        while _joy["n"] <= dopo and time.time() < fine:
-            _joy["cond"].wait(fine - time.time())
-        return {"n": _joy["n"], "eventi": [e for e in _joy["eventi"] if e["n"] > dopo]}
-
-
-PAGINA_JOYPAD = """<!DOCTYPE html><html lang="it"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover"><title>Joypad Home2Love</title>
-<style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%}
-body{background:radial-gradient(circle at 50% 30%,#2b2f3d,#12141b);color:#e8ecf6;font:16px sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;
-display:grid;grid-template-rows:auto 1fr;--jc:#ff8a3d}body.p1{--jc:#3de0d2}
-.t{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 16px 6px}.t b{color:var(--jc);font:800 18px monospace}#s{flex:1;text-align:center;font-size:13px;opacity:.75}
-.c{display:flex;align-items:center;justify-content:space-around;gap:10px;padding:10px 14px 20px;flex-wrap:wrap}
-.x{display:grid;grid-template-columns:repeat(3,62px);grid-template-rows:repeat(3,62px);gap:4px}
-button{border:0;color:#fff;font:800 22px sans-serif;touch-action:none}.x button{background:#3a3f52;border-radius:12px;box-shadow:0 5px 0 #1e212c}
-.su{grid-column:2;grid-row:1}.sx{grid-column:1;grid-row:2}.dx{grid-column:3;grid-row:2}.giu{grid-column:2;grid-row:3}
-.ab{display:grid;grid-template-columns:86px 86px;gap:14px;transform:rotate(-12deg)}.ab button{width:86px;height:86px;border-radius:50%;background:var(--jc);color:#12141b;box-shadow:0 6px 0 rgba(0,0,0,.35)}
-.ab .b{margin-top:40px;background:#8c93a8}.m{background:#3a3f52;border-radius:20px;padding:8px 18px;font-size:13px}.premuto{transform:translateY(4px);box-shadow:none!important;filter:brightness(1.25)}
-</style></head><body><div class="t"><b id="n"></b><span id="s">collegato via Wi-Fi</span></div><div class="c">
-<div class="x"><button class="su" data-k="su">&#9650;</button><button class="sx" data-k="sx">&#9664;</button><button class="dx" data-k="dx">&#9654;</button><button class="giu" data-k="giu">&#9660;</button></div>
-<button class="m" data-k="menu">MENU</button><div class="ab"><button class="b" data-k="b">B</button><button class="a" data-k="a">A</button></div></div>
-<script>
-var q=new URLSearchParams(location.search),p=q.get("p")==="1"?1:0,c=q.get("c")||"";
-document.getElementById("n").textContent=(q.get("n")||(p?"Giocatore 2":"Giocatore 1")).toUpperCase();if(p)document.body.classList.add("p1");
-function manda(t,k){fetch("/joy?c="+encodeURIComponent(c),{method:"POST",keepalive:true,body:JSON.stringify({p:p,t:t,k:k})}).then(function(r){
-document.getElementById("s").textContent=r.ok?"collegato via Wi-Fi":"codice scaduto: inquadra di nuovo il QR";},function(){document.getElementById("s").textContent="tablet non raggiungibile";});}
-[].forEach.call(document.querySelectorAll("[data-k]"),function(b){var k=b.getAttribute("data-k");
-b.addEventListener("pointerdown",function(e){e.preventDefault();b.classList.add("premuto");try{b.setPointerCapture(e.pointerId)}catch(x){}manda("giu",k);if(navigator.vibrate)navigator.vibrate(12);});
-["pointerup","pointercancel"].forEach(function(v){b.addEventListener(v,function(){b.classList.remove("premuto");manda("su",k);});});});
-</script></body></html>"""
-
-
-class _JoyLan(BaseHTTPRequestHandler):
-    def _fine(self, stato, corpo=b"", tipo="text/plain; charset=utf-8"):
-        try:
-            self.send_response(stato)
-            self.send_header("Content-Type", tipo)
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(corpo)
-        except (BrokenPipeError, ConnectionResetError):
-            pass
-
-    def do_GET(self):
-        if urlparse(self.path).path in ("/", "/joypad"):
-            return self._fine(200, PAGINA_JOYPAD.encode(), "text/html; charset=utf-8")
-        self._fine(404)
-
-    def do_POST(self):
-        u = urlparse(self.path)
-        if u.path != "/joy":
-            return self._fine(404)
-        codice = parse_qs(u.query).get("c", [""])[0]
-        if not _joy["codice"] or codice != _joy["codice"]:
-            return self._fine(403, b"codice")
-        try:
-            n = min(int(self.headers.get("Content-Length") or 0), 500)
-            d = json.loads(self.rfile.read(n) or b"{}")
-            p, t, k = int(d.get("p")), d.get("t"), d.get("k")
-            if p not in (0, 1) or t not in ("giu", "su") or k not in _TASTI:
-                raise ValueError
-        except Exception:
-            return self._fine(400)
-        joy_evento(p, t, k)
-        self._fine(204)
-
-    def log_message(self, *a):
-        pass
-
-
 def _url_valido(u):
     return isinstance(u, str) and u.startswith(("http://", "https://")) and len(u) < 1000
 
@@ -776,29 +675,6 @@ class _Aerei(BaseHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError):
                 pass
             return
-        if u.path == "/joy/apri":   # la dashboard sceglie il codice della sessione e chiede l'indirizzo del tablet
-            c = q.get("c", [""])[0]
-            if re.fullmatch(r"[\w-]{8,64}", c):
-                _joy["codice"] = c
-            corpo = json.dumps({"ip": ip_locale(), "porta": PORTA_LAN, "n": _joy["n"]}).encode()
-            try:
-                self._intestazioni(200)
-                self.wfile.write(corpo)
-            except (BrokenPipeError, ConnectionResetError):
-                pass
-            return
-        if u.path == "/joy/eventi":   # attesa lunga: risponde appena arriva un tasto (o dopo 20 secondi)
-            try:
-                dopo = int(q.get("dopo", ["0"])[0])
-            except ValueError:
-                dopo = 0
-            corpo = json.dumps(joy_attendi(dopo)).encode()
-            try:
-                self._intestazioni(200)
-                self.wfile.write(corpo)
-            except (BrokenPipeError, ConnectionResetError):
-                pass
-            return
         if u.path == "/bus":
             fermata = q.get("fermata", [""])[0].strip()
             linea = q.get("linea", [""])[0].strip()
@@ -850,12 +726,6 @@ def avvia_servizio_aerei():
         return
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     print(f"{ora()}  servizio aerei per la dashboard su http://127.0.0.1:{PORTA_AEREI}")
-    try:   # joypad via Wi-Fi: questo sì è visibile dalla rete di casa (accetta solo i tasti, con il codice della sessione)
-        lan = _ServizioAerei(("0.0.0.0", PORTA_LAN), _JoyLan)
-        threading.Thread(target=lan.serve_forever, daemon=True).start()
-        print(f"{ora()}  joypad via Wi-Fi su http://{ip_locale() or '<ip-del-tablet>'}:{PORTA_LAN}/joypad")
-    except OSError as e:
-        print(f"{ora()}  joypad via Wi-Fi non avviato (porta {PORTA_LAN} occupata?): {e}")
 
 
 def corri(c):

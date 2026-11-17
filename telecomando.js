@@ -27,6 +27,29 @@ function segnaRientro(p, v) {
 function oraHM(t) { var d = new Date(t); return d.getHours() + ":" + due(d.getMinutes()); }
 function traQuanto(t) { var m = Math.round((t - Date.now()) / 60000); return m <= 0 ? "a momenti" : m < 60 ? "tra " + m + " min" : "tra " + Math.floor(m / 60) + " h " + due(m % 60); }
 
+// ---------------------------------------------------------------- "Pensavo a te": un cuore che arriva all'altro (e al tablet)
+// Chiavi "pensiero.<id>" = { da, t } nel registro cifrato; si tengono solo gli ultimi 60.
+function pensieri() {
+  return Object.keys(reg || {}).filter(function (k) { return k.indexOf("pensiero.") === 0 && !reg[k].d && reg[k].v; })
+    .map(function (k) { return { k: k, da: reg[k].v.da, t: reg[k].v.t }; }).sort(function (a, b) { return a.t - b.t; });
+}
+function mandaPensiero(da) {
+  if (!token || !chiaveCripto || !reg || (da !== 0 && da !== 1)) return false;
+  var ora = Date.now();
+  reg["pensiero." + nuovoId()] = { v: { da: da, t: ora }, t: ora };
+  var l = pensieri(); l.slice(0, Math.max(0, l.length - 60)).forEach(function (x) { reg[x.k] = { d: 1, t: ora }; });
+  salva("cucina_registro", reg); sincronizza();
+  return true;
+}
+function pensieriNuovi(chiave, da) {   // quelli arrivati dopo l'ultima volta (la prima volta non mostra quelli vecchi)
+  var visto = leggi(chiave, 0);
+  if (!visto) { salva(chiave, Date.now()); return []; }
+  var nuovi = pensieri().filter(function (x) { return x.t > visto && (da === undefined || x.da === da) && Date.now() - x.t < 3 * 3600000; });
+  if (nuovi.length) salva(chiave, nuovi[nuovi.length - 1].t);
+  return nuovi;
+}
+function pensieriOggi(da) { var oggi = iso(new Date()); return pensieri().filter(function (x) { return x.da === da && iso(new Date(x.t)) === oggi; }).length; }
+
 // ---------------------------------------------------------------- lato tablet
 function sulTablet() { return !!$("card-radio"); }
 function eseguiComando(c) {
@@ -60,7 +83,7 @@ function controllaComandi() {
   Object.keys(fatti).forEach(function (k) { if (ora - fatti[k] > 864e5) delete fatti[k]; });
   salva("comandi_fatti", fatti);
   if (cambiato) { salva("cucina_registro", reg); sincronizza(); }
-  pubblicaStatoTablet(); disegnaRientri();
+  pubblicaStatoTablet(); disegnaRientri(); controllaPensieriTablet();
 }
 function pubblicaStatoTablet() {   // radio e timer, per il telefono; solo quando cambia qualcosa
   if (!sulTablet() || !window.radio) return;
@@ -87,6 +110,22 @@ function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando �
       disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Arriva " + cfg.nomi[p] + "! ♥", 8000);
     }
   });
+}
+function controllaPensieriTablet() {   // cuore grande sul tablet: "Marco pensa a Roberta"
+  var n = pensieriNuovi("pensieri_visti_tablet"); if (!n.length) return;
+  var x = n[n.length - 1], box = $("pensiero-tab");
+  if (!box) { box = el("div"); box.id = "pensiero-tab"; document.body.appendChild(box); box.onclick = function () { box.classList.remove("on"); }; }
+  box.innerHTML = '<div class="cuore-grande">♥</div><div class="testo"></div>';
+  box.querySelector(".testo").textContent = cfg.nomi[x.da] + " sta pensando a " + cfg.nomi[1 - x.da];
+  box.className = "on p" + x.da;
+  for (var i = 0; i < 14; i++) (function (i) {   // pioggia di cuoricini
+    setTimeout(function () {
+      var c = el("span", "cuoricino-volante"); c.textContent = "♥"; c.style.left = (5 + Math.random() * 90) + "%"; c.style.animationDuration = (2.5 + Math.random() * 2) + "s";
+      box.appendChild(c); setTimeout(function () { c.remove(); }, 5000);
+    }, i * 180);
+  })(i);
+  if (window.cuoricino && !$("gatto-strato").hidden) { G.salto = 10; fumetto("♥ " + cfg.nomi[x.da] + " pensa a " + cfg.nomi[1 - x.da], 6000); for (var k = 0; k < 6; k++) setTimeout(cuoricino, k * 250); }
+  clearTimeout(controllaPensieriTablet.t); controllaPensieriTablet.t = setTimeout(function () { box.classList.remove("on"); }, 8000);
 }
 function avviaTelecomando() {
   if (!sulTablet()) return;

@@ -235,6 +235,20 @@
   #rt-calcolo span { color: var(--muted); font-size: 14px; }
   .regola { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
   .regola button { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 8px 16px; font-size: 15px; }
+  /* --- pensavo a te --- */
+  #btn-pensiero { border: 0; background: rgba(255,255,255,.2); color: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
+  #btn-pensiero.inviato { background: #fff; color: #b8172d; }
+  .pensati { display: block; margin-top: 10px; font-size: 13.5px; opacity: .9; position: relative; z-index: 1; }
+  #pensiero { position: fixed; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+              background: radial-gradient(circle at 50% 40%, #ff5f7a, #b8172d 75%); color: #fff; text-align: center; padding: 24px; overflow: hidden; }
+  #pensiero.on { display: flex; animation: entra .3s ease-out; }
+  #pensiero .cuore-grande { font-size: 170px; line-height: 1; animation: batte 1s ease-in-out infinite; text-shadow: 0 10px 40px rgba(0,0,0,.25); }
+  #pensiero b { font-size: 24px; } #pensiero p { margin: 0; opacity: .85; }
+  #pensiero button { border: 0; border-radius: 22px; padding: 12px 22px; font-size: 16px; font-weight: 700; background: #fff; color: #b8172d; }
+  #pensiero .chiudi-p { background: none; color: #fff; font-weight: 500; text-decoration: underline; }
+  .cuoricino-volante { position: absolute; bottom: -40px; font-size: 32px; color: rgba(255,255,255,.75); animation: sale-cuore 3s ease-in forwards; pointer-events: none; }
+  @keyframes batte { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(.98); } 45% { transform: scale(1.1); } }
+  @keyframes sale-cuore { to { transform: translateY(-110vh) rotate(25deg); opacity: 0; } }
   /* --- telecomando del tablet --- */
   .tc-riga { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
   .tc-riga:first-of-type { border-top: 0; padding-top: 0; }
@@ -324,31 +338,6 @@
   .fine-gioco { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(250,245,240,.75); font-size: 20px; font-weight: 700; color: var(--ink); text-align: center; pointer-events: none; }
   @media (prefers-color-scheme: dark) { .fine-gioco { background: rgba(18,16,19,.7); } }
 
-  /* --- joypad della console --- */
-  .jp-card { text-align: center; padding: 22px 16px; }
-  .jp-card .grande { font-size: 54px; line-height: 1; }
-  .jp-card p { color: var(--muted); font-size: 14px; }
-  #jp-stato { min-height: 20px; font-size: 14px; color: var(--accent); font-weight: 500; }
-  #joypad { position: fixed; inset: 0; z-index: 20; display: none; background: radial-gradient(circle at 50% 30%, #2b2f3d, #12141b); color: #e8ecf6;
-            user-select: none; -webkit-user-select: none; touch-action: none; --jc: #ff8a3d; }
-  #joypad.p1 { --jc: #3de0d2; }
-  #joypad.on { display: grid; grid-template-rows: auto 1fr; }
-  .jp-testa { display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 16px 6px; }
-  .jp-testa b { color: var(--jc); font: 800 18px/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; }
-  #jp-testo { flex: 1; font-size: 13px; opacity: .75; text-align: center; }
-  #jp-esci { border: 1px solid rgba(255,255,255,.2); background: none; color: inherit; border-radius: 10px; padding: 6px 10px; font-size: 13px; }
-  .jp-corpo { display: flex; align-items: center; justify-content: space-around; gap: 10px; padding: 10px 14px calc(18px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
-  .jp-croce { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 62px); gap: 4px; }
-  .jp-croce button, .jp-ab button, .jp-menu { border: 0; color: #fff; font: 800 22px/1 sans-serif; touch-action: none; }
-  .jp-croce button { background: #3a3f52; border-radius: 12px; box-shadow: 0 5px 0 #1e212c; }
-  .jp-croce .su { grid-column: 2; grid-row: 1; } .jp-croce .sx { grid-column: 1; grid-row: 2; } .jp-croce .dx { grid-column: 3; grid-row: 2; } .jp-croce .giu { grid-column: 2; grid-row: 3; }
-  .jp-croce .centro { grid-column: 2; grid-row: 2; background: #2c303f; box-shadow: none; border-radius: 50%; }
-  .jp-ab { display: grid; grid-template-columns: 86px 86px; gap: 14px; transform: rotate(-12deg); }
-  .jp-ab button { width: 86px; height: 86px; border-radius: 50%; background: var(--jc); box-shadow: 0 6px 0 rgba(0,0,0,.35); color: #12141b; }
-  .jp-ab .b { margin-top: 40px; background: #8c93a8; }
-  .jp-menu { background: #3a3f52; border-radius: 20px; padding: 8px 18px; font-size: 13px; box-shadow: 0 4px 0 #1e212c; }
-  #joypad .premuto { transform: translateY(4px); box-shadow: none !important; filter: brightness(1.25); }
-
   /* --- minichat: pulsantino nell'angolo e pannello che sale --- */
   #chat-btn { position: fixed; right: 14px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 7; width: 40px; height: 40px;
               border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: var(--accent);
@@ -437,7 +426,7 @@
 
   <section class="scheda" id="s-giochi">
     <div class="titolo"><h2>Giochi</h2></div>
-    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button><button type="button" data-v="console">🎮</button></div>
+    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
     <div id="giochi-box"></div>
   </section>
 
@@ -500,15 +489,9 @@
 
 <div id="qr-grande"><div><img id="qr-grande-img" alt="QR code del Wi-Fi"><p id="qr-grande-testo"></p></div></div>
 
-<!-- joypad della console (tablet, pagina 3) -->
-<div id="joypad">
-  <div class="jp-testa"><b id="jp-nome"></b><span id="jp-testo"></span><button type="button" id="jp-esci">Esci</button></div>
-  <div class="jp-corpo">
-    <div class="jp-croce"><button class="su" data-k="su">▲</button><button class="sx" data-k="sx">◀</button><span class="centro"></span><button class="dx" data-k="dx">▶</button><button class="giu" data-k="giu">▼</button></div>
-    <button class="jp-menu" data-k="menu">MENU</button>
-    <div class="jp-ab"><button class="b" data-k="b">B</button><button class="a" data-k="a">A</button></div>
-  </div>
-</div>
+<!-- pensavo a te: arriva un cuore -->
+<div id="pensiero"><div class="cuore-grande">♥</div><b id="pensiero-testo"></b><p id="pensiero-ora"></p>
+  <button type="button" id="pensiero-ricambia">💗 Ricambia</button><button type="button" class="chiudi-p" id="pensiero-chiudi">Chiudi</button></div>
 
 <!-- minichat (solo telefono) -->
 <button id="chat-btn" type="button" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 3.5V15.5H4z"/></svg><b hidden></b></button>
@@ -596,13 +579,12 @@
   </div>
 </div>
 
-<script src="comune.js?v=37"></script>
-<script src="forza4.js?v=37"></script>
-<script src="giochi.js?v=37"></script>
-<script src="rete.js?v=37"></script>
-<script src="tragitti.js?v=37"></script>
-<script src="telecomando.js?v=37"></script>
-<script src="console.js?v=37"></script>
+<script src="comune.js?v=38"></script>
+<script src="forza4.js?v=38"></script>
+<script src="giochi.js?v=38"></script>
+<script src="rete.js?v=38"></script>
+<script src="tragitti.js?v=38"></script>
+<script src="telecomando.js?v=38"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -837,7 +819,13 @@ function disegnaOggi() {
   var az = el("div", "azioni-eroe"); az.appendChild(c);
   var bt = el("button"); bt.id = "btn-torno"; bt.type = "button"; bt.textContent = "🏠 Sto tornando"; bt.onclick = apriRientro;
   if (io !== null && rientroDi(io) && Date.now() < rientroDi(io).arrivo) bt.hidden = true;
-  az.appendChild(bt); e.appendChild(az);
+  var pz = el("button"); pz.id = "btn-pensiero"; pz.type = "button";
+  var appena = Date.now() - (inviaPensiero.ultimo || 0) < 2500; pz.textContent = appena ? "Inviato ♥" : "💗 Pensavo a te"; if (appena) pz.className = "inviato"; pz.onclick = function () { inviaPensiero(pz); };
+  az.appendChild(bt); az.appendChild(pz); e.appendChild(az);
+  if (io !== null) {   // quante volte vi siete pensati oggi
+    var lui = pensieriOggi(1 - io), me = pensieriOggi(io);
+    if (lui || me) { var pt = el("span", "pensati"); pt.textContent = (lui ? cfg.nomi[1 - io] + " ti ha pensato " + (lui === 1 ? "1 volta" : lui + " volte") + " oggi ♥" : "") + (lui && me ? " · " : "") + (me ? "tu " + (me === 1 ? "1 volta" : me + " volte") : ""); e.appendChild(pt); }
+  }
   [0, 1].forEach(function (p) {   // chi sta tornando (io o l'altro)
     var r = rientroDi(p); if (!r) return;
     var x = el("span", "rientro-info"), arrivato = Date.now() >= r.arrivo;
@@ -989,6 +977,32 @@ $("ed-rientro").querySelector("form").onsubmit = function (e) {
   inviaChat("🏠 Sto tornando! Arrivo verso le " + oraHM(arrivo) + " (" + ico + " circa " + rt.min + " min)");
   chiudi("ed-rientro"); disegnaOggi();
 };
+
+// ================= pensavo a te =================
+function inviaPensiero(b) {
+  if (io === null) { apriChat(); return; }   // prima bisogna sapere chi sei
+  if (Date.now() - (inviaPensiero.ultimo || 0) < 8000) return;   // niente raffiche
+  if (!mandaPensiero(io)) { alert("Sblocca prima con la password."); return; }
+  inviaPensiero.ultimo = Date.now();
+  if (navigator.vibrate) navigator.vibrate(40);
+  if (b) { b.classList.add("inviato"); b.textContent = "Inviato ♥"; }
+  setTimeout(disegnaOggi, 2600);
+}
+function controllaPensieri() {   // un cuore dall'altro: schermata grande e vibrazione
+  if (io === null) return;
+  var n = pensieriNuovi("pensieri_visti", 1 - io); if (!n.length) return;
+  var x = n[n.length - 1], d = new Date(x.t), box = $("pensiero");
+  $("pensiero-testo").textContent = cfg.nomi[x.da] + " sta pensando a te";
+  $("pensiero-ora").textContent = (n.length > 1 ? n.length + " cuori · " : "") + "alle " + d.getHours() + ":" + due(d.getMinutes());
+  box.classList.add("on");
+  if (navigator.vibrate) navigator.vibrate([90, 70, 90, 70, 260]);
+  for (var i = 0; i < 12; i++) (function (i) {
+    setTimeout(function () { var c = el("span", "cuoricino-volante"); c.textContent = "♥"; c.style.left = (5 + Math.random() * 90) + "%"; box.appendChild(c); setTimeout(function () { c.remove(); }, 3500); }, i * 200);
+  })(i);
+  disegnaOggi();
+}
+$("pensiero-chiudi").onclick = function () { $("pensiero").classList.remove("on"); };
+$("pensiero-ricambia").onclick = function () { inviaPensiero(); this.textContent = "Inviato ♥"; var b = this; setTimeout(function () { $("pensiero").classList.remove("on"); b.textContent = "💗 Ricambia"; }, 1200); };
 
 // ================= telecomando del tablet =================
 function disegnaTelecomando() {
@@ -1170,6 +1184,7 @@ $("chat-form").onsubmit = function (e) {
 // ================= collegamento =================
 function mostraStatoSync() {
   disegnaChat();   // dopo ogni sincronizzazione: nuovi messaggi e spunte
+  controllaPensieri();
   if (!document.querySelector(".velo.on")) { disegnaOggi(); disegnaTelecomando(); }   // chi sta tornando e stato del tablet
   var s = $("stato");
   if (!chiaveCripto) { s.className = ""; s.textContent = "Bloccata"; $("imp-stato").textContent = "Serve la password di casa."; return; }
@@ -1191,7 +1206,7 @@ function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "r
 
 // ================= avvio =================
 function ridisegna() { disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
-avviaGiochi(); avviaJoypad();
+avviaGiochi();
 mostraScheda(scheda);
 cambiaVista(vista);
 ridisegna();
