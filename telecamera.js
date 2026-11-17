@@ -31,6 +31,12 @@ var TCAM = (function () {
     S.es.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.message) decifra(m.message).then(fn, function () {}); };
     return new Promise(function (ok) { S.es.onopen = ok; setTimeout(ok, 4000); });
   }
+  // server di inoltro (TURN): se il collegamento diretto non passa, il video fa il giro da lì (sempre cifrato)
+  function serverIce(turn) {
+    var l = STUN.slice();
+    if (turn && turn.url) l.push({ urls: turn.url.split(/[\s,]+/).filter(Boolean), username: turn.utente || "", credential: turn.password || "" });
+    return l;
+  }
   function attendiIce(pc) {
     return new Promise(function (ok) {
       if (pc.iceGatheringState === "complete") return ok();
@@ -56,12 +62,12 @@ var TCAM = (function () {
   function messaggioTele(m) {
     if (!T.attiva) return;
     if (m.tipo === "chi") pubblica({ tipo: "ci-sono", cid: S.id, nome: T.nome, vid: m.vid });
-    if (m.tipo === "guarda" && m.cid === S.id) offri(m.vid);
+    if (m.tipo === "guarda" && m.cid === S.id) offri(m.vid, m.turn);
     if (m.tipo === "risposta" && m.cid === S.id && T.pcs[m.vid] && T.pcs[m.vid].signalingState === "have-local-offer") T.pcs[m.vid].setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(function () {});
   }
-  function offri(vid) {
+  function offri(vid, turn) {
     if (T.pcs[vid]) try { T.pcs[vid].close(); } catch (e) {}
-    var pc = new RTCPeerConnection({ iceServers: STUN }); T.pcs[vid] = pc;
+    var pc = new RTCPeerConnection({ iceServers: serverIce(turn), iceTransportPolicy: turn && turn.sempre && turn.url ? "relay" : "all" }); T.pcs[vid] = pc;
     T.stream.getTracks().forEach(function (t) { pc.addTrack(t, T.stream); });
     pc.onconnectionstatechange = function () { if (/failed|closed/.test(pc.connectionState)) delete T.pcs[vid]; stato(); };
     pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { return attendiIce(pc); })
@@ -80,6 +86,6 @@ var TCAM = (function () {
     stato();
   }
   function gira() { T.verso = T.verso === "environment" ? "user" : "environment"; return apriFotocamera(); }
-  return { S: S, STUN: STUN, preparaChiave: preparaChiave, pubblica: pubblica, ascolta: ascolta, attendiIce: attendiIce,
+  return { S: S, STUN: STUN, serverIce: serverIce, preparaChiave: preparaChiave, pubblica: pubblica, ascolta: ascolta, attendiIce: attendiIce,
            avvia: avvia, ferma: ferma, gira: gira, attiva: function () { return T.attiva; } };
 })();

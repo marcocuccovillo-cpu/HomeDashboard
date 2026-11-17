@@ -69,7 +69,18 @@
 </div>
 
 <div id="v-guarda" hidden>
-  <div class="barra"><button class="btn sec" id="cerca" type="button">↻ Cerca telecamere</button><button class="btn sec" id="esci" type="button">Esci</button></div>
+  <div class="barra"><button class="btn sec" id="cerca" type="button">↻ Cerca telecamere</button><button class="btn sec" id="b-turn" type="button">⚙ Collegamento</button><button class="btn sec" id="esci" type="button">Esci</button></div>
+  <div class="card" id="turn-box" hidden>
+    <b>Server di inoltro (TURN)</b>
+    <p class="nota" style="margin:6px 0 12px">Serve quando il collegamento diretto non passa (succede con alcuni telefoni o reti). Il video resta cifrato: il server lo inoltra ma non può vederlo.
+      Crea un account gratuito su <a href="https://www.metered.ca/stun-turn" target="_blank" rel="noopener" style="color:#ff8a95">metered.ca</a> (o un altro servizio TURN), poi copia qui indirizzo, utente e password del server. Si salvano solo su questo telefono.</p>
+    <label>Indirizzi del server (anche più di uno, separati da spazio)</label><input id="turn-url" type="text" autocomplete="off" placeholder="turn:global.relay.metered.ca:80 turns:global.relay.metered.ca:443?transport=tcp">
+    <label>Utente</label><input id="turn-utente" type="text" autocomplete="off">
+    <label>Password</label><input id="turn-pw" type="password" autocomplete="off">
+    <label style="display:flex;gap:10px;align-items:center;color:var(--ink);font-size:14px;margin-bottom:12px"><input id="turn-sempre" type="checkbox" style="width:auto;margin:0"> Usa sempre il server (se il diretto non va mai, è più veloce a collegarsi)</label>
+    <button class="btn" id="turn-salva" type="button">Salva</button>
+    <div class="msg" id="turn-msg"></div>
+  </div>
   <div id="griglia"></div>
   <p class="nota" id="nota-guarda">Le telecamere accese con la tua password compaiono qui. Il video arriva direttamente dal telefono‑telecamera, cifrato.</p>
 </div>
@@ -81,7 +92,7 @@
   <div class="tasti"><button type="button" id="tele-gira">Cambia fotocamera</button><button type="button" id="tele-buio">Schermo scuro</button><button type="button" id="tele-stop">Spegni</button></div>
 </div>
 
-<script src="telecamera.js?v=51"></script>
+<script src="telecamera.js?v=52"></script>
 <script>
 var S = TCAM.S, STUN = TCAM.STUN, preparaChiave = TCAM.preparaChiave, pubblica = TCAM.pubblica, ascolta = TCAM.ascolta, attendiIce = TCAM.attendiIce;
 S.modo = "guarda"; var PW_TELE = "";
@@ -121,6 +132,16 @@ function cerca() {
   setTimeout(function () { if (!Object.keys(CAM).length) $("nota-guarda").textContent = "Nessuna telecamera accesa con questa password. Controlla che i telefoni‑telecamera siano accesi e collegati a internet."; }, 8000);
 }
 $("cerca").onclick = cerca;
+function turn() { try { return JSON.parse(localStorage.getItem("cam_turn") || "null"); } catch (e) { return null; } }
+$("b-turn").onclick = function () {
+  var t = turn() || {}; $("turn-url").value = t.url || ""; $("turn-utente").value = t.utente || ""; $("turn-pw").value = t.password || ""; $("turn-sempre").checked = !!t.sempre;
+  $("turn-box").hidden = !$("turn-box").hidden;
+};
+$("turn-salva").onclick = function () {
+  var t = { url: $("turn-url").value.trim(), utente: $("turn-utente").value.trim(), password: $("turn-pw").value, sempre: $("turn-sempre").checked };
+  try { if (t.url) localStorage.setItem("cam_turn", JSON.stringify(t)); else localStorage.removeItem("cam_turn"); } catch (e) {}
+  $("turn-msg").textContent = t.url ? "Salvato ✓ Tocca di nuovo «Guarda» sulla telecamera." : "Tolto: si usa solo il collegamento diretto.";
+};
 $("esci").onclick = function () { location.reload(); };
 function messaggioVisore(m) {
   if (m.tipo === "ci-sono" && m.vid === S.id) {
@@ -143,17 +164,29 @@ function statoCam(cid, t) { var s = CAM[cid].box.querySelector(".stato"); s.text
 function guarda(cid) {
   var c = CAM[cid]; if (c.pc) try { c.pc.close(); } catch (e) {}
   statoCam(cid, "Mi collego…");
-  pubblica({ tipo: "guarda", vid: S.id, cid: cid });
-  clearTimeout(c.t); c.t = setTimeout(function () { if (!c.box.classList.contains("live")) statoCam(cid, "Non riesco a collegarmi. Riprova; se succede sempre fuori casa, la tua rete mobile potrebbe bloccare il collegamento diretto."); }, 25000);
+  pubblica({ tipo: "guarda", vid: S.id, cid: cid, turn: turn() });
+  clearTimeout(c.t); c.t = setTimeout(function () { if (!c.box.classList.contains("live")) statoCam(cid, nonVa()); }, 25000);
 }
 function rispondiCam(cid, sdp) {
-  var c = CAM[cid], pc = new RTCPeerConnection({ iceServers: STUN }); c.pc = pc;
-  pc.ontrack = function (e) { c.video.srcObject = e.streams[0]; c.video.play().catch(function () {}); c.box.classList.add("live"); statoCam(cid, ""); };
+  var tt = turn(), c = CAM[cid], pc = new RTCPeerConnection({ iceServers: TCAM.serverIce(tt), iceTransportPolicy: tt && tt.sempre && tt.url ? "relay" : "all" }); c.pc = pc;
+  pc.ontrack = function (e) { c.video.srcObject = e.streams[0]; c.video.play().catch(function () {}); };
+  c.video.onplaying = function () { if (pc.connectionState === "connected") { c.box.classList.add("live"); statoCam(cid, ""); } };   // live solo quando le immagini arrivano davvero
+  pc.addEventListener("connectionstatechange", function () { if (pc.connectionState === "connected") { c.box.classList.add("live"); statoCam(cid, ""); c.video.play().catch(function () {}); } });
   pc.onconnectionstatechange = function () {
-    if (/failed|disconnected|closed/.test(pc.connectionState)) { c.box.classList.remove("live"); statoCam(cid, pc.connectionState === "failed" ? "Collegamento non riuscito." : "Collegamento interrotto: tocca Guarda."); }
+    if (/failed|disconnected|closed/.test(pc.connectionState)) { c.box.classList.remove("live"); statoCam(cid, pc.connectionState === "failed" ? nonVa(pc, sdp) : "Collegamento interrotto: tocca Guarda."); }
   };
   pc.setRemoteDescription({ type: "offer", sdp: sdp }).then(function () { return pc.createAnswer(); }).then(function (a) { return pc.setLocalDescription(a); })
     .then(function () { return attendiIce(pc); }).then(function () { return pubblica({ tipo: "risposta", vid: S.id, cid: cid, sdp: pc.localDescription.sdp }); });
+}
+function contaCand(sdp) {
+  var l = (sdp || "").split("\n").filter(function (r) { return /^a=candidate/.test(r); });
+  return ["host", "srflx", "relay"].map(function (t) { return l.filter(function (r) { return r.indexOf(" typ " + t) >= 0; }).length; }).join("/");
+}
+function nonVa(pc, sdpCam) {   // messaggio quando non si collega, con la riga per la diagnosi
+  var t = turn();
+  return (t ? "Non riesco a collegarmi nemmeno tramite il server di inoltro: controlla indirizzo, utente e password in ⚙ Collegamento."
+            : "Il collegamento diretto non passa (capita con alcuni telefoni anche sulla stessa rete). Imposta un server di inoltro in ⚙ Collegamento e riprova.") +
+    (pc ? " [tel " + contaCand(pc.localDescription && pc.localDescription.sdp) + " · cam " + contaCand(sdpCam) + "]" : "");
 }
 function istantanea(cid) {
   var v = CAM[cid].video; if (!v.videoWidth) return;
