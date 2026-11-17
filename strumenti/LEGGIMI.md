@@ -64,3 +64,20 @@ python ~/homedashboard/dispositivi.py --prova
 ```
 
 Poi riavvia il tablet (o chiudi e riapri Termux) per far ripartire il lettore.
+
+## Server delle telecamere (`telecamere.py`)
+
+Fa passare il video dei telefoni-telecamera dal tablet al tuo telefono, in casa e fuori casa, senza servizi esterni.
+Il video è cifrato dai telefoni con la password delle telecamere: il tablet inoltra ma non può vederlo.
+
+1. In Termux:
+   `curl -fsSLo telecamere.sh https://marcocuccovillo-cpu.github.io/HomeDashboard/strumenti/telecamere-termux.sh && bash telecamere.sh`
+   (chiede la password delle telecamere, crea il certificato https e lo fa partire anche all'accensione).
+2. Vodafone Station → **Port Mapping**: inoltra la porta **8443 TCP** all'indirizzo del tablet che Termux ti mostra,
+   e fissa quell'indirizzo per il tablet (DHCP statico).
+3. Su ogni telefono (telecamere, comodino, il tuo), nella pagina Telecamere → **⚙ Server di casa**: indirizzo del tablet e porta.
+   La prima volta apri il link che compare e accetta l'avviso "connessione non privata" (il certificato è del tablet).
+   L'indirizzo da fuori casa lo prende da solo dall'app.
+
+- Registro: `tail -n 20 ~/homedashboard/telecamere.txt`
+- Cambiare la password: `bash telecamere.sh --configura`

@@ -166,7 +166,7 @@
 <div id="cam-imp"><div class="foglio">
   <h3>Telecamera del comodino</h3>
   <div id="cam-spenta">
-    <p class="nota">Usa la stessa password delle telecamere. Finché è accesa, qui in alto resta sempre «Telecamera attiva» e chiunque può spegnerla toccandolo.</p>
+    <p class="nota">Il video passa dal tablet di casa: l'indirizzo del tablet si imposta una volta nella pagina <a href="sorveglianza.html" style="color:inherit">Telecamere</a> di questo telefono. Usa la stessa password delle telecamere. Finché è accesa, qui in alto resta sempre «Telecamera attiva» e chiunque può spegnerla toccandolo.</p>
     <input type="password" id="cam-pw" placeholder="Password delle telecamere" autocomplete="off">
     <input type="text" id="cam-nome" placeholder="Nome (es. Camera · finestra)" maxlength="24" autocomplete="off">
     <label class="spunta"><input type="checkbox" id="cam-ricorda" checked> Riaccendila da sola se la pagina si ricarica (la password resta solo su questo telefono; se qualcuno la spegne dall'indicatore, non si riaccende)</label>
@@ -201,10 +201,10 @@
   <button type="button" class="bott pieno-b" id="sv-chiudi">Fatto</button>
 </div></div>
 
-<script src="comune.js?v=54"></script>
-<script src="suoni.js?v=54"></script>
-<script src="telecomando.js?v=54"></script>
-<script src="telecamera.js?v=54"></script>
+<script src="comune.js?v=55"></script>
+<script src="suoni.js?v=55"></script>
+<script src="telecomando.js?v=55"></script>
+<script src="telecamera.js?v=55"></script>
 <script>
 // ================= chi dorme qui =================
 var io = leggi("telefono_io", null);
@@ -518,10 +518,14 @@ function accendiCam(pw, nome, ricorda) {
   return TCAM.avvia(pw, nome, { video: $("cam-anteprima"), onStato: statoCam }).then(function () {
     $("cam-msg").textContent = "";
     if (ricorda) salva("cam_comodino", { pw: pw, nome: nome }); else { try { localStorage.removeItem("cam_comodino"); } catch (e) {} }
-  }, function (e) { $("cam-msg").textContent = e && e.message ? e.message : "Non riesco ad accendere la fotocamera."; });
+  }, function (e) {
+    $("cam-msg").textContent = e && e.message ? e.message : "Non riesco ad accendere la fotocamera.";
+    clearTimeout(accendiCam.t);   // riaccensione automatica (es. tablet non ancora pronto dopo un blackout): riprova tra un minuto
+    if (ricorda && leggi("cam_comodino", null)) accendiCam.t = setTimeout(function () { var r = leggi("cam_comodino", null); if (r && r.pw && !TCAM.attiva()) accendiCam(r.pw, r.nome || "Comodino", true); }, 60000);
+  });
 }
 function spegniCam() {   // da chiunque, senza password: e non si riaccende da sola
-  TCAM.ferma(); try { localStorage.removeItem("cam_comodino"); } catch (e) {}
+  clearTimeout(accendiCam.t); TCAM.ferma(); try { localStorage.removeItem("cam_comodino"); } catch (e) {}
 }
 $("b-cam").onclick = function (e) { e.stopPropagation(); $("cam-nome").value = $("cam-nome").value || "Comodino"; $("cam-imp").classList.add("on"); };
 $("cam-chiudi").onclick = function () { $("cam-imp").classList.remove("on"); };
