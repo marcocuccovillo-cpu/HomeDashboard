@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>Home2Love · Comodino</title>
+<link rel="manifest" href="comodino.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Comodino">
+<style>
+  /* Home2Love — versione comodino: un telefono avanzato diventa sveglia e orologio da notte.
+     Di giorno è chiaro e completo; di notte (22:30–7) nero con l'orologio rosso fioco. */
+  :root { --bg: #14110f; --card: #201c19; --ink: #f2e9e1; --muted: #a2968b; --line: #332d28; --accent: #ff5468; --p0: #f08b55; --p1: #4fc1b8; --done: #6b6159; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.3 -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif; user-select: none; -webkit-user-select: none;
+         transition: background 1.2s, color 1.2s; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  #schermo { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vmin;
+             padding: env(safe-area-inset-top) 4vw env(safe-area-inset-bottom); transition: transform 2s ease; }
+  #ora { font-size: min(30vw, 46vh); font-weight: 200; line-height: .9; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #ora small { font-size: .28em; color: var(--muted); margin-left: .15em; letter-spacing: 0; }
+  #data { font-size: min(5vw, 4.2vh); color: var(--muted); text-transform: capitalize; }
+  #sotto { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6vmin; margin-top: 2vmin; max-width: 96vw; }
+  .riq { background: var(--card); border-radius: 2.4vmin; padding: 1.6vmin 2.4vmin; font-size: min(3.8vw, 3.4vh); display: flex; align-items: center; gap: 1.4vmin; }
+  .riq b { font-weight: 600; } .riq .m { color: var(--muted); }
+  .p0 { color: var(--p0); } .p1 { color: var(--p1); }
+  #sveglia-btn { position: absolute; top: calc(2vmin + env(safe-area-inset-top)); right: 3vmin; border: 0; background: var(--card); border-radius: 4vmin; padding: 1.2vmin 2.4vmin;
+                 font-size: min(3.6vw, 3.2vh); display: flex; gap: 1vmin; align-items: center; }
+  #sveglia-btn.spenta { opacity: .55; }
+  #luce-btn { position: absolute; top: calc(2vmin + env(safe-area-inset-top)); left: 3vmin; border: 0; background: var(--card); border-radius: 50%; width: 7vmin; height: 7vmin; font-size: 3.4vmin; }
+  /* notte: nero, orologio rosso fioco, il resto nascosto finché non tocchi */
+  body.notte { background: #000; }
+  body.notte #ora { color: #ff2a1a; opacity: .42; font-weight: 300; }
+  body.notte #ora small { color: #ff2a1a; }
+  body.notte #data, body.notte #sotto, body.notte #luce-btn { opacity: 0; transition: opacity .6s; }
+  body.notte #sveglia-btn { background: none; color: #ff2a1a; opacity: .35; }
+  body.notte.svelato #data, body.notte.svelato #sotto, body.notte.svelato #luce-btn { opacity: .55; }
+  body.notte .riq { background: #120604; color: #ff6a55; } body.notte .riq .m, body.notte #data { color: #b4443a; }
+  body.buio #ora { opacity: .14; }
+  /* sveglia che suona */
+  #suona { position: fixed; inset: 0; z-index: 20; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 4vmin;
+           background: radial-gradient(circle at 50% 40%, #ff9a5a, #d7263d 70%); color: #fff; text-align: center; }
+  #suona.on { display: flex; animation: pulsa 2s ease-in-out infinite; }
+  @keyframes pulsa { 50% { filter: brightness(1.12); } }
+  #suona .grande { font-size: min(26vw, 36vh); font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; }
+  #suona .perche { font-size: min(5vw, 4vh); opacity: .9; }
+  #suona .tasti { display: flex; gap: 4vmin; }
+  #suona button { border: 0; border-radius: 6vmin; padding: 3vmin 6vmin; font-size: min(5vw, 4vh); font-weight: 700; }
+  #rimanda { background: rgba(255,255,255,.25); color: #fff; } #basta { background: #fff; color: #b8172d; }
+  /* foglio impostazioni sveglia */
+  #imp { position: fixed; inset: 0; z-index: 15; display: none; background: rgba(0,0,0,.6); align-items: flex-end; justify-content: center; }
+  #imp.on { display: flex; }
+  #imp .foglio { width: min(100%, 560px); background: var(--card); border-radius: 22px 22px 0 0; padding: 22px 20px calc(20px + env(safe-area-inset-bottom)); }
+  #imp h3 { margin: 0 0 14px; font-size: 19px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+  .seg button { flex: 1; border: 0; background: none; padding: 11px 4px; font-size: 15px; }
+  .seg button.sel { background: var(--accent); color: #fff; font-weight: 600; }
+  .riga { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 15px; }
+  .riga label { flex: 1; color: var(--muted); }
+  .riga input, .riga select { padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 17px; }
+  .nota { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
+  .chiudi-imp { width: 100%; border: 0; border-radius: 12px; padding: 13px; background: var(--accent); color: #fff; font-weight: 700; font-size: 16px; }
+  .prova { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 11px; background: none; margin-bottom: 10px; }
+  /* cuore in arrivo */
+  #cuore { position: fixed; inset: 0; z-index: 12; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 3vmin; background: rgba(0,0,0,.55); }
+  #cuore.on { display: flex; }
+  #cuore .c { font-size: min(40vw, 50vh); color: #ff4f6a; line-height: 1; animation: batte 1.1s ease-in-out infinite; }
+  body.notte #cuore .c { color: #a8122c; }
+  #cuore p { margin: 0; font-size: min(5vw, 4vh); color: #ffd0d8; }
+  @keyframes batte { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.15); } 30% { transform: scale(.98); } 45% { transform: scale(1.08); } }
+  #chi { position: fixed; inset: 0; z-index: 25; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; background: var(--bg); }
+  #chi.on { display: flex; }
+  #chi button { border: 0; border-radius: 14px; padding: 14px 28px; background: var(--accent); color: #fff; font-size: 18px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="schermo">
+  <div id="ora"></div>
+  <div id="data"></div>
+  <div id="sotto">
+    <div class="riq" id="r-meteo" hidden></div>
+    <div class="riq" id="r-domani"></div>
+    <div class="riq" id="r-app" hidden></div>
+  </div>
+</div>
+<button id="luce-btn" type="button" aria-label="Luminosità">☾</button>
+<button id="sveglia-btn" type="button">⏰ <span id="sveglia-testo"></span></button>
+
+<div id="suona"><div class="grande" id="suona-ora"></div><div class="perche" id="suona-perche"></div>
+  <div class="tasti"><button type="button" id="rimanda">Rimanda 9 min</button><button type="button" id="basta">Basta</button></div></div>
+
+<div id="cuore"><div class="c">♥</div><p id="cuore-testo"></p></div>
+
+<div id="chi"><p>Di chi è questo comodino?</p><div id="chi-pulsanti" style="display:flex;gap:12px"></div></div>
+
+<div id="imp"><div class="foglio">
+  <h3>Sveglia</h3>
+  <div class="seg" id="sv-modo"><button type="button" data-v="spenta">Spenta</button><button type="button" data-v="fissa">Ora fissa</button><button type="button" data-v="turni">Dai turni</button></div>
+  <div class="riga" id="sv-riga-ora"><label>Suona alle</label><input type="time" id="sv-ora" value="07:00"></div>
+  <div class="riga" id="sv-riga-anticipo"><label>Quanto prima del mio turno</label><select id="sv-anticipo"><option value="45">45 min</option><option value="60">1 ora</option><option value="75">1 ora e 15</option><option value="90">1 ora e 30</option><option value="105">1 ora e 45</option><option value="120">2 ore</option></select></div>
+  <div class="riga" id="sv-riga-giorni"><label>Nei giorni</label><select id="sv-giorni"><option value="tutti">tutti i giorni</option><option value="feriali">lunedì–venerdì</option></select></div>
+  <p class="nota" id="sv-nota"></p>
+  <button type="button" class="prova" id="sv-prova">Prova il suono</button>
+  <button type="button" class="chiudi-imp" id="sv-chiudi">Fatto</button>
+</div></div>
+
+<script src="comune.js?v=49"></script>
+<script src="suoni.js?v=49"></script>
+<script src="telecomando.js?v=49"></script>
+<script>
+// ================= chi dorme qui =================
+var io = leggi("telefono_io", null);
+function chiediChi() {
+  var box = $("chi-pulsanti"); box.innerHTML = "";
+  [0, 1].forEach(function (p) { var b = el("button"); b.type = "button"; b.textContent = cfg.nomi[p]; b.onclick = function () { io = p; salva("telefono_io", p); $("chi").classList.remove("on"); disegna(); }; box.appendChild(b); });
+  $("chi").classList.add("on");
+}
+
+// ================= sveglia =================
+var SV = leggi("comodino_sveglia", { modo: "spenta", ora: "07:00", anticipo: 90, giorni: "tutti" });
+function salvaSV() { salva("comodino_sveglia", SV); }
+function hm(min) { min = ((min % 1440) + 1440) % 1440; return Math.floor(min / 60) + ":" + due(min % 60); }
+// prossima sveglia: { quando: Date, perche: "turno alle 8:00" } oppure { niente: "domani riposo" }
+function prossimaSveglia() {
+  var ora = new Date(), oggi = new Date(ora.getFullYear(), ora.getMonth(), ora.getDate());
+  if (SV.modo === "spenta") return null;
+  for (var g = 0; g <= 7; g++) {
+    var d = piuGiorni(oggi, g), feriale = d.getDay() >= 1 && d.getDay() <= 5, q;
+    if (SV.modo === "fissa") {
+      if (SV.giorni === "feriali" && !feriale) continue;
+      var p = SV.ora.split(":"); q = new Date(d.getFullYear(), d.getMonth(), d.getDate(), +p[0], +p[1]);
+      if (q > ora) return { quando: q, perche: "" };
+    } else {
+      if (io === null) return null;
+      var f = fasceGiorno(d, io); if (!f.length) { if (g <= 1) var riposo = true; continue; }
+      q = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, f[0][0] - SV.anticipo);
+      if (q > ora) return { quando: q, perche: "turno alle " + hm(f[0][0]) };
+    }
+  }
+  return null;
+}
+var suonando = null, pianificata = null;
+// La sveglia programmata resta ferma finché non suona: si ricalcola solo prima della sua ora
+// (così se cambia un turno si aggiorna, ma passate le 6:30 non "salta" a quella del giorno dopo).
+function controllaSveglia() {
+  if (suonando) return;
+  var ora = Date.now(), fatte = leggi("comodino_suonate", {});
+  if (pianificata && ora >= pianificata.quando.getTime() - 500) {
+    var k = pianificata.quando.getTime(), s = pianificata; pianificata = null;
+    if (!fatte[k] && ora - k < 30 * 60000) { fatte[k] = 1; salva("comodino_suonate", fatte); suona(s); return; }   // più di mezz'ora di ritardo (telefono spento): non suona
+  }
+  pianificata = prossimaSveglia();
+}
+var rimandata = 0;
+function suona(s) {
+  suonando = { inizio: Date.now(), s: s };
+  $("suona-ora").textContent = hm(new Date().getHours() * 60 + new Date().getMinutes());
+  $("suona-perche").textContent = "Buongiorno" + (io !== null ? " " + cfg.nomi[io].split(" ")[0] : "") + "!" + (s.perche ? " · " + s.perche : "");
+  $("suona").classList.add("on");
+  suonaCarillon();
+}
+function suonaCarillon() {   // carillon dolce che si ripete e cresce piano per un minuto e mezzo
+  if (!suonando) return;
+  var ac = audioCtx(); if (!ac) return;
+  var passati = (Date.now() - suonando.inizio) / 1000, vol = Math.min(1, .15 + passati / 90), out = ac.createGain(), t = ac.currentTime + .05;
+  out.gain.value = vol * .9; out.connect(ac.destination);
+  [[784, 0], [988, .25], [1175, .5], [1568, .75], [1175, 1.15], [1568, 1.4]].forEach(function (n) { campanella(ac, out, n[0], t + n[1], 1.6, .5); });
+  if (navigator.vibrate) navigator.vibrate([200, 150, 200]);
+  if (passati < 600) suonando.t = setTimeout(suonaCarillon, 2600);
+}
+function fermaSveglia() { if (suonando) clearTimeout(suonando.t); suonando = null; $("suona").classList.remove("on"); }
+$("basta").onclick = function () { fermaSveglia(); disegna(); };
+$("rimanda").onclick = function () { var s = suonando && suonando.s; fermaSveglia(); setTimeout(function () { suona(s || { perche: "" }); }, 9 * 60000); rimandata = Date.now() + 9 * 60000; disegna(); };
+
+// impostazioni della sveglia
+function seg(id, v) { [].forEach.call($(id).children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === v); }); }
+function disegnaImp() {
+  seg("sv-modo", SV.modo);
+  $("sv-riga-ora").hidden = SV.modo !== "fissa"; $("sv-riga-giorni").hidden = SV.modo !== "fissa"; $("sv-riga-anticipo").hidden = SV.modo !== "turni";
+  $("sv-ora").value = SV.ora; $("sv-anticipo").value = SV.anticipo; $("sv-giorni").value = SV.giorni;
+  var s = prossimaSveglia();
+  $("sv-nota").textContent = SV.modo === "spenta" ? "La sveglia non suona." : s ? "Prossima: " + quandoTesto(s.quando) + (s.perche ? " (" + s.perche + ")" : "") + ". Lascia il telefono in carica con questa pagina aperta."
+    : SV.modo === "turni" ? "Nei prossimi giorni non hai turni: niente sveglia." : "";
+}
+$("sv-modo").onclick = function (e) { var b = e.target.closest("button"); if (!b) return; SV.modo = b.getAttribute("data-v"); salvaSV(); pianificata = prossimaSveglia(); disegnaImp(); disegna(); audioCtx(); };
+$("sv-ora").onchange = function () { SV.ora = this.value || "07:00"; salvaSV(); pianificata = prossimaSveglia(); disegnaImp(); disegna(); };
+$("sv-anticipo").onchange = function () { SV.anticipo = +this.value; salvaSV(); pianificata = prossimaSveglia(); disegnaImp(); disegna(); };
+$("sv-giorni").onchange = function () { SV.giorni = this.value; salvaSV(); pianificata = prossimaSveglia(); disegnaImp(); disegna(); };
+$("sv-prova").onclick = function () { suonando = { inizio: Date.now() - 60000, s: {} }; suonaCarillon(); clearTimeout(suonando.t); suonando = null; };
+$("sv-chiudi").onclick = function () { $("imp").classList.remove("on"); };
+$("sveglia-btn").onclick = function (e) { e.stopPropagation(); audioCtx(); disegnaImp(); $("imp").classList.add("on"); };
+function quandoTesto(q) {
+  var oggi = iso(new Date()), dom = iso(piuGiorni(new Date(), 1)), k = iso(q);
+  return (k === oggi ? "oggi" : k === dom ? "domani" : GIORNI[q.getDay()]) + " alle " + hm(q.getHours() * 60 + q.getMinutes());
+}
+
+// ================= notte, luminosità, schermo acceso =================
+var luce = leggi("comodino_luce", "auto");   // auto | giorno | notte | buio
+function eNotte() { var m = new Date().getHours() * 60 + new Date().getMinutes(); return m >= 22 * 60 + 30 || m < 7 * 60; }
+function applicaLuce() {
+  var notte = luce === "notte" || luce === "buio" || (luce === "auto" && eNotte());
+  document.body.classList.toggle("notte", notte); document.body.classList.toggle("buio", luce === "buio");
+  $("luce-btn").textContent = { auto: "◐", giorno: "☀", notte: "☾", buio: "●" }[luce];
+}
+$("luce-btn").onclick = function (e) { e.stopPropagation(); var l = ["auto", "giorno", "notte", "buio"]; luce = l[(l.indexOf(luce) + 1) % l.length]; salva("comodino_luce", luce); applicaLuce(); };
+var tSvela = null;
+document.addEventListener("click", function () {   // di notte un tocco mostra i dettagli per 10 secondi
+  if ($("cuore").classList.contains("on")) { $("cuore").classList.remove("on"); return; }
+  document.body.classList.add("svelato"); clearTimeout(tSvela); tSvela = setTimeout(function () { document.body.classList.remove("svelato"); }, 10000);
+  try { if (document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(function () {}); } catch (er) {}
+});
+var blocco = null;
+function tieniAcceso() {
+  if (!("wakeLock" in navigator) || document.visibilityState !== "visible") return;
+  navigator.wakeLock.request("screen").then(function (b) { blocco = b; }).catch(function () {});
+}
+document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") tieniAcceso(); });
+
+// ================= meteo =================
+var meteo = null;
+function tipoMeteo(c) {
+  return c === 0 ? "☀️" : c <= 2 ? "🌤️" : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "🌨️" : c >= 95 ? "⛈️" : "☁️";
+}
+function leggiMeteo() {
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FRome&forecast_days=2")
+    .then(function (r) { return r.json(); }).then(function (j) { meteo = j; disegna(); }, function () {});
+}
+
+// ================= disegno =================
+function disegna() {
+  var d = new Date(), notte = document.body.classList.contains("notte");
+  $("ora").innerHTML = ""; $("ora").appendChild(document.createTextNode(d.getHours() + ":" + due(d.getMinutes())));
+  $("data").textContent = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
+  // meteo: adesso e domani
+  if (meteo && meteo.current) {
+    var dm = meteo.daily, r = $("r-meteo"); r.hidden = false;
+    r.innerHTML = "<span>" + tipoMeteo(meteo.current.weather_code) + " <b>" + Math.round(meteo.current.temperature_2m) + "°</b></span><span class='m'>domani</span><span>" +
+      tipoMeteo(dm.weather_code[1]) + " " + Math.round(dm.temperature_2m_min[1]) + "–" + Math.round(dm.temperature_2m_max[1]) + "°" + (dm.precipitation_probability_max[1] >= 40 ? " · ☂ " + dm.precipitation_probability_max[1] + "%" : "") + "</span>";
+  }
+  // turni: di sera quelli di domani, di giorno quelli di oggi
+  var sera = d.getHours() >= 14, giorno = sera ? piuGiorni(d, 1) : d, rd = $("r-domani"); rd.innerHTML = "";
+  var t = el("span", "m"); t.textContent = sera ? "domani" : "oggi"; rd.appendChild(t);
+  [0, 1].forEach(function (p) {
+    var v = turno(giorno, p), s = el("span"), n = el("b", "p" + p); n.textContent = (cfg.nomi[p] || "").split(" ")[0] + " ";
+    s.appendChild(n); s.appendChild(document.createTextNode(v ? (ordinato(v).replace(/:00/g, "") || v) : "riposo")); rd.appendChild(s);
+  });
+  var ins = insieme(giorno); if (ins) { var c = el("span"); c.style.color = "#ff5f7a"; c.textContent = ins === "giorno" ? "♥" : "♡"; rd.appendChild(c); }
+  // prossimo appuntamento (oggi o domani)
+  var ra = $("r-app"), oggiK = iso(d), domK = iso(piuGiorni(d, 1));
+  var ev = (cfg.eventi || []).filter(function (e) { return e.data === oggiK || e.data === domK; })
+    .sort(function (a, b) { return a.data.localeCompare(b.data) || (a.ora || "99").localeCompare(b.ora || "99"); })
+    .filter(function (e) { return !(e.data === oggiK && e.ora && e.ora < due(d.getHours()) + ":" + due(d.getMinutes())); });
+  ra.hidden = !ev.length;
+  if (ev.length) { ra.innerHTML = ""; var a = el("span", "m"); a.textContent = ev[0].data === oggiK ? "oggi" : "domani"; var b = el("span"); b.textContent = "📅 " + (ev[0].ora ? ev[0].ora + " " : "") + ev[0].testo; ra.appendChild(a); ra.appendChild(b); }
+  // sveglia
+  var s = pianificata || prossimaSveglia(), st = $("sveglia-testo");
+  $("sveglia-btn").classList.toggle("spenta", !s);
+  st.textContent = Date.now() < rimandata ? "rimandata alle " + hm(new Date(rimandata).getHours() * 60 + new Date(rimandata).getMinutes())
+    : s ? quandoTesto(s.quando) : SV.modo === "turni" ? "nessun turno" : "spenta";
+  // un po' di movimento ogni minuto: lo schermo non si "segna"
+  var k = d.getMinutes();
+  $("schermo").style.transform = "translate(" + ((k * 7) % 11 - 5) * .3 + "vmin," + ((k * 5) % 9 - 4) * .3 + "vmin)";
+}
+function mostraStatoSync() {   // dopo ogni sincronizzazione: un "Pensavo a te" per me?
+  if (io === null) return;
+  var n = pensieriNuovi("pensieri_visti_comodino", 1 - io); if (!n.length) { disegna(); return; }
+  $("cuore-testo").textContent = cfg.nomi[1 - io].split(" ")[0] + " sta pensando a te";
+  $("cuore").classList.add("on");
+  if (!document.body.classList.contains("notte") && window.suonaPensiero) suonaPensiero();   // di notte solo il cuore, niente suono
+  setTimeout(function () { $("cuore").classList.remove("on"); }, 20000);
+  disegna();
+}
+function ridisegna() { disegna(); }
+function dopoSblocco() { if (io === null) chiediChi(); }
+
+// ================= avvio =================
+applicaLuce(); controllaSveglia(); disegna(); leggiMeteo();
+setInterval(function () { applicaLuce(); disegna(); controllaSveglia(); }, 5000);
+setInterval(leggiMeteo, 30 * 60000);
+tieniAcceso();
+avviaSync();
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
