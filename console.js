@@ -51,7 +51,10 @@ function preparaOfferta(p) {
   var pc = new RTCPeerConnection({ iceServers: CONS.STUN }), id = String(nuovoId());
   var dc = pc.createDataChannel("joypad", { ordered: true });
   CN.pc[p] = pc; CN.dc[p] = dc; CN.offerta[p] = { id: id, quando: Date.now(), pronta: false };
-  dc.onopen = function () { suono(880, 90); suono(1320, 120); manda(p, { t: "ciao", nome: cfg.nomi[p] }); disegnaMenuSePronto(); };
+  dc.onopen = function () {
+    suono(880, 90); suono(1320, 120); manda(p, { t: "ciao", nome: cfg.nomi[p] }); disegnaMenuSePronto();
+    regMetti("console.offerta." + p, { occupato: true, t: Date.now() });   // gli altri telefoni sanno che il posto è preso
+  };
   dc.onclose = function () { if (CN.dc[p] === dc) { CN.offerta[p] = null; } disegnaMenuSePronto(); };
   dc.onmessage = function (e) { try { input(p, JSON.parse(e.data)); } catch (er) {} };
   pc.onconnectionstatechange = function () { if (/failed|closed/.test(pc.connectionState) && CN.pc[p] === pc) CN.offerta[p] = null; };
@@ -68,8 +71,11 @@ function controllaAgganci() {
     var o = CN.offerta[p];
     if (!o || Date.now() - o.quando > CONS.OFFERTA_VALIDA) { preparaOfferta(p); return; }
     var r = regLeggi("console.risposta." + p);
-    if (o.pronta && r && r.id === o.id && CN.usata[p] !== r.id && CN.pc[p].signalingState === "have-local-offer") {
-      CN.usata[p] = r.id;
+    if (o.applicata && Date.now() - o.applicata > 20000) { preparaOfferta(p); return; }   // risposta arrivata ma niente collegamento: si riparte
+    if (o.pronta && r && r.id === o.id && r.rid && CN.usata[p] !== r.rid) {
+      CN.usata[p] = r.rid;
+      if (CN.pc[p].signalingState !== "have-local-offer") { preparaOfferta(p); return; }   // offerta già usata da un tentativo fallito
+      o.applicata = Date.now();
       CN.pc[p].setRemoteDescription({ type: "answer", sdp: r.sdp }).catch(function () { CN.offerta[p] = null; });
     }
   });
@@ -468,15 +474,25 @@ function collegaJoypad() {
   if (!token || !chiaveCripto) { joypadStato("Sblocca prima con la password."); return; }
   chiudiJoypad(true);
   joypadStato("Cerco la console… apri la pagina 3 del tablet.");
-  var inizio = Date.now();
+  var inizio = Date.now(); JP.risposto = null;
   function cerca() {
+    if (Date.now() - inizio > 120000) { joypadStato("Non trovo la console: il tablet è sulla pagina 3 e sul Wi‑Fi di casa?"); return; }
     sincronizza().then(function () {
       var o = regLeggi("console.offerta." + io);
-      if (o && Date.now() - o.t < CONS.OFFERTA_VALIDA && regLeggi("console.risposta." + io) && regLeggi("console.risposta." + io).id === o.id) o = null;   // già usata
-      if (!o) { if (Date.now() - inizio < 90000) JP.tAttesa = setTimeout(cerca, 2000); else joypadStato("Non trovo la console: il tablet è sulla pagina 3?"); return; }
-      rispondi(o);
+      if (o && o.occupato) {
+        joypadStato("Il posto di " + cfg.nomi[io] + " è già collegato da un altro telefono. Se questo telefono è di " + cfg.nomi[1 - io] + ", tocca «cambia» qui sopra.");
+        JP.tAttesa = setTimeout(cerca, 3000); return;
+      }
+      if (!o || !o.sdp || Date.now() - o.t > CONS.OFFERTA_VALIDA || o.id === JP.risposto) { JP.tAttesa = setTimeout(cerca, 2000); return; }
+      JP.risposto = o.id; rispondi(o);
+      JP.tAttesa = setTimeout(function () {   // dopo 20 secondi senza collegamento: chiudo e cerco l'offerta nuova
+        if (JP.dc && JP.dc.readyState === "open") return;
+        if (JP.pc) try { JP.pc.close(); } catch (e) {}
+        JP.pc = JP.dc = null; joypadStato("Riprovo…"); cerca();
+      }, 20000);
     });
   }
+  JP.cerca = cerca;
   cerca();
 }
 function rispondi(o) {
@@ -484,7 +500,7 @@ function rispondi(o) {
   var pc = new RTCPeerConnection({ iceServers: CONS.STUN }); JP.pc = pc;
   pc.ondatachannel = function (e) {
     JP.dc = e.channel;
-    JP.dc.onopen = function () { joypadStato("Collegato 🎮"); apriPad(); if (navigator.vibrate) navigator.vibrate([40, 60, 40]); };
+    JP.dc.onopen = function () { clearTimeout(JP.tAttesa); joypadStato("Collegato 🎮"); apriPad(); if (navigator.vibrate) navigator.vibrate([40, 60, 40]); };
     JP.dc.onclose = function () { joypadStato("Scollegato"); chiudiPad(); };
     JP.dc.onmessage = function (m) {
       var x = JSON.parse(m.data);
@@ -495,7 +511,7 @@ function rispondi(o) {
   pc.onconnectionstatechange = function () { if (pc.connectionState === "failed") joypadStato("Collegamento non riuscito: siete sullo stesso Wi‑Fi?"); };
   pc.setRemoteDescription({ type: "offer", sdp: o.sdp }).then(function () { return pc.createAnswer(); })
     .then(function (a) { return pc.setLocalDescription(a); }).then(function () { return attendiIce(pc); })
-    .then(function () { regMetti("console.risposta." + io, { id: o.id, sdp: pc.localDescription.sdp, t: Date.now() }); joypadStato("Aspetto la console…"); })
+    .then(function () { regMetti("console.risposta." + io, { id: o.id, rid: String(nuovoId()), sdp: pc.localDescription.sdp, t: Date.now() }); joypadStato("Aspetto la console…"); })
     .catch(function () { joypadStato("Collegamento non riuscito, riprova."); });
 }
 function chiudiJoypad(silenzioso) {

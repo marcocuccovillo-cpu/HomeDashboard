@@ -281,6 +281,10 @@ function disegnaConsoleTel(box) {
   var c = el("div", "card jp-card");
   c.innerHTML = '<div class="grande">🎮</div><h3 style="justify-content:center">Console di casa</h3>' +
     '<p>Apri la <b>pagina 3</b> del tablet (scorri a destra due volte), poi collega il tuo telefono come joypad. Dovete essere sul Wi‑Fi di casa.</p>';
+  var chi = el("p"); chi.innerHTML = "Questo telefono è di <b></b> · "; chi.querySelector("b").textContent = cfg.nomi[io];
+  var cambia = el("a"); cambia.href = "#"; cambia.textContent = "cambia"; cambia.style.color = "var(--accent)";
+  cambia.onclick = function (e) { e.preventDefault(); io = 1 - io; salva("telefono_io", io); if (window.chiudiJoypad) chiudiJoypad(); disegnaGiochi(); };
+  chi.appendChild(cambia); c.appendChild(chi);
   var b = el("button", "btn pieno"); b.type = "button"; b.textContent = "Collega il joypad"; b.onclick = collegaJoypad;
   var st = el("p"); st.id = "jp-stato"; st.textContent = JP.stato || "";
   c.appendChild(b); c.appendChild(st); box.appendChild(c);
