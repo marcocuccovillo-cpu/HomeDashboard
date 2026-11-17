@@ -107,7 +107,7 @@ function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando �
     box.appendChild(d);
     var m = Math.round((r.arrivo - Date.now()) / 60000);
     if (m === 1 && disegnaRientri.avvisato !== r.t && window.fumetto && !$("gatto-strato").hidden) {   // il gatto lo aspetta
-      disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Miao! Arriva " + cfg.nomi[p] + "! ♥", 8000);
+      disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Arriva " + cfg.nomi[p] + "! ♥", 8000);
     }
   });
 }
