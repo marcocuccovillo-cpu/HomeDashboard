@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<meta name="robots" content="noindex">
+<title>Home2Love · Telecamere</title>
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<style>
+  /* Telecamere di casa con telefoni dedicati.
+     - Un telefono diventa telecamera solo se lo avvii TU su quel telefono, con la tua password (mai sul tablet o sui telefoni di altri).
+     - Il telefono che riprende mostra sempre "Telecamera attiva": chi è in casa deve poterlo sapere.
+     - Il video va direttamente dalla telecamera al tuo telefono (WebRTC, cifrato). Per presentarsi usano ntfy.sh con messaggi
+       cifrati da una chiave ricavata dalla tua password (che non lascia mai il telefono). Nessuna registrazione su server. */
+  :root { --bg: #0b0d12; --card: #161a22; --ink: #eef1f6; --muted: #8b93a3; --line: #262c38; --accent: #ff4d5e; --ok: #4fd18b; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.4 -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif; padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom); }
+  button, input { font: inherit; }
+  h1 { font-size: 22px; margin: 18px 0 4px; } h1 span { color: var(--accent); }
+  .sotto { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 14px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px; }
+  input { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: #0e1117; color: var(--ink); font-size: 17px; outline: none; margin-bottom: 12px; }
+  .btn { width: 100%; border: 0; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 600; background: var(--accent); color: #fff; cursor: pointer; }
+  .btn.sec { background: none; border: 1px solid var(--line); color: var(--ink); font-weight: 500; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+  .seg button { flex: 1; border: 0; background: none; color: var(--muted); padding: 12px 4px; font-size: 15px; cursor: pointer; }
+  .seg button.sel { background: var(--accent); color: #fff; font-weight: 600; }
+  .msg { min-height: 20px; color: #ffb36b; font-size: 14px; margin-top: 10px; }
+  .nota { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+  /* visore */
+  #griglia { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 12px; }
+  .cam { background: #000; border-radius: 16px; overflow: hidden; position: relative; aspect-ratio: 4 / 3; border: 1px solid var(--line); }
+  .cam video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+  .cam .testa { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: linear-gradient(#000a, transparent); font-size: 14px; }
+  .cam .testa b { flex: 1; } .cam .testa i { width: 9px; height: 9px; border-radius: 50%; background: #666; }
+  .cam.live .testa i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .cam .stato { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; text-align: center; padding: 20px; }
+  .cam .tasti { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 10px; background: linear-gradient(transparent, #000a); }
+  .cam .tasti button { flex: 1; border: 0; border-radius: 10px; padding: 9px 6px; background: rgba(255,255,255,.14); color: #fff; font-size: 13.5px; cursor: pointer; }
+  .barra { display: flex; gap: 10px; margin-bottom: 14px; } .barra .btn { flex: 1; padding: 11px; font-size: 15px; }
+  /* telecamera */
+  #tele { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 20px; }
+  #tele video { width: min(92vw, 520px); border-radius: 14px; opacity: .9; }
+  #tele.buio video { opacity: 0; }
+  .rec { color: var(--accent); font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .rec::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); animation: lampo 1.4s infinite; }
+  @keyframes lampo { 50% { opacity: .25; } }
+  #tele .info { color: var(--muted); font-size: 14px; }
+  #tele .tasti { display: flex; gap: 10px; }
+  #tele .tasti button { border: 1px solid #333; background: #111; color: #ddd; border-radius: 10px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Home<span>2</span>Love · Telecamere</h1>
+<p class="sotto">Telefoni dedicati come telecamere di casa, visibili solo con la tua password.</p>
+
+<div class="card" id="v-entra">
+  <div class="seg" id="modo"><button type="button" data-v="guarda" class="sel">Guarda le telecamere</button><button type="button" data-v="tele">Usa come telecamera</button></div>
+  <label for="pw">Password delle telecamere</label>
+  <input id="pw" type="password" autocomplete="current-password" placeholder="almeno 8 caratteri">
+  <div id="campo-nome" hidden><label for="nome-cam">Nome di questa telecamera</label><input id="nome-cam" type="text" maxlength="24" placeholder="es. Ingresso, Soggiorno" autocomplete="off"></div>
+  <button class="btn" id="vai" type="button">Entra</button>
+  <div class="msg" id="msg"></div>
+  <p class="nota" id="nota-modo">Inserisci la password che hai scelto. È diversa da quella di casa e non viene salvata da nessuna parte: se la dimentichi, ne scegli una nuova e riavvii le telecamere con quella.</p>
+</div>
+
+<div id="v-guarda" hidden>
+  <div class="barra"><button class="btn sec" id="cerca" type="button">↻ Cerca telecamere</button><button class="btn sec" id="esci" type="button">Esci</button></div>
+  <div id="griglia"></div>
+  <p class="nota" id="nota-guarda">Le telecamere accese con la tua password compaiono qui. Il video arriva direttamente dal telefono‑telecamera, cifrato.</p>
+</div>
+
+<div id="tele" hidden>
+  <div class="rec" id="tele-nome">Telecamera attiva</div>
+  <video id="tele-video" autoplay playsinline muted></video>
+  <div class="info" id="tele-info">In attesa di chi guarda…</div>
+  <div class="tasti"><button type="button" id="tele-gira">Cambia fotocamera</button><button type="button" id="tele-buio">Schermo scuro</button><button type="button" id="tele-stop">Spegni</button></div>
+</div>
+
+<script>
+var NTFY = window.NTFY_BASE || "https://ntfy.sh/", STUN = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }];
+var S = { chiave: null, stanza: "", es: null, modo: "guarda", id: Math.random().toString(36).slice(2, 10) };
+function $(id) { return document.getElementById(id); }
+function el(t, c) { var e = document.createElement(t); if (c) e.className = c; return e; }
+function b64u(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function daB64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
+
+// ---------------------------------------------------------------- chiave e "stanza" dalla password (PBKDF2, 300.000 giri)
+function preparaChiave(pw) {
+  var enc = new TextEncoder();
+  return crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits", "deriveKey"]).then(function (base) {
+    return Promise.all([
+      crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode("home2love-telecamere-chiave"), iterations: 300000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]),
+      crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode("home2love-telecamere-stanza"), iterations: 300000, hash: "SHA-256" }, base, 128)
+    ]);
+  }).then(function (r) { S.chiave = r[0]; S.stanza = "h2l-cam-" + b64u(r[1]); });
+}
+function cifra(o) {
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, S.chiave, new TextEncoder().encode(JSON.stringify(o))).then(function (c) {
+    var t = new Uint8Array(12 + c.byteLength); t.set(iv); t.set(new Uint8Array(c), 12); return b64u(t);
+  });
+}
+function decifra(s) { var b = daB64u(s); return crypto.subtle.decrypt({ name: "AES-GCM", iv: b.slice(0, 12) }, S.chiave, b.slice(12)).then(function (p) { return JSON.parse(new TextDecoder().decode(p)); }); }
+function pubblica(o) { return cifra(o).then(function (c) { return fetch(NTFY + S.stanza, { method: "POST", body: c }); }); }
+function ascolta(fn) {
+  if (S.es) S.es.close();
+  S.es = new EventSource(NTFY + S.stanza + "/sse");
+  S.es.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.message) decifra(m.message).then(fn, function () {}); };
+  return new Promise(function (ok) { S.es.onopen = ok; setTimeout(ok, 4000); });
+}
+function attendiIce(pc) {
+  return new Promise(function (ok) {
+    if (pc.iceGatheringState === "complete") return ok();
+    var t = setTimeout(ok, 3000);
+    pc.addEventListener("icegatheringstatechange", function () { if (pc.iceGatheringState === "complete") { clearTimeout(t); ok(); } });
+  });
+}
+
+// ---------------------------------------------------------------- ingresso
+$("modo").onclick = function (e) {
+  var b = e.target.closest("button"); if (!b) return; S.modo = b.getAttribute("data-v");
+  [].forEach.call(this.children, function (x) { x.classList.toggle("sel", x === b); });
+  $("campo-nome").hidden = S.modo !== "tele"; $("vai").textContent = S.modo === "tele" ? "Accendi la telecamera" : "Entra";
+  $("nota-modo").textContent = S.modo === "tele"
+    ? "Usa questa modalità solo su un telefono dedicato a fare da telecamera. Lo schermo mostrerà sempre «Telecamera attiva»: chi è in casa deve sapere che c'è."
+    : "Inserisci la password che hai scelto. È diversa da quella di casa e non viene salvata da nessuna parte.";
+  try { $("nome-cam").value = localStorage.getItem("cam_nome") || ""; } catch (x) {}
+};
+$("vai").onclick = function () {
+  var pw = $("pw").value;
+  if (pw.length < 8) { $("msg").textContent = "La password deve avere almeno 8 caratteri."; return; }
+  if (S.modo === "tele" && !$("nome-cam").value.trim()) { $("msg").textContent = "Dai un nome a questa telecamera."; $("nome-cam").focus(); return; }
+  this.disabled = true; $("msg").textContent = "Preparo la chiave…";
+  var b = this;
+  preparaChiave(pw).then(function () { $("pw").value = ""; return S.modo === "tele" ? avviaTelecamera($("nome-cam").value.trim()) : avviaVisore(); })
+    .catch(function (e) { $("msg").textContent = e && e.message ? e.message : "Non è andata, riprova."; }).then(function () { b.disabled = false; });
+};
+
+// ================================================================ VISORE (il tuo telefono)
+var CAM = {};   // cid → { nome, pc, box, video }
+function avviaVisore() {
+  $("v-entra").hidden = true; $("v-guarda").hidden = false; $("msg").textContent = "";
+  return ascolta(messaggioVisore).then(cerca);
+}
+function cerca() {
+  $("nota-guarda").textContent = "Cerco le telecamere…";
+  pubblica({ tipo: "chi", vid: S.id });
+  setTimeout(function () { if (!Object.keys(CAM).length) $("nota-guarda").textContent = "Nessuna telecamera accesa con questa password. Controlla che i telefoni‑telecamera siano accesi e collegati a internet."; }, 8000);
+}
+$("cerca").onclick = cerca;
+$("esci").onclick = function () { location.reload(); };
+function messaggioVisore(m) {
+  if (m.tipo === "ci-sono" && m.vid === S.id) {
+    if (!CAM[m.cid]) { CAM[m.cid] = { nome: m.nome }; schedaCam(m.cid); }
+    $("nota-guarda").textContent = "Tocca «Guarda» su una telecamera per vederla dal vivo.";
+  }
+  if (m.tipo === "offerta" && m.vid === S.id && CAM[m.cid]) rispondiCam(m.cid, m.sdp);
+}
+function schedaCam(cid) {
+  var c = CAM[cid], box = el("div", "cam");
+  box.innerHTML = '<video autoplay playsinline muted></video><div class="stato">Pronta</div><div class="testa"><i></i><b></b></div>' +
+    '<div class="tasti"><button type="button" data-a="guarda">▶ Guarda</button><button type="button" data-a="foto">📷 Istantanea</button><button type="button" data-a="grande">⛶ Grande</button></div>';
+  box.querySelector("b").textContent = c.nome; c.box = box; c.video = box.querySelector("video");
+  box.querySelector('[data-a="guarda"]').onclick = function () { guarda(cid); };
+  box.querySelector('[data-a="foto"]').onclick = function () { istantanea(cid); };
+  box.querySelector('[data-a="grande"]').onclick = function () { var v = c.video; (v.requestFullscreen || v.webkitEnterFullscreen || function () {}).call(v); };
+  $("griglia").appendChild(box);
+}
+function statoCam(cid, t) { var s = CAM[cid].box.querySelector(".stato"); s.textContent = t; s.hidden = !t; }
+function guarda(cid) {
+  var c = CAM[cid]; if (c.pc) try { c.pc.close(); } catch (e) {}
+  statoCam(cid, "Mi collego…");
+  pubblica({ tipo: "guarda", vid: S.id, cid: cid });
+  clearTimeout(c.t); c.t = setTimeout(function () { if (!c.box.classList.contains("live")) statoCam(cid, "Non riesco a collegarmi. Riprova; se succede sempre fuori casa, la tua rete mobile potrebbe bloccare il collegamento diretto."); }, 25000);
+}
+function rispondiCam(cid, sdp) {
+  var c = CAM[cid], pc = new RTCPeerConnection({ iceServers: STUN }); c.pc = pc;
+  pc.ontrack = function (e) { c.video.srcObject = e.streams[0]; c.video.play().catch(function () {}); c.box.classList.add("live"); statoCam(cid, ""); };
+  pc.onconnectionstatechange = function () {
+    if (/failed|disconnected|closed/.test(pc.connectionState)) { c.box.classList.remove("live"); statoCam(cid, pc.connectionState === "failed" ? "Collegamento non riuscito." : "Collegamento interrotto: tocca Guarda."); }
+  };
+  pc.setRemoteDescription({ type: "offer", sdp: sdp }).then(function () { return pc.createAnswer(); }).then(function (a) { return pc.setLocalDescription(a); })
+    .then(function () { return attendiIce(pc); }).then(function () { return pubblica({ tipo: "risposta", vid: S.id, cid: cid, sdp: pc.localDescription.sdp }); });
+}
+function istantanea(cid) {
+  var v = CAM[cid].video; if (!v.videoWidth) return;
+  var cv = el("canvas"); cv.width = v.videoWidth; cv.height = v.videoHeight; cv.getContext("2d").drawImage(v, 0, 0);
+  var d = new Date(), a = el("a"); a.download = CAM[cid].nome + " " + d.toISOString().slice(0, 16).replace("T", " ").replace(":", ".") + ".jpg";
+  a.href = cv.toDataURL("image/jpeg", .9); a.click();
+}
+
+// ================================================================ TELECAMERA (i telefoni dedicati)
+var T = { stream: null, nome: "", verso: "environment", pcs: {} };
+function avviaTelecamera(nome) {
+  try { localStorage.setItem("cam_nome", nome); } catch (x) {}
+  T.nome = nome;
+  return apriFotocamera().then(function () {
+    $("v-entra").hidden = true; $("tele").hidden = false; $("tele-nome").textContent = "Telecamera attiva · " + nome;
+    tieniAcceso();
+    return ascolta(messaggioTele);
+  }).then(function () { pubblica({ tipo: "ci-sono", cid: S.id, nome: T.nome, vid: "*" }); });
+}
+function apriFotocamera() {
+  if (T.stream) T.stream.getTracks().forEach(function (t) { t.stop(); });
+  return navigator.mediaDevices.getUserMedia({ video: { facingMode: T.verso, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false }).then(function (s) {
+    T.stream = s; $("tele-video").srcObject = s;
+    Object.keys(T.pcs).forEach(function (k) {   // chi sta guardando passa alla nuova fotocamera
+      var snd = T.pcs[k].getSenders().filter(function (x) { return x.track && x.track.kind === "video"; })[0];
+      if (snd) snd.replaceTrack(s.getVideoTracks()[0]);
+    });
+  }, function () { throw new Error("Serve il permesso della fotocamera."); });
+}
+function messaggioTele(m) {
+  if (m.tipo === "chi") pubblica({ tipo: "ci-sono", cid: S.id, nome: T.nome, vid: m.vid });
+  if (m.tipo === "guarda" && m.cid === S.id) offri(m.vid);
+  if (m.tipo === "risposta" && m.cid === S.id && T.pcs[m.vid] && T.pcs[m.vid].signalingState === "have-local-offer") T.pcs[m.vid].setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(function () {});
+}
+function offri(vid) {
+  if (T.pcs[vid]) try { T.pcs[vid].close(); } catch (e) {}
+  var pc = new RTCPeerConnection({ iceServers: STUN }); T.pcs[vid] = pc;
+  T.stream.getTracks().forEach(function (t) { pc.addTrack(t, T.stream); });
+  pc.onconnectionstatechange = function () { contaSpettatori(); if (/failed|closed/.test(pc.connectionState)) delete T.pcs[vid]; };
+  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { return attendiIce(pc); })
+    .then(function () { return pubblica({ tipo: "offerta", cid: S.id, vid: vid, sdp: pc.localDescription.sdp }); });
+}
+function contaSpettatori() {
+  var n = Object.keys(T.pcs).filter(function (k) { return T.pcs[k].connectionState === "connected"; }).length;
+  $("tele-info").textContent = n ? "Qualcuno sta guardando (" + n + ")" : "In attesa di chi guarda…";
+}
+$("tele-gira").onclick = function () { T.verso = T.verso === "environment" ? "user" : "environment"; apriFotocamera(); };
+$("tele-buio").onclick = function () { $("tele").classList.toggle("buio"); this.textContent = $("tele").classList.contains("buio") ? "Mostra anteprima" : "Schermo scuro"; };
+$("tele-stop").onclick = function () { if (T.stream) T.stream.getTracks().forEach(function (t) { t.stop(); }); location.reload(); };
+function tieniAcceso() {
+  if ("wakeLock" in navigator) navigator.wakeLock.request("screen").catch(function () {});
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && "wakeLock" in navigator) navigator.wakeLock.request("screen").catch(function () {}); });
+}
+</script>
+</body>
+</html>
