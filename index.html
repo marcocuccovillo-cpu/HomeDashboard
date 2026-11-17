@@ -274,23 +274,33 @@
                color: var(--muted); font-size: 2.2vh; line-height: 1.5; padding: 2vw; }
   body.notte #carosello img { filter: brightness(.7); }
 
-  /* --- pixel art e indovinello del giorno --- */
-  #card-gioco { padding: 0; overflow: hidden; }
-  .gioco-alto { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
-  .pixel-box { position: relative; min-width: 0; }
-  #pixel { width: 100%; aspect-ratio: 96 / 34; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
-  .pioggia { display: flex; align-items: center; gap: .5vw; padding: .5vh .6vw; font-size: 1.6vh; color: var(--muted); }
-  .pioggia span { white-space: nowrap; }
-  .pioggia-barra { flex: 1; display: flex; gap: 2px; height: 1.6vh; align-items: flex-end; }
-  .pioggia-barra i { flex: 1; background: var(--line); border-radius: 2px 2px 0 0; min-height: 2px; }
-  .pioggia-barra i.p { background: #4f8fd6; }
-  #card-radio { padding: 1vh .9vw; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-  .radio-testa { font-size: 1.8vh; font-weight: 500; display: flex; justify-content: space-between; align-items: center; margin-bottom: .6vh; }
-  .gioco-box { padding: 1.2vh 1.4vw 1.4vh; }
-  .gioco-tipo { font-size: 1.7vh; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .4vh; }
-  .gioco-testo { font-size: 2.2vh; line-height: 1.35; }
-  #gioco-sol { margin-top: .8vh; }
-  .gioco-risposta { margin-top: .8vh; font-size: 2.1vh; font-weight: 500; color: var(--accent); }
+  /* --- radio (pagina 2, sotto la spesa) --- */
+  #card-radio { flex: none; padding: 1.4vh 1.2vw; display: flex; flex-direction: column; }
+  .radio-testa { font-size: 2.2vh; font-weight: 500; display: flex; justify-content: space-between; align-items: center; margin-bottom: .8vh; }
+
+  /* --- lista della spesa (pagina 2) --- */
+  #card-spesa { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .sp-testa { display: flex; align-items: baseline; justify-content: space-between; }
+  .sp-testa h2 { margin: 0 0 .8vh; }
+  .sp-conta { font-size: 1.7vh; color: var(--muted); }
+  .sp-form { display: flex; gap: .6vw; margin-bottom: .8vh; }
+  .sp-input { flex: 1; min-width: 0; padding: 1vh 1vw; border-radius: 1.2vh; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 1.9vh; outline: none; }
+  .sp-form button { border: 0; border-radius: 1.2vh; width: 5vh; background: var(--accent); color: #fff; font-size: 2.8vh; cursor: pointer; }
+  .sp-suggeriti { display: flex; gap: .5vw; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: .8vh; flex: none;
+                  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+  .sp-suggeriti::-webkit-scrollbar { display: none; }
+  .sp-chip { flex: none; border: 1px dashed var(--done); background: none; border-radius: 2vh; padding: .5vh .9vw; font-size: 1.6vh; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .sp-lista { flex: 1; min-height: 0; overflow-y: auto; }
+  .sp-reparto { font-size: 1.5vh; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 1vh 0 .3vh; }
+  .sp-reparto:first-child { margin-top: 0; }
+  .sp-voce { display: flex; align-items: center; gap: .8vw; padding: .55vh 0; border-bottom: 1px solid var(--line); }
+  .sp-check { width: 2.6vh; height: 2.6vh; flex: none; border-radius: 50%; border: 2px solid var(--done); background: none; cursor: pointer; padding: 0; }
+  .sp-voce.fatto .sp-check { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 .4vh var(--card); }
+  .sp-testo { flex: 1; min-width: 0; font-size: 2vh; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sp-voce.fatto .sp-testo { color: var(--done); text-decoration: line-through; }
+  .sp-x { border: 0; background: none; color: var(--done); font-size: 2.4vh; cursor: pointer; padding: 0 .4vw; }
+  .sp-vuota { color: var(--muted); font-size: 1.8vh; padding: 1vh 0; }
+  .sp-presi { margin-top: .8vh; border: 1px solid var(--line); background: none; border-radius: 1vh; padding: .7vh; font-size: 1.6vh; color: var(--muted); cursor: pointer; flex: none; }
 
   /* --- radio --- */
   .radio-ora { display: flex; align-items: center; gap: 1vw; }
@@ -345,7 +355,7 @@
   /* --- tragitti casa → lavoro --- */
   #card-tragitti { flex: none; display: flex; flex-direction: column; }
   #card-tragitti h2 small { margin-left: auto; font-size: 1.7vh; color: var(--muted); font-weight: 400; }
-  #tr-mappa { height: 30vh; border-radius: 12px; overflow: hidden; background: var(--line); z-index: 0; }
+  #tr-mappa { height: 21vh; border-radius: 12px; overflow: hidden; background: var(--line); z-index: 0; }
   #tr-mappa .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,.7); }
   .tr-pin span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font: 700 13px/1 sans-serif;
                  border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
@@ -361,7 +371,7 @@
   .tr-info { font-size: 1.55vh; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #tr-vuoto { margin-top: 1vh; }
   /* --- bus TPER --- */
-  #card-bus { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  #card-bus { flex: none; max-height: 24vh; display: flex; flex-direction: column; overflow: hidden; }
   #card-bus h2 small { margin-left: auto; font-size: 1.7vh; color: var(--muted); font-weight: 400; }
   .bus-lista { display: flex; flex-direction: column; gap: 1.2vh; overflow-y: auto; min-height: 0; }
   .bus-nome { font-size: 1.7vh; color: var(--muted); margin-bottom: .5vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -517,32 +527,18 @@
     <table class="tturni" id="tab-turni"></table>
   </section>
 
-  <!-- pixel art e indovinello del giorno + foto -->
+  <!-- casa → lavoro, bus sotto casa e foto -->
   <div class="col" id="col-destra">
-    <section class="card" id="card-gioco">
-      <div class="gioco-alto">
-        <div class="pixel-box">
-          <canvas id="pixel" width="96" height="34" aria-label="Pixel art di Bologna con il meteo, l'ora e la pioggia in arrivo"></canvas>
-          <div class="pioggia" id="pioggia"><span id="pioggia-testo"></span><div class="pioggia-barra" id="pioggia-barra"></div></div>
-        </div>
-        <div id="card-radio">
-          <div class="radio-testa">Radio <span id="radio-stato" class="pillola">spenta</span></div>
-          <div class="radio-ora">
-            <button type="button" id="radio-play" aria-label="Accendi">▶</button>
-            <img id="radio-logo" alt="" hidden>
-            <div class="radio-testi"><b id="radio-nome"></b><span id="radio-titolo"></span></div>
-            <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-          </div>
-          <div class="radio-volume"><span>🔈</span><input type="range" id="radio-volume" min="0" max="100" aria-label="Volume"><span>🔊</span></div>
-          <div class="chips radio-chips" id="radio-stazioni"></div>
-        </div>
-      </div>
-      <div class="gioco-box">
-        <div class="gioco-tipo" id="gioco-tipo"></div>
-        <div class="gioco-testo" id="gioco-testo"></div>
-        <button class="btn-piccolo" id="gioco-sol" hidden>Mostra la soluzione</button>
-        <div class="gioco-risposta" id="gioco-risposta" hidden></div>
-      </div>
+    <section class="card" id="card-tragitti">
+      <h2>Casa → lavoro <small id="tr-fonte"></small></h2>
+      <div id="tr-mappa"></div>
+      <div class="tr-righe" id="tr-righe"></div>
+      <div class="nota-txt" id="tr-vuoto">Impostate casa e lavori per vedere percorsi e tempi. <button class="btn-piccolo" id="tr-imposta">Imposta</button></div>
+    </section>
+    <section class="card" id="card-bus">
+      <h2>Bus sotto casa <small>TPER in tempo reale</small></h2>
+      <div class="bus-lista" id="bus-lista"></div>
+      <div class="nota-txt" id="bus-vuoto">Scegliete le fermate vicino a casa. <button class="btn-piccolo" id="bus-imposta">Imposta</button></div>
     </section>
     <section class="card riempi" id="card-foto">
       <div id="carosello">
@@ -617,16 +613,17 @@
     </section>
     </div>
     <div class="col-cielo">
-      <section class="card" id="card-tragitti">
-        <h2>Casa → lavoro <small id="tr-fonte"></small></h2>
-        <div id="tr-mappa"></div>
-        <div class="tr-righe" id="tr-righe"></div>
-        <div class="nota-txt" id="tr-vuoto">Impostate casa e lavori per vedere percorsi e tempi. <button class="btn-piccolo" id="tr-imposta">Imposta</button></div>
-      </section>
-      <section class="card" id="card-bus">
-        <h2>Bus sotto casa <small>TPER in tempo reale</small></h2>
-        <div class="bus-lista" id="bus-lista"></div>
-        <div class="nota-txt" id="bus-vuoto">Scegliete le fermate vicino a casa. <button class="btn-piccolo" id="bus-imposta">Imposta</button></div>
+      <section class="card spesa-box" id="card-spesa"></section>
+      <section class="card" id="card-radio">
+      <div class="radio-testa">Radio <span id="radio-stato" class="pillola">spenta</span></div>
+      <div class="radio-ora">
+        <button type="button" id="radio-play" aria-label="Accendi">▶</button>
+        <img id="radio-logo" alt="" hidden>
+        <div class="radio-testi"><b id="radio-nome"></b><span id="radio-titolo"></span></div>
+        <div class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="radio-volume"><span>🔈</span><input type="range" id="radio-volume" min="0" max="100" aria-label="Volume"><span>🔊</span></div>
+      <div class="chips radio-chips" id="radio-stazioni"></div>
       </section>
     </div>
   </div>
@@ -816,16 +813,16 @@
   </div>
 </div>
 
-<script src="comune.js?v=40"></script>
-<script src="rete.js?v=40"></script>
-<script src="giorno.js?v=40"></script>
-<script src="radio.js?v=40"></script>
-<script src="forza4.js?v=40"></script>
+<script src="comune.js?v=41"></script>
+<script src="rete.js?v=41"></script>
+<script src="radio.js?v=41"></script>
+<script src="forza4.js?v=41"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=40"></script>
-<script src="bus.js?v=40"></script>
-<script src="telecomando.js?v=40"></script>
-<script src="gatto.js?v=40"></script>
+<script src="tragitti.js?v=41"></script>
+<script src="bus.js?v=41"></script>
+<script src="spesa.js?v=41"></script>
+<script src="telecomando.js?v=41"></script>
+<script src="gatto.js?v=41"></script>
 <script>
 
 // ================= orologio =================
@@ -1491,9 +1488,9 @@ $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPag
 window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaAttuale() * $("pagine").clientWidth; });
 
 // ================= avvio =================
-function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
+function ridisegna() { ridisegnaSpesa(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); avviaSpesa(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

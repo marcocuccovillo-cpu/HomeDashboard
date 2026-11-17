@@ -260,7 +260,8 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   if (window.ridisegna) ridisegna();
 }
 function puoApplicare() {
-  var tag = document.activeElement ? document.activeElement.tagName : "";
+  var a = document.activeElement, tag = a ? a.tagName : "";
+  if (a && a.classList && a.classList.contains("sp-input")) tag = "";   // il campo della spesa non viene toccato dagli aggiornamenti
   return !(window.occupato && occupato()) && !document.querySelector(".scuro.on") && tag !== "INPUT" && tag !== "TEXTAREA";
 }
 function b64(s) { return btoa(unescape(encodeURIComponent(s))); }

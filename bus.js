@@ -56,7 +56,7 @@ function disegnaBus() {
     pp.forEach(function (x) {
       var c = el("span", "bus-pass" + (x.min <= 2 ? " ora" : ""));
       var l = el("b"); l.textContent = x.linea;
-      var m = el("span"); m.textContent = x.min <= 0 ? "adesso" : x.min + " min";
+      var m = el("span"); m.textContent = x.min <= 0 ? "adesso" : x.min > 90 ? "alle " + x.ora : x.min + " min";
       c.title = (x.vivo ? "dal satellite" : "da orario") + " · " + x.ora;
       c.appendChild(l); c.appendChild(m);
       if (x.vivo) { var s = el("i", "bus-vivo"); s.title = "in tempo reale"; c.appendChild(s); }
