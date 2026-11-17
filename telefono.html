@@ -256,6 +256,33 @@
   .sp-vuota { color: var(--muted); font-size: 14px; padding: 8px 0; }
   .sp-presi { width: 100%; margin-top: 12px; border: 1px solid var(--line); background: none; border-radius: 12px; padding: 10px; font-size: 14px; color: var(--muted); }
 
+  /* --- turni: vista Mese --- */
+  .seg.vista button { padding: 8px 1px; font-size: 13.5px; }
+  .ms-testa { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .ms-titolo { flex: 1; border: 0; background: none; font-size: 19px; font-weight: 700; color: var(--ink); padding: 6px 0; }
+  .ms-nav { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--card); box-shadow: var(--ombra); font-size: 22px; color: var(--ink); }
+  .ms-griglia { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .ms-sett { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); padding-bottom: 2px; }
+  .ms-sett.fine { color: var(--accent); }
+  .ms-g { border: 0; background: var(--card); border-radius: 10px; padding: 4px 3px 5px; min-height: 66px; display: flex; flex-direction: column; gap: 2px;
+          box-shadow: var(--ombra); color: var(--ink); text-align: left; overflow: hidden; }
+  .ms-g.fuori { opacity: .3; } .ms-g.passato:not(.oggi):not(.fuori) { opacity: .62; }
+  .ms-g.insieme { background: color-mix(in srgb, #ff5f7a 12%, var(--card)); }
+  .ms-g.oggi { box-shadow: 0 0 0 2px var(--accent), var(--ombra); }
+  .ms-num { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; padding: 0 2px; }
+  .ms-g.oggi .ms-num { color: var(--accent); }
+  .ms-cuore { color: #e0245e; font-size: 11px; }
+  .ms-t { font-size: 9.5px; line-height: 1.35; border-radius: 4px; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: clip; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ms-t.p0 { background: var(--p0-soft); color: var(--p0); } .ms-t.p1 { background: var(--p1-soft); color: var(--p1); }
+  .ms-t.riposo { background: none; color: var(--done); text-align: center; }
+  .ms-ev { font-size: 9.5px; color: var(--accent); font-weight: 700; padding: 0 2px; margin-top: auto; }
+  #mese .legenda { margin-bottom: 8px; }
+  #mese .spiega { margin-top: 10px; }
+  .eg-cuore { color: #e0245e; font-size: 14px; margin: -4px 0 10px; }
+  .eg-turni { display: flex; gap: 8px; margin-bottom: 6px; }
+  .eg-turno { flex: 1; border: 0; border-radius: 14px; padding: 10px 12px; text-align: left; display: flex; flex-direction: column; gap: 2px; background: var(--pc-soft); }
+  .eg-turno span { font-size: 12.5px; color: var(--muted); } .eg-turno b { font-size: 19px; color: var(--pc); }
+
   /* --- appuntamenti --- */
   .app-piu { border: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 22px; line-height: 1; padding: 0; }
   .app-piu.piccolo { width: 26px; height: 26px; font-size: 17px; margin-left: 6px; background: var(--accent-soft); color: var(--accent); }
@@ -446,7 +473,8 @@
 
   <section class="scheda" id="s-turni">
     <div class="titolo"><h2>Turni</h2><button class="link" id="btn-nomi">Nomi e settimane</button></div>
-    <div class="seg vista" id="vista"><button type="button" data-v="giorni">Calendario<small>giorno per giorno</small></button><button type="button" data-v="A">Settimana A<small id="sub-A"></small></button><button type="button" data-v="B">Settimana B<small id="sub-B"></small></button></div>
+    <div class="seg vista" id="vista"><button type="button" data-v="mese">Mese<small>calendario</small></button><button type="button" data-v="giorni">Giorni<small>uno per uno</small></button><button type="button" data-v="A">Sett. A<small id="sub-A"></small></button><button type="button" data-v="B">Sett. B<small id="sub-B"></small></button></div>
+    <div id="mese" hidden></div>
     <div id="giorni"></div>
     <div id="sett-tipo" hidden>
       <div class="spiega-box" id="st-spiega"></div>
@@ -581,6 +609,12 @@
   </form>
 </div>
 
+<!-- un giorno della vista Mese -->
+<div class="velo" id="ed-giorno">
+  <div class="foglio"><h3 id="eg-titolo"></h3><div id="eg-corpo"></div>
+    <div class="azioni"><button type="button" class="btn chiudi" style="margin-left:auto">Chiudi</button></div></div>
+</div>
+
 <!-- appuntamento (lo stesso calendario del tablet) -->
 <div class="velo" id="ed-app">
   <form class="foglio">
@@ -630,14 +664,14 @@
   </div>
 </div>
 
-<script src="comune.js?v=47"></script>
-<script src="forza4.js?v=47"></script>
-<script src="giochi.js?v=47"></script>
-<script src="rete.js?v=47"></script>
-<script src="tragitti.js?v=47"></script>
-<script src="suoni.js?v=47"></script>
-<script src="telecomando.js?v=47"></script>
-<script src="spesa.js?v=47"></script>
+<script src="comune.js?v=48"></script>
+<script src="forza4.js?v=48"></script>
+<script src="giochi.js?v=48"></script>
+<script src="rete.js?v=48"></script>
+<script src="tragitti.js?v=48"></script>
+<script src="suoni.js?v=48"></script>
+<script src="telecomando.js?v=48"></script>
+<script src="spesa.js?v=48"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -664,21 +698,75 @@ function seg(id, val) { [].forEach.call($(id).children, function (b) { b.classLi
 [].forEach.call(document.querySelectorAll(".velo"), function (v) { v.classList.add("scuro"); });
 
 // ================= turni =================
-var vista = leggi("telefono_vista", "giorni");
+var vista = leggi("telefono_vista", "mese");
 function cambiaVista(v) {
   vista = v; salva("telefono_vista", v); seg("vista", v);
-  $("giorni").hidden = v !== "giorni"; $("sett-tipo").hidden = v === "giorni";
+  $("giorni").hidden = v !== "giorni"; $("mese").hidden = v !== "mese"; $("sett-tipo").hidden = v === "giorni" || v === "mese";
   disegnaTurni();
 }
-$("vista").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) cambiaVista(v); };
+$("vista").onclick = function (e) { var b = e.target.closest("button"); if (b) cambiaVista(b.getAttribute("data-v")); };
 function testoTurno(v) { return v ? ordinato(v).replace(/\s*\/\s*/g, "\n") : "Riposo"; }
 function breve(v) { return testoTurno(v).replace(/:00/g, ""); }   // "9:00–17:00" → "9–17"
 function disegnaTurni() {
   seg("vista", vista);
   var q = quale(lunedi(new Date()));
   $("sub-A").textContent = q === "A" ? "questa" : "prossima"; $("sub-B").textContent = q === "B" ? "questa" : "prossima";
-  if (vista === "giorni") disegnaGiorni(); else disegnaSettimanaTipo(vista);
+  if (vista === "mese") disegnaMese(); else if (vista === "giorni") disegnaGiorni(); else disegnaSettimanaTipo(vista);
 }
+// ---------------------------------------------------------------- vista Mese: la stessa grafica del calendario del tablet
+var meseTel = 0;   // spostamento rispetto al mese attuale
+function turnoMini(v) { return v ? (ordinato(v).replace(/:00/g, "").split(/\s*\/\s*/)[0] || v).slice(0, 7) : ""; }
+function disegnaMese() {
+  var box = $("mese"), oggi = new Date(), oggiK = iso(oggi), base = new Date(oggi.getFullYear(), oggi.getMonth() + meseTel, 1);
+  var inizio = lunedi(base), fine = new Date(base.getFullYear(), base.getMonth() + 1, 0), settimane = Math.ceil(((fine - inizio) / 864e5 + 1) / 7);
+  box.innerHTML = "";
+  var testa = el("div", "ms-testa"), indietro = el("button", "ms-nav"), avanti = el("button", "ms-nav"), t = el("button", "ms-titolo");
+  indietro.textContent = "‹"; avanti.textContent = "›"; [indietro, avanti, t].forEach(function (b) { b.type = "button"; });
+  t.textContent = MESI[base.getMonth()].charAt(0).toUpperCase() + MESI[base.getMonth()].slice(1) + " " + base.getFullYear();
+  indietro.onclick = function () { meseTel--; disegnaMese(); }; avanti.onclick = function () { meseTel++; disegnaMese(); }; t.onclick = function () { meseTel = 0; disegnaMese(); };
+  testa.appendChild(indietro); testa.appendChild(t); testa.appendChild(avanti); box.appendChild(testa);
+  box.appendChild(legenda());
+  var g = el("div", "ms-griglia");
+  GIORNI_LUN.forEach(function (n, i) { var h = el("div", "ms-sett" + (i > 4 ? " fine" : "")); h.textContent = n.charAt(0); g.appendChild(h); });
+  for (var k = 0; k < settimane * 7; k++) (function (d) {
+    var key = iso(d), ins = insieme(d), ev = appDelGiorno(key);
+    var c = el("button", "ms-g" + (d.getMonth() !== base.getMonth() ? " fuori" : "") + (key === oggiK ? " oggi" : "") + (key < oggiK ? " passato" : "") + (ins === "giorno" ? " insieme" : ""));
+    c.type = "button";
+    var n = el("div", "ms-num"); n.textContent = d.getDate();
+    if (ins) { var h = el("span", "ms-cuore"); h.textContent = ins === "giorno" ? "♥" : "♡"; n.appendChild(h); }
+    c.appendChild(n);
+    [0, 1].forEach(function (p) { var v = turno(d, p), r = el("div", "ms-t p" + p + (v ? "" : " riposo")); r.textContent = v ? turnoMini(v) : "·"; c.appendChild(r); });
+    if (ev.length) { var pt = el("div", "ms-ev"); pt.textContent = ev.length > 1 ? "● " + ev.length : "●"; c.appendChild(pt); }
+    c.onclick = function () { apriGiornoTel(key); };
+    g.appendChild(c);
+  })(piuGiorni(inizio, k));
+  box.appendChild(g);
+  var s = el("p", "spiega"); s.textContent = "Tocca un giorno per vedere turni e appuntamenti, cambiarli o aggiungerne."; box.appendChild(s);
+}
+function apriGiornoTel(key) {   // foglio con il dettaglio del giorno
+  var d = daIso(key), box = $("eg-corpo"), ins = insieme(d);
+  $("eg-titolo").textContent = GIORNI[d.getDay()].charAt(0).toUpperCase() + GIORNI[d.getDay()].slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];
+  box.innerHTML = "";
+  if (ins) { var c = el("div", "eg-cuore"); c.textContent = ins === "giorno" ? "♥ Liberi insieme tutto il giorno" : "♡ Serata libera insieme"; box.appendChild(c); }
+  var tt = el("div", "eg-turni");
+  [0, 1].forEach(function (p) {
+    var v = turno(d, p), b = el("button", "eg-turno p" + p); b.type = "button";
+    var n = el("span"); n.textContent = cfg.nomi[p]; var o = el("b"); o.textContent = v ? breve(v).replace(/\n/g, " · ") : "Riposo";
+    b.appendChild(n); b.appendChild(o);
+    b.onclick = function () { chiudi("ed-giorno"); modificaTurno({ modo: "data", d: d, p: p }); };
+    tt.appendChild(b);
+  });
+  box.appendChild(tt);
+  var lt = el("div", "etichetta"); lt.textContent = "Appuntamenti"; box.appendChild(lt);
+  var ev = appDelGiorno(key);
+  if (!ev.length) { var v0 = el("div", "app-vuoto"); v0.textContent = "Nessuno."; box.appendChild(v0); }
+  ev.forEach(function (e) { var r = rigaApp(e, false); var f = r.onclick; r.onclick = function () { chiudi("ed-giorno"); f(); }; box.appendChild(r); });
+  var piu = el("button", "btn pieno"); piu.type = "button"; piu.style.cssText = "width:100%;margin-top:12px"; piu.textContent = "+ Aggiungi un appuntamento";
+  piu.onclick = function () { chiudi("ed-giorno"); modificaApp(null, key); };
+  box.appendChild(piu);
+  apri("ed-giorno");
+}
+
 // barra delle 24 ore con i turni colorati (e la linea di "adesso" se è oggi)
 function barraGiorno(d, p, adesso) {
   var b = el("div", "barra");
