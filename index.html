@@ -375,6 +375,13 @@
   .bus-niente { font-size: 1.8vh; color: var(--muted); }
 
 
+  /* --- chi sta tornando (dal telefono) --- */
+  #rientri { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; flex-direction: column; gap: .8vh; align-items: center; pointer-events: none; }
+  .rientro { background: var(--card); border: 2px solid var(--pc, #d7263d); color: var(--ink); border-radius: 3vh; padding: .9vh 1.6vw; font-size: 2.2vh; font-weight: 500;
+             box-shadow: 0 6px 20px -6px rgba(0,0,0,.35); animation: rientra .4s ease-out; }
+  .rientro.p0 { --pc: var(--p0); } .rientro.p1 { --pc: var(--p1); }
+  @keyframes rientra { from { transform: translateY(-120%); opacity: 0; } }
+
   /* --- livelli sopra --- */
   .livello { position: fixed; inset: 0; display: none; z-index: 10; }
   .livello.on { display: block; }
@@ -790,15 +797,16 @@
   </div>
 </div>
 
-<script src="comune.js?v=30"></script>
-<script src="rete.js?v=30"></script>
-<script src="giorno.js?v=30"></script>
-<script src="radio.js?v=30"></script>
-<script src="forza4.js?v=30"></script>
+<script src="comune.js?v=31"></script>
+<script src="rete.js?v=31"></script>
+<script src="giorno.js?v=31"></script>
+<script src="radio.js?v=31"></script>
+<script src="forza4.js?v=31"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=30"></script>
-<script src="bus.js?v=30"></script>
-<script src="gatto.js?v=30"></script>
+<script src="tragitti.js?v=31"></script>
+<script src="bus.js?v=31"></script>
+<script src="telecomando.js?v=31"></script>
+<script src="gatto.js?v=31"></script>
 <script>
 
 // ================= orologio =================
@@ -1466,7 +1474,7 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }

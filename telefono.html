@@ -224,6 +224,27 @@
   .riga2 { display: flex; gap: 8px; flex-wrap: wrap; }
   .nota-txt { font-size: 13px; color: var(--muted); }
 
+  /* --- sto tornando --- */
+  .eroe .azioni-eroe { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; position: relative; z-index: 1; }
+  .eroe .azioni-eroe .cuore { margin-top: 0; }
+  #btn-torno { border: 0; background: #fff; color: #b8172d; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 10px -4px rgba(0,0,0,.3); }
+  .rientro-info { display: block; margin-top: 10px; font-size: 14px; background: rgba(255,255,255,.18); border-radius: 14px; padding: 8px 12px; position: relative; z-index: 1; }
+  .rientro-info button { border: 0; background: none; color: #fff; text-decoration: underline; font-size: 13px; padding: 0 0 0 6px; }
+  #rt-calcolo { text-align: center; margin: 10px 0 4px; }
+  #rt-calcolo b { display: block; font-size: 44px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+  #rt-calcolo span { color: var(--muted); font-size: 14px; }
+  .regola { display: flex; gap: 8px; justify-content: center; margin: 10px 0; }
+  .regola button { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 8px 16px; font-size: 15px; }
+  /* --- telecomando del tablet --- */
+  .tc-riga { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .tc-riga:first-of-type { border-top: 0; padding-top: 0; }
+  .tc-riga > b { font-size: 14px; min-width: 52px; }
+  .tc-riga select { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 14.5px; }
+  .tc-btn { border: 0; border-radius: 10px; background: var(--soft); padding: 8px 12px; font-size: 14px; font-weight: 500; }
+  .tc-btn.pieno { background: var(--accent); color: #fff; }
+  .tc-btn.fatto { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+  #tc-stato { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+
   /* --- rete di casa --- */
   .rete-num { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .rete-num div { background: var(--soft); border-radius: 14px; padding: 10px 12px; }
@@ -357,6 +378,14 @@
   <section class="scheda" id="s-oggi">
     <div class="eroe" id="eroe"></div>
     <div id="oggi-turni"></div>
+    <div class="card" id="card-tc">
+      <div class="titolo" style="margin-top:0"><h2>Tablet di casa</h2><span class="spiega" style="margin:0">telecomando</span></div>
+      <div class="tc-riga"><b>Radio</b><select id="tc-stazione"></select><button type="button" class="tc-btn pieno" id="tc-radio">▶</button>
+        <button type="button" class="tc-btn" data-vol="-0.15" aria-label="Volume giù">−</button><button type="button" class="tc-btn" data-vol="0.15" aria-label="Volume su">+</button></div>
+      <div class="tc-riga"><b>Timer</b><button type="button" class="tc-btn" data-min="5">5′</button><button type="button" class="tc-btn" data-min="10">10′</button><button type="button" class="tc-btn" data-min="15">15′</button><button type="button" class="tc-btn" data-min="30">30′</button><button type="button" class="tc-btn" data-min="60">1 h</button></div>
+      <div class="tc-riga"><b>Gatto</b><button type="button" class="tc-btn" id="tc-gatto">Fallo miagolare con un bacio ♥</button></div>
+      <p id="tc-stato"></p>
+    </div>
     <div class="card">
       <div class="titolo" style="margin-top:0"><h2>Forza 4</h2><span class="spiega" style="margin:0">tocca una colonna</span></div>
       <div class="f4-info" id="f4-info"></div>
@@ -483,6 +512,17 @@
   </form>
 </div>
 
+<!-- sto tornando -->
+<div class="velo" id="ed-rientro">
+  <form class="foglio">
+    <h3 id="rt-titolo">Sto tornando</h3>
+    <div class="seg" id="rt-mezzo"><button type="button" data-v="auto">🚗 Auto</button><button type="button" data-v="bici">🚲 Bici</button><button type="button" data-v="piedi">🚶 A piedi</button></div>
+    <div id="rt-calcolo"><b id="rt-ora">…</b><span id="rt-come">calcolo il percorso…</span></div>
+    <div class="regola"><button type="button" data-d="-5">−5 min</button><button type="button" data-d="5">+5 min</button><button type="button" data-d="15">+15 min</button></div>
+    <div class="azioni"><button type="button" class="btn chiudi sx">Annulla</button><button class="btn pieno" id="rt-invia">Avvisa</button></div>
+  </form>
+</div>
+
 <!-- modifica bigliettino -->
 <div class="velo" id="ed-nota">
   <form class="foglio">
@@ -521,10 +561,12 @@
   </div>
 </div>
 
-<script src="comune.js?v=30"></script>
-<script src="forza4.js?v=30"></script>
-<script src="giochi.js?v=30"></script>
-<script src="rete.js?v=30"></script>
+<script src="comune.js?v=31"></script>
+<script src="forza4.js?v=31"></script>
+<script src="giochi.js?v=31"></script>
+<script src="rete.js?v=31"></script>
+<script src="tragitti.js?v=31"></script>
+<script src="telecomando.js?v=31"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -756,7 +798,17 @@ function disegnaOggi() {
     var diff = Math.round((prox - oggi0) / 864e5);
     c.textContent = "♥ Prossimo giorno insieme: " + (diff === 1 ? "domani" : GIORNI[prox.getDay()] + " " + prox.getDate() + (diff > 6 ? " " + MESI[prox.getMonth()].slice(0, 3) : ""));
   } else c.hidden = true;
-  e.appendChild(c);
+  var az = el("div", "azioni-eroe"); az.appendChild(c);
+  var bt = el("button"); bt.id = "btn-torno"; bt.type = "button"; bt.textContent = "🏠 Sto tornando"; bt.onclick = apriRientro;
+  if (io !== null && rientroDi(io) && Date.now() < rientroDi(io).arrivo) bt.hidden = true;
+  az.appendChild(bt); e.appendChild(az);
+  [0, 1].forEach(function (p) {   // chi sta tornando (io o l'altro)
+    var r = rientroDi(p); if (!r) return;
+    var x = el("span", "rientro-info"), arrivato = Date.now() >= r.arrivo;
+    x.textContent = (p === io ? "Hai avvisato: arrivi" : cfg.nomi[p] + " arriva") + (arrivato ? " adesso ♥" : " alle " + oraHM(r.arrivo) + " (" + traQuanto(r.arrivo) + ")");
+    if (p === io) { var a = el("button"); a.type = "button"; a.textContent = arrivato ? "ok" : "annulla"; a.onclick = function () { segnaRientro(io, null); disegnaOggi(); }; x.appendChild(a); }
+    e.appendChild(x);
+  });
   var box = $("oggi-turni"); box.innerHTML = "";
   [0, 1].forEach(function (p) {
     var v = turno(d, p), b = el("button", "persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
@@ -850,6 +902,84 @@ $("foto-input").onchange = function () {
     }).then(function () { fatte++; $("foto-stato").textContent = fatte < files.length ? "Carico " + (fatte + 1) + " di " + files.length + "…" : "Fatto ✓"; });
   }, Promise.resolve()).catch(function () { alert("Non sono riuscito a caricare tutte le foto. Riprova."); }).then(disegnaFoto);
 };
+
+// ================= sto tornando =================
+// Ora di arrivo: dalla posizione del telefono (se la dai) a casa, altrimenti il tragitto lavoro → casa.
+var rt = { min: null, mezzo: "auto", base: null, da: "" };
+var VEL_PIEDI = 4.5;   // km/h
+function apriRientro() {
+  if (io === null) { apriChat(); return; }   // prima bisogna sapere chi sei (lo chiede la chat)
+  var t = trCfg();
+  rt.mezzo = t.mezzo[io] || "auto"; rt.base = null; rt.min = null;
+  $("rt-invia").textContent = "Avvisa " + cfg.nomi[1 - io];
+  seg("rt-mezzo", rt.mezzo); apri("ed-rientro"); calcolaRientro();
+}
+function mostraRientro() {
+  if (rt.min == null) { $("rt-ora").textContent = "…"; return; }
+  $("rt-ora").textContent = oraHM(Date.now() + rt.min * 60000);
+  $("rt-come").textContent = "circa " + rt.min + " min" + (rt.da ? " · " + rt.da : "");
+}
+function calcolaRientro() {
+  var t = trCfg(); rt.min = null; mostraRientro();
+  if (!t.casa) { rt.min = 20; rt.da = "stima a mano (manca l'indirizzo di casa nel tablet)"; mostraRientro(); return; }
+  $("rt-come").textContent = "calcolo il percorso…";
+  function daQui() {
+    return new Promise(function (ok, ko) {
+      if (!navigator.geolocation) return ko();
+      navigator.geolocation.getCurrentPosition(function (p) { ok({ lat: p.coords.latitude, lon: p.coords.longitude }); }, ko, { timeout: 8000, maximumAge: 120000 });
+    });
+  }
+  function tempo(da, etichetta) {
+    if (rt.mezzo === "piedi") {
+      var dx = (da.lon - t.casa.lon) * 79, dy = (da.lat - t.casa.lat) * 111, km = Math.sqrt(dx * dx + dy * dy) * 1.3;
+      return Promise.resolve({ min: Math.max(2, Math.round(km / VEL_PIEDI * 60)), da: etichetta });
+    }
+    return percorso(da, t.casa, rt.mezzo).then(function (r) { return { min: Math.max(1, Math.round(r.sec / 60)), da: etichetta + (r.traffico && r.ritardo >= 60 ? " · traffico +" + Math.round(r.ritardo / 60) + " min" : "") }; });
+  }
+  var lavoro = t.lavoro[io];
+  daQui().then(function (pos) { return tempo(pos, "da dove sei"); })
+    .catch(function () { if (!lavoro) throw new Error("niente"); return tempo(lavoro, "dal lavoro"); })
+    .then(function (r) { rt.min = r.min; rt.da = r.da; }, function () { rt.min = 20; rt.da = "stima a mano: correggila con i pulsanti"; })
+    .then(mostraRientro);
+}
+$("rt-mezzo").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { rt.mezzo = v; seg("rt-mezzo", v); calcolaRientro(); } };
+[].forEach.call(document.querySelectorAll("#ed-rientro .regola button"), function (b) {
+  b.onclick = function () { if (rt.min == null) return; rt.min = Math.max(1, rt.min + (+b.getAttribute("data-d"))); mostraRientro(); };
+});
+$("ed-rientro").querySelector("form").onsubmit = function (e) {
+  e.preventDefault(); if (rt.min == null) return;
+  var arrivo = Date.now() + rt.min * 60000, ico = rt.mezzo === "bici" ? "🚲" : rt.mezzo === "piedi" ? "🚶" : "🚗";
+  segnaRientro(io, { arrivo: arrivo, min: rt.min, mezzo: rt.mezzo, da: io, t: Date.now() });
+  inviaChat("🏠 Sto tornando! Arrivo verso le " + oraHM(arrivo) + " (" + ico + " circa " + rt.min + " min)");
+  chiudi("ed-rientro"); disegnaOggi();
+};
+
+// ================= telecomando del tablet =================
+function disegnaTelecomando() {
+  var st = cfg.statoTablet, sel = $("tc-stazione"), nomi = st && st.stazioni || ["Radio Deejay"];
+  if (sel.options.length !== nomi.length) { sel.innerHTML = ""; nomi.forEach(function (n, i) { var o = el("option"); o.value = i; o.textContent = n; sel.appendChild(o); }); }
+  if (st && document.activeElement !== sel) sel.value = st.stazione;
+  $("tc-radio").textContent = st && st.radio ? "■" : "▶";
+  $("tc-stato").textContent = !st ? "Il tablet manda il suo stato quando viene aperto con la nuova versione."
+    : (st.radio ? "📻 " + nomi[st.stazione] + " in onda · volume " + st.volume + "%" : "Radio spenta") + (st.timer ? " · " + st.timer + (st.timer === 1 ? " timer attivo" : " timer attivi") : "") +
+      " · aggiornato " + fraQuanto(st.quando);
+}
+function comando(cosa, dati, bottone) {
+  if (!mandaComando(cosa, dati)) { $("tc-stato").textContent = "Sblocca prima con la password."; return; }
+  if (bottone) { var t = bottone.textContent; bottone.classList.add("fatto"); setTimeout(function () { bottone.classList.remove("fatto"); bottone.textContent = t; }, 2500); }
+  $("tc-stato").textContent = "Inviato ✓ il tablet lo esegue entro una decina di secondi.";
+}
+$("tc-radio").onclick = function () {
+  var st = cfg.statoTablet, accesa = st && st.radio;
+  comando("radio", { accendi: !accesa, stazione: +$("tc-stazione").value }, this);
+  if (st) { st.radio = !accesa; $("tc-radio").textContent = st.radio ? "■" : "▶"; }
+};
+$("tc-stazione").onchange = function () { comando("radio", { accendi: true, stazione: +this.value }); };
+[].forEach.call(document.querySelectorAll("#card-tc [data-vol]"), function (b) { b.onclick = function () { comando("volume", { passo: +b.getAttribute("data-vol") }, b); }; });
+[].forEach.call(document.querySelectorAll("#card-tc [data-min]"), function (b) {
+  b.onclick = function () { comando("timer", { min: +b.getAttribute("data-min"), nome: io !== null ? "da " + cfg.nomi[io] : "" }, b); };
+});
+$("tc-gatto").onclick = function () { comando("gatto", {}, this); };
 
 // ================= rete di casa =================
 // Velocità, latenza e operatore li misura il tablet (sempre sul Wi-Fi di casa) e li condivide in cfg.reteCasa;
@@ -1004,6 +1134,7 @@ $("chat-form").onsubmit = function (e) {
 // ================= collegamento =================
 function mostraStatoSync() {
   disegnaChat();   // dopo ogni sincronizzazione: nuovi messaggi e spunte
+  if (!document.querySelector(".velo.on")) { disegnaOggi(); disegnaTelecomando(); }   // chi sta tornando e stato del tablet
   var s = $("stato");
   if (!chiaveCripto) { s.className = ""; s.textContent = "Bloccata"; $("imp-stato").textContent = "Serve la password di casa."; return; }
   if (erroreSync) { s.className = "err"; s.textContent = "Errore"; $("imp-stato").textContent = erroreSync; return; }
@@ -1023,7 +1154,7 @@ $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Pe
 function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
 
 // ================= avvio =================
-function ridisegna() { disegnaReteTel(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
+function ridisegna() { disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
 avviaGiochi();
 mostraScheda(scheda);
 cambiaVista(vista);
