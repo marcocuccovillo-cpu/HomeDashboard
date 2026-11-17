@@ -107,7 +107,7 @@ function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando �
     box.appendChild(d);
     var m = Math.round((r.arrivo - Date.now()) / 60000);
     if (m === 1 && disegnaRientri.avvisato !== r.t && window.fumetto && !$("gatto-strato").hidden) {   // il gatto lo aspetta
-      disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Arriva " + cfg.nomi[p] + "! ♥", 8000);
+      disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Miao! Arriva " + cfg.nomi[p] + "! ♥", 8000);
     }
   });
 }
@@ -117,6 +117,7 @@ function controllaPensieriTablet() {   // cuore grande sul tablet: "Marco pensa 
   if (!box) { box = el("div"); box.id = "pensiero-tab"; document.body.appendChild(box); box.onclick = function () { box.classList.remove("on"); }; }
   box.innerHTML = '<div class="cuore-grande">♥</div><div class="testo"></div>';
   box.querySelector(".testo").textContent = cfg.nomi[x.da] + " sta pensando a " + cfg.nomi[1 - x.da];
+  if (window.suonaPensiero) suonaPensiero();
   box.className = "on p" + x.da;
   for (var i = 0; i < 14; i++) (function (i) {   // pioggia di cuoricini
     setTimeout(function () {

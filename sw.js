@@ -2,8 +2,8 @@
 // Pagina e icone: prima la rete (così gli aggiornamenti arrivano subito), poi la copia salvata.
 // Font Google: prima la copia salvata. Meteo: sempre dalla rete.
 // Ad ogni rilascio: alzare la versione qui e il ?v= degli script in index.html e telefono.html.
-var CACHE = "homedashboard-v44";
-var BASE = ["./", "./index.html", "./manifest.webmanifest", "./comune.js", "./rete.js", "./radio.js", "./gatto.js", "./forza4.js", "./giochi.js", "./tragitti.js", "./bus.js", "./spesa.js", "./giochi.js", "./calendario.js", "./telecomando.js", "./telefono.html", "./telefono.webmanifest", "./icone/icona-192.png", "./icone/icona-512.png", "./icone/icona-180.png"];
+var CACHE = "homedashboard-v45";
+var BASE = ["./", "./index.html", "./manifest.webmanifest", "./comune.js", "./rete.js", "./radio.js", "./gatto.js", "./forza4.js", "./giochi.js", "./tragitti.js", "./bus.js", "./spesa.js", "./giochi.js", "./calendario.js", "./suoni.js", "./telecomando.js", "./telefono.html", "./telefono.webmanifest", "./icone/icona-192.png", "./icone/icona-512.png", "./icone/icona-180.png"];
 
 // install: cache "reload" = mai copie vecchie dalla cache del browser
 self.addEventListener("install", function (e) {

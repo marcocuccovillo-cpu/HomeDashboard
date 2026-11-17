@@ -603,13 +603,14 @@
   </div>
 </div>
 
-<script src="comune.js?v=44"></script>
-<script src="forza4.js?v=44"></script>
-<script src="giochi.js?v=44"></script>
-<script src="rete.js?v=44"></script>
-<script src="tragitti.js?v=44"></script>
-<script src="telecomando.js?v=44"></script>
-<script src="spesa.js?v=44"></script>
+<script src="comune.js?v=45"></script>
+<script src="forza4.js?v=45"></script>
+<script src="giochi.js?v=45"></script>
+<script src="rete.js?v=45"></script>
+<script src="tragitti.js?v=45"></script>
+<script src="suoni.js?v=45"></script>
+<script src="telecomando.js?v=45"></script>
+<script src="spesa.js?v=45"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1019,6 +1020,7 @@ function inviaPensiero(b) {
   if (!mandaPensiero(io)) { alert("Sblocca prima con la password."); return; }
   inviaPensiero.ultimo = Date.now();
   if (navigator.vibrate) navigator.vibrate(40);
+  if (window.suonaPensieroInviato) suonaPensieroInviato();
   if (b) { b.classList.add("inviato"); b.textContent = "Inviato ♥"; }
   setTimeout(disegnaOggi, 2600);
 }
@@ -1030,6 +1032,7 @@ function controllaPensieri() {   // un cuore dall'altro: schermata grande e vibr
   $("pensiero-ora").textContent = (n.length > 1 ? n.length + " cuori · " : "") + "alle " + d.getHours() + ":" + due(d.getMinutes());
   box.classList.add("on");
   if (navigator.vibrate) navigator.vibrate([90, 70, 90, 70, 260]);
+  if (window.suonaPensiero) suonaPensiero();
   for (var i = 0; i < 12; i++) (function (i) {
     setTimeout(function () { var c = el("span", "cuoricino-volante"); c.textContent = "♥"; c.style.left = (5 + Math.random() * 90) + "%"; box.appendChild(c); setTimeout(function () { c.remove(); }, 3500); }, i * 200);
   })(i);

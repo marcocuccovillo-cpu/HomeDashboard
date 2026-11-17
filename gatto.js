@@ -55,7 +55,14 @@ function umore() {
   var festa = window.insieme && insieme(new Date()) === "giorno";
   return { sonno: notte || tutti, freddo: freddo, festa: festa, perche: notte ? "è notte" : tutti ? "siete al lavoro" : "" };
 }
+function voceGatto(testo) {   // se nel fumetto miagola, miagola davvero
+  if (!window.miagola || $("gatto-strato").hidden) return;
+  if (/MIAO/.test(testo)) miagola("forte");
+  else if (/mrrp/i.test(testo)) miagola("mrrp");
+  else if (/miao/i.test(testo)) miagola("miao");
+}
 function fumetto(testo, ms) {
+  voceGatto(testo);
   var b = $("gatto-fumetto"); b.textContent = testo; b.hidden = false;
   clearTimeout(fumetto.t); fumetto.t = setTimeout(function () { b.hidden = true; }, ms || 2500);
 }
@@ -273,7 +280,7 @@ function avviaPresa() {
 }
 function coccola() {
   G.attivita = null; G.coccole = Date.now() + 6000; G.stato = "seduto"; G.fino = Date.now() + 6000;
-  fumetto(umore().sonno ? "prrr… zzz" : "prrr ♥"); for (var i = 0; i < 4; i++) setTimeout(cuoricino, i * 250);
+  fumetto(umore().sonno ? "prrr… zzz" : "prrr ♥"); if (window.fusa) fusa(2.6); for (var i = 0; i < 4; i++) setTimeout(cuoricino, i * 250);
 }
 function saltaGatto() { G.attivita = null; G.salto = 10; G.stato = "seduto"; G.fino = Date.now() + 5000; fumetto("MIAO! Il timer!", 4000); }
 
