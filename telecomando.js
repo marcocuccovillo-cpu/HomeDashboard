@@ -114,6 +114,7 @@ function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando Â
 function controllaPensieriTablet() {   // cuore grande sul tablet: "Marco pensa a Roberta"
   var n = pensieriNuovi("pensieri_visti_tablet"); if (!n.length) return;
   var x = n[n.length - 1], box = $("pensiero-tab");
+  if (window.acquarioCuore) acquarioCuore();   // anche nell'acquario sale una bolla a cuore
   if (!box) { box = el("div"); box.id = "pensiero-tab"; document.body.appendChild(box); box.onclick = function () { box.classList.remove("on"); }; }
   box.innerHTML = '<div class="cuore-grande">â™¥</div><div class="testo"></div>';
   box.querySelector(".testo").textContent = cfg.nomi[x.da] + " sta pensando a " + cfg.nomi[1 - x.da];

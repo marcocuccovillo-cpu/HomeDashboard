@@ -386,9 +386,19 @@
   @keyframes compare { from { opacity: 0; } }
   @keyframes sale-cuore { to { transform: translateY(-115vh) rotate(25deg); opacity: 0; } }
 
-  /* --- pagina 3: per ora vuota --- */
-  #pagina-3 { display: grid; place-items: center; }
-  .pagina-vuota { color: var(--muted); font-size: 2.2vh; text-align: center; opacity: .6; }
+  /* --- pagina 3: griglia 3×3, l'acquario prende 2 colonne e 2 righe --- */
+  .griglia3 { height: 100%; display: grid; gap: 14px; padding: 14px 14px 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); }
+  #card-acquario { grid-column: 1 / 3; grid-row: 1 / 3; padding: 0; overflow: hidden; position: relative; background: #06102a; border: 0;
+                   box-shadow: 0 0 0 .5vh #2b3446, 0 0 0 .8vh rgba(255,255,255,.08), 0 1.6vh 3vh -1.2vh rgba(0,0,0,.45); }
+  .acq-vasca { position: absolute; inset: 0; }
+  #acquario { display: block; image-rendering: pixelated; cursor: pointer; }
+  .acq-testa { position: absolute; left: 1.6vh; right: 1.6vh; top: 1.4vh; display: flex; align-items: center; gap: 1vw; pointer-events: none; }
+  .acq-testa b { font-size: 2.3vh; font-weight: 600; color: #fff; text-shadow: 0 .2vh .6vh rgba(0,0,0,.45); }
+  #acq-info, #acq-prossimo { font-size: 1.6vh; color: #fff; background: rgba(6,16,42,.45); padding: .4vh .9vw; border-radius: 2vh; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  #acq-prossimo { margin-left: auto; }
+  .acq-vetro { position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+               background: linear-gradient(115deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 70%, rgba(255,255,255,.06) 100%); }
+  .spazio3 { border: 2px dashed var(--line); border-radius: 18px; opacity: .55; }
 
   /* --- chi sta tornando (dal telefono) --- */
   #rientri { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; flex-direction: column; gap: .8vh; align-items: center; pointer-events: none; }
@@ -631,9 +641,20 @@
     </div>
   </div>
 </div>
-<!-- terza schermata: per ora vuota -->
+<!-- terza schermata: l'acquario (2×2) e spazio per altro -->
 <div class="pagina" id="pagina-3">
-  <div class="pagina-vuota">♥<br>Pagina libera</div>
+  <div class="griglia3">
+    <section class="card" id="card-acquario">
+      <div class="acq-vasca"><canvas id="acquario" aria-label="Acquario: tocca l'acqua per dare da mangiare ai pesci"></canvas></div>
+      <div class="acq-vetro"></div>
+      <div class="acq-testa"><b>Acquario</b><span id="acq-info"></span><span id="acq-prossimo"></span></div>
+    </section>
+    <div class="spazio3" style="grid-column:3;grid-row:1"></div>
+    <div class="spazio3" style="grid-column:3;grid-row:2"></div>
+    <div class="spazio3" style="grid-column:1;grid-row:3"></div>
+    <div class="spazio3" style="grid-column:2;grid-row:3"></div>
+    <div class="spazio3" style="grid-column:3;grid-row:3"></div>
+  </div>
 </div>
 </div>
 <!-- il gatto di casa, sopra tutta l'interfaccia -->
@@ -816,16 +837,17 @@
   </div>
 </div>
 
-<script src="comune.js?v=38"></script>
-<script src="rete.js?v=38"></script>
-<script src="giorno.js?v=38"></script>
-<script src="radio.js?v=38"></script>
-<script src="forza4.js?v=38"></script>
+<script src="comune.js?v=39"></script>
+<script src="rete.js?v=39"></script>
+<script src="giorno.js?v=39"></script>
+<script src="radio.js?v=39"></script>
+<script src="forza4.js?v=39"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=38"></script>
-<script src="bus.js?v=38"></script>
-<script src="telecomando.js?v=38"></script>
-<script src="gatto.js?v=38"></script>
+<script src="tragitti.js?v=39"></script>
+<script src="bus.js?v=39"></script>
+<script src="telecomando.js?v=39"></script>
+<script src="acquario.js?v=39"></script>
+<script src="gatto.js?v=39"></script>
 <script>
 
 // ================= orologio =================
@@ -1493,7 +1515,7 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
-tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
+tieniAcceso(); avviaCarosello(); avviaRete(); avviaGiorno(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); avviaAcquario(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
 function dopoSblocco() { sincronizzaFoto(); leggiDispositivi(); }
