@@ -6,6 +6,10 @@ var GIOCO = leggi("telefono_gioco", "tris");
 if (["tris", "dama", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
 
 function chiSono() { return window.io === null || window.io === undefined ? null : io; }
+// Sul tablet (pagina 3, sala giochi) chi è davanti allo schermo muove per chi è di turno, come in Forza 4.
+var SUL_TABLET = !!document.getElementById("sala-giochi");
+function giocaPer(s) { return SUL_TABLET ? s.turno : chiSono(); }
+function ridisegnaGiochi() { if (window.disegnaGiochi) disegnaGiochi(); if (window.disegnaSala) disegnaSala(); }
 function scegliChi(box, poi) {   // la prima volta: chi usa questo telefono? (lo stesso della chat)
   var c = el("div", "chi-sei"), p = el("p"); p.textContent = "Chi usa questo telefono?"; c.appendChild(p);
   var r = el("div", "riga2");
@@ -17,7 +21,7 @@ function scegliChi(box, poi) {   // la prima volta: chi usa questo telefono? (lo
   c.appendChild(r); box.appendChild(c);
 }
 function infoPartita(box, s, rivincita) {   // "Tocca a…" / "Ha vinto…" + punteggio + rivincita
-  var nomi = cfg.nomi, me = chiSono(), t = el("span", "f4-turno");
+  var nomi = cfg.nomi, me = SUL_TABLET ? null : chiSono(), t = el("span", "f4-turno");
   if (s.vincitore === "pari") t.textContent = "Pareggio!";
   else if (s.vincitore !== null) { t.textContent = (s.vincitore === me ? "Hai vinto! 🎉" : "Ha vinto " + nomi[s.vincitore]); t.className += " p" + s.vincitore; }
   else { t.textContent = s.turno === me ? "Tocca a te" : "Tocca a " + nomi[s.turno]; t.className += " p" + s.turno; }
@@ -25,7 +29,7 @@ function infoPartita(box, s, rivincita) {   // "Tocca a…" / "Ha vinto…" + pu
   box.appendChild(t); box.appendChild(p);
   if (s.vincitore !== null) {
     var b = el("button", "f4-rivincita"); b.type = "button"; b.textContent = "Rivincita";
-    b.onclick = function () { rivincita(); disegnaGiochi(); };
+    b.onclick = function () { rivincita(); ridisegnaGiochi(); };
     box.appendChild(b);
   }
 }
@@ -40,14 +44,14 @@ function trisNuova(primo) {
 // partita vuota solo da mostrare: si salva alla prima mossa, così non copre una mossa dell'altro non ancora arrivata
 function trisStato() { return cfg.tris && typeof cfg.tris.celle === "string" && cfg.tris.celle.length === 9 ? cfg.tris : trisNuova(0); }
 function trisMuovi(i) {
-  var s = trisStato(); if (s.vincitore !== null || s.celle.charAt(i) !== "." || s.turno !== chiSono()) return;
+  var s = trisStato(); if (s.vincitore !== null || s.celle.charAt(i) !== "." || s.turno !== giocaPer(s)) return;
   var n = JSON.parse(JSON.stringify(s));
   n.celle = s.celle.substr(0, i) + s.turno + s.celle.substr(i + 1); n.ultima = i;
   var l = TRIS_LINEE.filter(function (x) { return x.every(function (k) { return n.celle.charAt(k) === String(s.turno); }); })[0];
   if (l) { n.vincitore = s.turno; n.vincenti = l; n.punti[s.turno]++; }
   else if (n.celle.indexOf(".") < 0) n.vincitore = "pari";
   else n.turno = 1 - s.turno;
-  cfg.tris = n; salvaCfg(); disegnaGiochi();
+  cfg.tris = n; salvaCfg(); ridisegnaGiochi();
 }
 function disegnaTris(box) {
   var s = trisStato(), info = el("div", "f4-info"), g = el("div", "tris-griglia");
@@ -113,13 +117,13 @@ function damaMuovi(m) {
 }
 var damaSel = -1;
 function disegnaDama(box) {
-  var s = damaStato(), me = chiSono(), info = el("div", "f4-info");
+  var s = damaStato(), me = giocaPer(s), info = el("div", "f4-info");
   infoPartita(info, s, function () { var v = damaStato(); cfg.dama = damaNuova(primoRivincita(v)); salvaCfg(); damaSel = -1; });
   box.appendChild(info);
   var mosse = s.vincitore === null && s.turno === me ? damaMosse(s, me) : [];
   if (s.cattura >= 0) damaSel = s.cattura;
   var dest = mosse.filter(function (m) { return m.da === damaSel; });
-  var g = el("div", "dama-griglia"), giro = me === 1;   // ognuno vede le sue pedine in basso
+  var g = el("div", "dama-griglia"), giro = !SUL_TABLET && me === 1;   // ognuno vede le sue pedine in basso
   for (var k = 0; k < 64; k++) (function (k) {
     var i = giro ? 63 - k : k, r = Math.floor(i / 8), c = i % 8, v = s.celle.charAt(i), scura = (r + c) % 2 === 1;
     var cl = "dama-c" + (scura ? " scura" : "") + (i === damaSel ? " sel" : "") + (s.ultima && s.ultima.indexOf(i) >= 0 ? " ultima" : "");
@@ -129,9 +133,9 @@ function disegnaDama(box) {
     var b = el("button", cl); b.type = "button";
     if (v !== ".") { var p = el("i", "pedina p" + diChi(v) + (eDama(v) ? " re" : "")); b.appendChild(p); }
     b.onclick = function () {
-      if (d) { damaMuovi(d); damaSel = damaStato().cattura; disegnaGiochi(); return; }
+      if (d) { damaMuovi(d); damaSel = damaStato().cattura; ridisegnaGiochi(); return; }
       if (s.cattura >= 0) return;
-      damaSel = mosse.some(function (m) { return m.da === i; }) ? (damaSel === i ? -1 : i) : -1; disegnaGiochi();
+      damaSel = mosse.some(function (m) { return m.da === i; }) ? (damaSel === i ? -1 : i) : -1; ridisegnaGiochi();
     };
     g.appendChild(b);
   })(k);
@@ -170,7 +174,7 @@ function scorrimento(el_, fn) {   // dito che scorre: su, giù, sinistra, destra
 }
 document.addEventListener("keydown", function (e) {   // anche con le frecce (per provarlo dal computer)
   var k = { ArrowUp: "su", ArrowDown: "g", ArrowLeft: "s", ArrowRight: "d" }[e.key];
-  if (!k || scheda !== "giochi") return;
+  if (!k || typeof scheda === "undefined" || scheda !== "giochi") return;
   e.preventDefault();
   if (GIOCO === "2048") g48Muovi(k); else if (GIOCO === "snake") SN.vuole = k;
 });
@@ -278,6 +282,31 @@ function disegnaSnake(box) {
 }
 
 // ================================================================ scheda
+// ================================================================ sala giochi del tablet (pagina 3)
+function disegnaSala() {
+  if (!SUL_TABLET) return;
+  var t = $("sala-tris"), d = $("sala-dama"), c = $("sala-classifica");
+  t.innerHTML = ""; disegnaTris(t);
+  d.innerHTML = ""; disegnaDama(d);
+  c.innerHTML = "";
+  var giochi = [["Forza 4", cfg.forza4 && cfg.forza4.punti], ["Tris", cfg.tris && cfg.tris.punti], ["Dama", cfg.dama && cfg.dama.punti],
+                ["2048 · record", record("2048")], ["Snake · record", record("snake")]];
+  var vinte = [0, 0], testa = el("div", "cl-riga cl-nomi"); testa.appendChild(el("span"));
+  [0, 1].forEach(function (q) { var n = el("b", "cl-p p" + q); n.textContent = cfg.nomi[q].split(" ")[0]; testa.appendChild(n); });
+  c.appendChild(testa);
+  giochi.forEach(function (x) {
+    var p = x[1] || [0, 0], r = el("div", "cl-riga"), n = el("span", "cl-gioco"); n.textContent = x[0]; r.appendChild(n);
+    [0, 1].forEach(function (q) {
+      var v = el("b", "cl-p p" + q + (p[q] > p[1 - q] ? " primo" : "")); v.textContent = (p[q] > p[1 - q] ? "👑 " : "") + p[q]; r.appendChild(v);
+    });
+    if (p[0] > p[1]) vinte[0]++; else if (p[1] > p[0]) vinte[1]++;
+    c.appendChild(r);
+  });
+  var tot = el("div", "cl-tot");
+  tot.textContent = vinte[0] === vinte[1] ? "Siete pari! 🤝" : "In testa: " + cfg.nomi[vinte[0] > vinte[1] ? 0 : 1] + " (" + Math.max(vinte[0], vinte[1]) + " giochi su 5)";
+  c.appendChild(tot);
+}
+
 function disegnaGiochi() {
   var box = $("giochi-box"); if (!box) return;
   [].forEach.call($("giochi-scelta").children, function (b) { b.classList.toggle("sel", b.getAttribute("data-v") === GIOCO); });
