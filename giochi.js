@@ -287,7 +287,16 @@ function disegnaConsoleTel(box) {
   chi.appendChild(cambia); c.appendChild(chi);
   var b = el("button", "btn pieno"); b.type = "button"; b.textContent = "Collega il joypad"; b.onclick = collegaJoypad;
   var st = el("p"); st.id = "jp-stato"; st.textContent = JP.stato || "";
-  c.appendChild(b); c.appendChild(st); box.appendChild(c);
+  c.appendChild(b); c.appendChild(st);
+  if (JP.diagnosi) {   // il collegamento diretto non è riuscito: suggerimenti e un secondo tentativo
+    var aiuto = el("div"); aiuto.style.cssText = "text-align:left;font-size:13.5px;color:var(--muted);margin-top:6px";
+    aiuto.innerHTML = "<b>Prova così:</b><br>• stesso Wi‑Fi del tablet (non quello ospiti), dati mobili spenti per un attimo<br>• niente VPN o app che bloccano la pubblicità<br>• oppure il pulsante qui sotto: chiede il microfono solo per mostrare al tablet l'indirizzo di rete vero (non registra niente)";
+    var r = el("button", "btn"); r.type = "button"; r.style.marginTop = "10px"; r.textContent = "Riprova con il permesso del microfono";
+    r.onclick = function () { mostraIndirizzoVero().then(collegaJoypad, function () { JP.stato = "Permesso negato."; disegnaGiochi(); }); };
+    var d = el("p"); d.style.cssText = "font-size:11.5px;color:var(--muted);margin:10px 0 0"; d.textContent = JP.diagnosi;
+    aiuto.appendChild(r); aiuto.appendChild(d); c.appendChild(aiuto);
+  }
+  box.appendChild(c);
   var r = el("div", "card");
   r.innerHTML = "<h3>Giochi della console</h3>";
   [["tron", "Tron a due"], ["tank", "Carri armati"], ["pong", "Pong a due"], ["serpi", "Serpenti"], ["sumo", "Sumo"]].forEach(function (x) { var d = el("div", "titolo"); d.style.margin = "6px 0"; var n = el("span"); n.textContent = x[1]; d.appendChild(n); r.appendChild(d); classifica(r, x[0]); });

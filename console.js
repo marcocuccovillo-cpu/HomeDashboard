@@ -8,6 +8,20 @@
 var CONS = { STUN: [{ urls: "stun:stun.l.google.com:19302" }], OFFERTA_VALIDA: 10 * 60000 };
 function regMetti(k, v) { var ora = Date.now(); reg[k] = { v: v, t: ora }; salva("cucina_registro", reg); sincronizza(); }
 function regLeggi(k) { var e = reg && reg[k]; return e && !e.d ? e.v : null; }
+// Chrome nasconde l'indirizzo locale dietro un nome ".local": alcuni telefoni (VPN, blocchi pubblicità, certi Samsung)
+// non riescono a risolverlo. Con il permesso del microfono Chrome mostra l'indirizzo vero: lo chiedo e chiudo subito,
+// senza registrare niente. Basta farlo su uno dei due dispositivi.
+function mostraIndirizzoVero() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error("non disponibile"));
+  return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (st) { st.getTracks().forEach(function (t) { t.stop(); }); salva("console_ip_vero", true); });
+}
+function candidati(sdp) {   // riassunto per la diagnosi: locali nascosti, locali veri, pubblici
+  var l = (sdp || "").split("\n").filter(function (r) { return /^a=candidate/.test(r) && / udp /i.test(r); });
+  return { nascosti: l.filter(function (r) { return / typ host/.test(r) && /\.local /.test(r); }).length,
+           veri: l.filter(function (r) { return / typ host/.test(r) && !/\.local /.test(r); }).length,
+           pubblici: l.filter(function (r) { return / typ srflx/.test(r); }).length };
+}
+function testoCandidati(c) { return c.nascosti + " nascosti, " + c.veri + " locali, " + c.pubblici + " pubblici"; }
 function attendiIce(pc) {   // aspetto i candidati (al massimo 3 secondi): così basta un solo scambio di messaggi
   return new Promise(function (ok) {
     if (pc.iceGatheringState === "complete") return ok();
@@ -451,8 +465,22 @@ function cicloConsole(t) {
     tronDisegna();
   } else { CN.eventi = ev; GIOCHI_FN[PARTITA.gioco].passo(dt, ev); CN.eventi = []; GIOCHI_FN[PARTITA.gioco].disegna(); }
 }
+function pulsanteCollegamento() {   // sul tablet, finché non c'è il permesso: "Migliora il collegamento"
+  var b = $("console-ip"); if (!b) return;
+  if (!navigator.permissions || !navigator.permissions.query) { b.hidden = !!leggi("console_ip_vero", false); return; }
+  navigator.permissions.query({ name: "microphone" }).then(function (p) { b.hidden = p.state === "granted"; }, function () { b.hidden = !!leggi("console_ip_vero", false); });
+}
 function consoleVisibile(si) {   // la pagina 3 è in vista (o no)
   if (!consoleSulTablet()) return;
+  if (si && $("console-ip") && !$("console-ip").onclick) {
+    $("console-ip").onclick = function () {
+      var b = this; b.textContent = "Un attimo…";
+      mostraIndirizzoVero().then(function () {
+        b.hidden = true; [0, 1].forEach(function (p) { if (!collegato(p)) CN.offerta[p] = null; });   // offerte nuove con l'indirizzo vero
+      }, function () { b.textContent = "Permesso negato: riprova dalle impostazioni del browser"; });
+    };
+    pulsanteCollegamento();
+  }
   document.body.classList.toggle("in-console", si);
   if (si === CN.attivo) return;
   CN.attivo = si; tela();
@@ -474,7 +502,7 @@ function collegaJoypad() {
   if (!token || !chiaveCripto) { joypadStato("Sblocca prima con la password."); return; }
   chiudiJoypad(true);
   joypadStato("Cerco la console… apri la pagina 3 del tablet.");
-  var inizio = Date.now(); JP.risposto = null;
+  var inizio = Date.now(); JP.risposto = null; JP.diagnosi = "";
   function cerca() {
     if (Date.now() - inizio > 120000) { joypadStato("Non trovo la console: il tablet è sulla pagina 3 e sul Wi‑Fi di casa?"); return; }
     sincronizza().then(function () {
@@ -508,7 +536,14 @@ function rispondi(o) {
       if (x.t === "msg") { var f = $("jp-testo"); if (f) f.textContent = x.testo; }
     };
   };
-  pc.onconnectionstatechange = function () { if (pc.connectionState === "failed") joypadStato("Collegamento non riuscito: siete sullo stesso Wi‑Fi?"); };
+  pc.onconnectionstatechange = function () {
+    if (pc.connectionState !== "failed") return;
+    clearTimeout(JP.tAttesa);
+    var mio = candidati(pc.localDescription && pc.localDescription.sdp), suo = candidati(o.sdp);
+    joypadStato("Collegamento non riuscito.");
+    JP.diagnosi = "Telefono: " + testoCandidati(mio) + " · Tablet: " + testoCandidati(suo);
+    if (window.disegnaGiochi) disegnaGiochi();
+  };
   pc.setRemoteDescription({ type: "offer", sdp: o.sdp }).then(function () { return pc.createAnswer(); })
     .then(function (a) { return pc.setLocalDescription(a); }).then(function () { return attendiIce(pc); })
     .then(function () { regMetti("console.risposta." + io, { id: o.id, rid: String(nuovoId()), sdp: pc.localDescription.sdp, t: Date.now() }); joypadStato("Aspetto la console…"); })
@@ -719,6 +754,6 @@ function disegnaParty() {
 function pyClassifica() { return PY.giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }); }
 
 // le uniche cose visibili da fuori
-window.consoleVisibile = consoleVisibile; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
+window.consoleVisibile = consoleVisibile; window.mostraIndirizzoVero = mostraIndirizzoVero; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
 window.CONSOLE_DEBUG = { avvia: function (id) { CN.sel = GIOCHI_CONS.findIndex(function (g) { return g.id === id; }); avviaGioco(); }, giochi: function () { return { pong: PG, serpi: SP, sumo: SU }; }, py: function () { return PY; }, CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
 })();

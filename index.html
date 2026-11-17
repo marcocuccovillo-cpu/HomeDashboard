@@ -387,6 +387,9 @@
                 background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.55) 100%); animation: sfarfallio 6s infinite; }
   @keyframes sfarfallio { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .85; } }
   body.in-console #gatto-strato, body.in-console #rientri { display: none; }
+  #card-console { position: relative; }
+  #console-ip { position: absolute; bottom: 2.2vh; left: 50%; transform: translateX(-50%); z-index: 3; border: 0; border-radius: 2vh; padding: .9vh 1.6vw;
+                background: #ffd75e; color: #12141b; font: 600 1.8vh sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
   /* party "Disegna e indovina": lavagna a sinistra, giocatori e risposte a destra */
   #party { position: absolute; inset: 0; z-index: 0; display: flex; gap: 2%; padding: 2.4%; background: #05060a; color: #e8f2ff;
            font-family: ui-monospace, Menlo, Consolas, monospace; }
@@ -655,6 +658,7 @@
 <div class="pagina" id="pagina-3">
   <section class="card" id="card-console">
     <div class="crt"><canvas id="console-tela" aria-label="Console di casa"></canvas><div id="party" hidden></div></div>
+    <button type="button" id="console-ip" hidden>📶 Un telefono non si collega? Migliora il collegamento</button>
   </section>
 </div>
 </div>
@@ -838,18 +842,18 @@
   </div>
 </div>
 
-<script src="comune.js?v=35"></script>
-<script src="rete.js?v=35"></script>
-<script src="giorno.js?v=35"></script>
-<script src="radio.js?v=35"></script>
-<script src="forza4.js?v=35"></script>
+<script src="comune.js?v=36"></script>
+<script src="rete.js?v=36"></script>
+<script src="giorno.js?v=36"></script>
+<script src="radio.js?v=36"></script>
+<script src="forza4.js?v=36"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=35"></script>
-<script src="bus.js?v=35"></script>
-<script src="telecomando.js?v=35"></script>
+<script src="tragitti.js?v=36"></script>
+<script src="bus.js?v=36"></script>
+<script src="telecomando.js?v=36"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="console.js?v=35"></script>
-<script src="gatto.js?v=35"></script>
+<script src="console.js?v=36"></script>
+<script src="gatto.js?v=36"></script>
 <script>
 
 // ================= orologio =================
