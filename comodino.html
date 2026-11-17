@@ -122,6 +122,20 @@
   .bott { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: none; margin-bottom: 10px; font-size: 15px; }
   .bott.pieno-b { border: 0; background: var(--accent); color: #fff; font-weight: 600; }
   #chi { background: linear-gradient(170deg, #05060d, #1b1033); gap: 3vmin; }
+  /* ---------------- telecamera: indicatore sempre visibile (anche di notte); toccandolo si spegne */
+  #b-cam { bottom: calc(2.4vmin + env(safe-area-inset-bottom)); left: calc(2.4vmin + env(safe-area-inset-left)); }
+  #cam-badge { position: fixed; z-index: 30; top: calc(2vmin + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 1.4vmin;
+               border: 0; border-radius: 6vmin; padding: 1.2vmin 3vmin; background: rgba(255,77,94,.18); color: #ff6b78; font-size: min(3.4vw, 3vh); font-weight: 600; cursor: pointer; }
+  #cam-badge::before { content: ""; width: 1.8vmin; height: 1.8vmin; border-radius: 50%; background: #ff4d5e; animation: lampo 1.4s infinite; }
+  @keyframes lampo { 50% { opacity: .3; } }
+  body.notte #cam-badge { opacity: .75; background: rgba(120,20,20,.3); }
+  #cam-imp { position: fixed; inset: 0; z-index: 16; display: none; background: rgba(0,0,0,.6); align-items: flex-end; justify-content: center; }
+  #cam-imp.on { display: flex; }
+  #cam-imp .foglio { width: min(100%, 600px); background: #15131c; border-radius: 22px 22px 0 0; padding: 22px 20px calc(20px + env(safe-area-inset-bottom)); }
+  #cam-imp h3 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+  #cam-imp input[type=password], #cam-imp input[type=text] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--line); background: #0c0b11; color: var(--ink); font: inherit; font-size: 16px; margin-bottom: 10px; }
+  #cam-imp .spunta { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--muted); margin: 4px 0 12px; }
+  #cam-anteprima { width: 100%; max-height: 32vh; border-radius: 12px; background: #000; margin-bottom: 10px; object-fit: contain; }
   #chi button { border: 0; border-radius: 14px; padding: 14px 30px; background: var(--accent); color: #fff; font-size: 18px; font-weight: 600; margin: 0 6px; }
 </style>
 </head>
@@ -147,6 +161,26 @@
 </div>
 <button class="angolo" id="b-luce" type="button" aria-label="Luminosità"></button>
 <button class="angolo" id="b-ruota" type="button" aria-label="Ruota lo schermo">⟳</button>
+<button class="angolo" id="b-cam" type="button" aria-label="Telecamera">📹</button>
+<button id="cam-badge" type="button" hidden>Telecamera attiva · tocca per spegnerla</button>
+<div id="cam-imp"><div class="foglio">
+  <h3>Telecamera del comodino</h3>
+  <div id="cam-spenta">
+    <p class="nota">Usa la stessa password delle telecamere. Finché è accesa, qui in alto resta sempre «Telecamera attiva» e chiunque può spegnerla toccandolo.</p>
+    <input type="password" id="cam-pw" placeholder="Password delle telecamere" autocomplete="off">
+    <input type="text" id="cam-nome" placeholder="Nome (es. Camera · finestra)" maxlength="24" autocomplete="off">
+    <label class="spunta"><input type="checkbox" id="cam-ricorda" checked> Riaccendila da sola se la pagina si ricarica (la password resta solo su questo telefono; se qualcuno la spegne dall'indicatore, non si riaccende)</label>
+    <button type="button" class="bott pieno-b" id="cam-accendi">Accendi la telecamera</button>
+  </div>
+  <div id="cam-accesa" hidden>
+    <video id="cam-anteprima" autoplay playsinline muted></video>
+    <p class="nota" id="cam-stato"></p>
+    <button type="button" class="bott" id="cam-gira">Cambia fotocamera</button>
+    <button type="button" class="bott pieno-b" id="cam-spegni">Spegni la telecamera</button>
+  </div>
+  <p class="msg" id="cam-msg" style="color:#ffb36b;font-size:14px;min-height:18px"></p>
+  <button type="button" class="bott" id="cam-chiudi">Chiudi</button>
+</div></div>
 
 <div class="pieno" id="suona"><div class="grande" id="suona-ora"></div><div class="perche" id="suona-perche"></div>
   <div class="tasti"><button type="button" id="rimanda">Rimanda 9 min</button><button type="button" id="basta">Basta</button></div></div>
@@ -167,9 +201,10 @@
   <button type="button" class="bott pieno-b" id="sv-chiudi">Fatto</button>
 </div></div>
 
-<script src="comune.js?v=50"></script>
-<script src="suoni.js?v=50"></script>
-<script src="telecomando.js?v=50"></script>
+<script src="comune.js?v=51"></script>
+<script src="suoni.js?v=51"></script>
+<script src="telecomando.js?v=51"></script>
+<script src="telecamera.js?v=51"></script>
 <script>
 // ================= chi dorme qui =================
 var io = leggi("telefono_io", null);
@@ -471,6 +506,35 @@ function mostraStatoSync() {   // dopo ogni sincronizzazione: un "Pensavo a te" 
   if (!document.body.classList.contains("notte") && window.suonaPensiero) suonaPensiero();   // di notte solo il cuore
   clearTimeout(mostraStatoSync.t); mostraStatoSync.t = setTimeout(function () { $("cuore").classList.remove("on"); }, 20000);
 }
+// ================= telecamera (con il consenso di chi dorme qui: sempre segnalata, spegnibile da chiunque) =================
+function statoCam(st) {
+  $("cam-badge").hidden = !st.attiva;
+  $("cam-badge").textContent = "Telecamera attiva" + (st.spettatori ? " · qualcuno guarda" : "") + " · tocca per spegnerla";
+  $("cam-spenta").hidden = st.attiva; $("cam-accesa").hidden = !st.attiva;
+  $("cam-stato").textContent = st.attiva ? "«" + st.nome + "» è accesa. " + (st.spettatori ? "Qualcuno sta guardando." : "Nessuno sta guardando.") : "";
+}
+function accendiCam(pw, nome, ricorda) {
+  $("cam-msg").textContent = "Accendo…";
+  return TCAM.avvia(pw, nome, { video: $("cam-anteprima"), onStato: statoCam }).then(function () {
+    $("cam-msg").textContent = "";
+    if (ricorda) salva("cam_comodino", { pw: pw, nome: nome }); else { try { localStorage.removeItem("cam_comodino"); } catch (e) {} }
+  }, function (e) { $("cam-msg").textContent = e && e.message ? e.message : "Non riesco ad accendere la fotocamera."; });
+}
+function spegniCam() {   // da chiunque, senza password: e non si riaccende da sola
+  TCAM.ferma(); try { localStorage.removeItem("cam_comodino"); } catch (e) {}
+}
+$("b-cam").onclick = function (e) { e.stopPropagation(); $("cam-nome").value = $("cam-nome").value || "Comodino"; $("cam-imp").classList.add("on"); };
+$("cam-chiudi").onclick = function () { $("cam-imp").classList.remove("on"); };
+$("cam-accendi").onclick = function () {
+  var pw = $("cam-pw").value, nome = $("cam-nome").value.trim() || "Comodino";
+  if (pw.length < 8) { $("cam-msg").textContent = "La password ha almeno 8 caratteri."; return; }
+  accendiCam(pw, nome, $("cam-ricorda").checked).then(function () { $("cam-pw").value = ""; });
+};
+$("cam-gira").onclick = function () { TCAM.gira(); };
+$("cam-spegni").onclick = function () { spegniCam(); };
+$("cam-badge").onclick = function (e) { e.stopPropagation(); if (confirm("Spegnere la telecamera del comodino?")) spegniCam(); };
+(function () { var r = leggi("cam_comodino", null); if (r && r.pw) accendiCam(r.pw, r.nome || "Comodino", true); })();
+
 function ridisegna() { if (!pianificata || pianificata.quando.getTime() > Date.now() + 2000) pianificata = prossimaSveglia(); disegna(); }   // mai spostare una sveglia che sta per suonare
 function dopoSblocco() { if (io === null) chiediChi(); }
 

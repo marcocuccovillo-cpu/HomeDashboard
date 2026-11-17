@@ -81,45 +81,12 @@
   <div class="tasti"><button type="button" id="tele-gira">Cambia fotocamera</button><button type="button" id="tele-buio">Schermo scuro</button><button type="button" id="tele-stop">Spegni</button></div>
 </div>
 
+<script src="telecamera.js?v=51"></script>
 <script>
-var NTFY = window.NTFY_BASE || "https://ntfy.sh/", STUN = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }];
-var S = { chiave: null, stanza: "", es: null, modo: "guarda", id: Math.random().toString(36).slice(2, 10) };
+var S = TCAM.S, STUN = TCAM.STUN, preparaChiave = TCAM.preparaChiave, pubblica = TCAM.pubblica, ascolta = TCAM.ascolta, attendiIce = TCAM.attendiIce;
+S.modo = "guarda"; var PW_TELE = "";
 function $(id) { return document.getElementById(id); }
 function el(t, c) { var e = document.createElement(t); if (c) e.className = c; return e; }
-function b64u(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
-function daB64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
-
-// ---------------------------------------------------------------- chiave e "stanza" dalla password (PBKDF2, 300.000 giri)
-function preparaChiave(pw) {
-  var enc = new TextEncoder();
-  return crypto.subtle.importKey("raw", enc.encode(pw), "PBKDF2", false, ["deriveBits", "deriveKey"]).then(function (base) {
-    return Promise.all([
-      crypto.subtle.deriveKey({ name: "PBKDF2", salt: enc.encode("home2love-telecamere-chiave"), iterations: 300000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]),
-      crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode("home2love-telecamere-stanza"), iterations: 300000, hash: "SHA-256" }, base, 128)
-    ]);
-  }).then(function (r) { S.chiave = r[0]; S.stanza = "h2l-cam-" + b64u(r[1]); });
-}
-function cifra(o) {
-  var iv = crypto.getRandomValues(new Uint8Array(12));
-  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, S.chiave, new TextEncoder().encode(JSON.stringify(o))).then(function (c) {
-    var t = new Uint8Array(12 + c.byteLength); t.set(iv); t.set(new Uint8Array(c), 12); return b64u(t);
-  });
-}
-function decifra(s) { var b = daB64u(s); return crypto.subtle.decrypt({ name: "AES-GCM", iv: b.slice(0, 12) }, S.chiave, b.slice(12)).then(function (p) { return JSON.parse(new TextDecoder().decode(p)); }); }
-function pubblica(o) { return cifra(o).then(function (c) { return fetch(NTFY + S.stanza, { method: "POST", body: c }); }); }
-function ascolta(fn) {
-  if (S.es) S.es.close();
-  S.es = new EventSource(NTFY + S.stanza + "/sse");
-  S.es.onmessage = function (e) { var m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.message) decifra(m.message).then(fn, function () {}); };
-  return new Promise(function (ok) { S.es.onopen = ok; setTimeout(ok, 4000); });
-}
-function attendiIce(pc) {
-  return new Promise(function (ok) {
-    if (pc.iceGatheringState === "complete") return ok();
-    var t = setTimeout(ok, 3000);
-    pc.addEventListener("icegatheringstatechange", function () { if (pc.iceGatheringState === "complete") { clearTimeout(t); ok(); } });
-  });
-}
 
 // ---------------------------------------------------------------- ingresso
 $("modo").onclick = function (e) {
@@ -137,7 +104,8 @@ $("vai").onclick = function () {
   if (S.modo === "tele" && !$("nome-cam").value.trim()) { $("msg").textContent = "Dai un nome a questa telecamera."; $("nome-cam").focus(); return; }
   this.disabled = true; $("msg").textContent = "Preparo la chiave…";
   var b = this;
-  preparaChiave(pw).then(function () { $("pw").value = ""; return S.modo === "tele" ? avviaTelecamera($("nome-cam").value.trim()) : avviaVisore(); })
+  PW_TELE = pw;
+  (S.modo === "tele" ? avviaTelecamera($("nome-cam").value.trim()) : preparaChiave(pw).then(avviaVisore)).then(function () { $("pw").value = ""; PW_TELE = ""; })
     .catch(function (e) { $("msg").textContent = e && e.message ? e.message : "Non è andata, riprova."; }).then(function () { b.disabled = false; });
 };
 
@@ -195,46 +163,16 @@ function istantanea(cid) {
 }
 
 // ================================================================ TELECAMERA (i telefoni dedicati)
-var T = { stream: null, nome: "", verso: "environment", pcs: {} };
 function avviaTelecamera(nome) {
   try { localStorage.setItem("cam_nome", nome); } catch (x) {}
-  T.nome = nome;
-  return apriFotocamera().then(function () {
-    $("v-entra").hidden = true; $("tele").hidden = false; $("tele-nome").textContent = "Telecamera attiva · " + nome;
-    tieniAcceso();
-    return ascolta(messaggioTele);
-  }).then(function () { pubblica({ tipo: "ci-sono", cid: S.id, nome: T.nome, vid: "*" }); });
+  $("tele-nome").textContent = "Telecamera attiva · " + nome;
+  return TCAM.avvia(PW_TELE, nome, { video: $("tele-video"), onStato: function (st) {
+    $("tele-info").textContent = st.spettatori ? "Qualcuno sta guardando (" + st.spettatori + ")" : "In attesa di chi guarda…";
+  } }).then(function () { $("v-entra").hidden = true; $("tele").hidden = false; tieniAcceso(); });
 }
-function apriFotocamera() {
-  if (T.stream) T.stream.getTracks().forEach(function (t) { t.stop(); });
-  return navigator.mediaDevices.getUserMedia({ video: { facingMode: T.verso, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false }).then(function (s) {
-    T.stream = s; $("tele-video").srcObject = s;
-    Object.keys(T.pcs).forEach(function (k) {   // chi sta guardando passa alla nuova fotocamera
-      var snd = T.pcs[k].getSenders().filter(function (x) { return x.track && x.track.kind === "video"; })[0];
-      if (snd) snd.replaceTrack(s.getVideoTracks()[0]);
-    });
-  }, function () { throw new Error("Serve il permesso della fotocamera."); });
-}
-function messaggioTele(m) {
-  if (m.tipo === "chi") pubblica({ tipo: "ci-sono", cid: S.id, nome: T.nome, vid: m.vid });
-  if (m.tipo === "guarda" && m.cid === S.id) offri(m.vid);
-  if (m.tipo === "risposta" && m.cid === S.id && T.pcs[m.vid] && T.pcs[m.vid].signalingState === "have-local-offer") T.pcs[m.vid].setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(function () {});
-}
-function offri(vid) {
-  if (T.pcs[vid]) try { T.pcs[vid].close(); } catch (e) {}
-  var pc = new RTCPeerConnection({ iceServers: STUN }); T.pcs[vid] = pc;
-  T.stream.getTracks().forEach(function (t) { pc.addTrack(t, T.stream); });
-  pc.onconnectionstatechange = function () { contaSpettatori(); if (/failed|closed/.test(pc.connectionState)) delete T.pcs[vid]; };
-  pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { return attendiIce(pc); })
-    .then(function () { return pubblica({ tipo: "offerta", cid: S.id, vid: vid, sdp: pc.localDescription.sdp }); });
-}
-function contaSpettatori() {
-  var n = Object.keys(T.pcs).filter(function (k) { return T.pcs[k].connectionState === "connected"; }).length;
-  $("tele-info").textContent = n ? "Qualcuno sta guardando (" + n + ")" : "In attesa di chi guarda…";
-}
-$("tele-gira").onclick = function () { T.verso = T.verso === "environment" ? "user" : "environment"; apriFotocamera(); };
+$("tele-gira").onclick = function () { TCAM.gira(); };
 $("tele-buio").onclick = function () { $("tele").classList.toggle("buio"); this.textContent = $("tele").classList.contains("buio") ? "Mostra anteprima" : "Schermo scuro"; };
-$("tele-stop").onclick = function () { if (T.stream) T.stream.getTracks().forEach(function (t) { t.stop(); }); location.reload(); };
+$("tele-stop").onclick = function () { TCAM.ferma(); location.reload(); };
 function tieniAcceso() {
   if ("wakeLock" in navigator) navigator.wakeLock.request("screen").catch(function () {});
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && "wakeLock" in navigator) navigator.wakeLock.request("screen").catch(function () {}); });
