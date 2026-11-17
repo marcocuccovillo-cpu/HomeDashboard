@@ -166,6 +166,7 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
   if (cfg.forza4) f["gioco.forza4"] = cfg.forza4;
   if (cfg.tris) f["gioco.tris"] = cfg.tris;
   if (cfg.reteCasa) f["rete.casa"] = cfg.reteCasa;
+  (cfg.eventi || []).forEach(function (e) { f["evento." + e.id] = { data: e.data, ora: e.ora || "", testo: e.testo }; });   // appuntamenti del calendario
   if (cfg.statoTablet) f["tablet.stato"] = cfg.statoTablet;
   if (cfg.dama) f["gioco.dama"] = cfg.dama;
   if (cfg.record) Object.keys(cfg.record).forEach(function (g) {   // record di ognuno su una chiave sua: due telefoni non si pestano
@@ -233,6 +234,8 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   if (val("gioco.forza4")) cfg.forza4 = val("gioco.forza4").v;
   if (val("gioco.tris")) cfg.tris = val("gioco.tris").v;
   if (val("rete.casa")) cfg.reteCasa = val("rete.casa").v;
+  cfg.eventi = Object.keys(reg).filter(function (k) { return k.indexOf("evento.") === 0 && val(k); })
+    .map(function (k) { var v = val(k).v; return { id: +k.slice(7), data: v.data, ora: v.ora || "", testo: v.testo }; });
   if (val("tablet.stato")) cfg.statoTablet = val("tablet.stato").v;
   if (val("gioco.dama")) cfg.dama = val("gioco.dama").v;
   cfg.record = {};   // record di qualsiasi gioco: "gioco.record.<gioco>.<persona>"

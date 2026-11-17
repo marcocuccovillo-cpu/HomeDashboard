@@ -283,28 +283,30 @@ function disegnaSnake(box) {
 
 // ================================================================ scheda
 // ================================================================ sala giochi del tablet (pagina 3)
+// Tre schede con l'anteprima della partita; toccandone una il gioco si apre a tutto schermo.
+var GRANDE = null, TITOLI_SALA = { forza4: "Forza 4", dama: "Dama", tris: "Tris" };
 function disegnaSala() {
   if (!SUL_TABLET) return;
-  var t = $("sala-tris"), d = $("sala-dama"), c = $("sala-classifica");
+  var t = $("prev-tris"), d = $("prev-dama");
   t.innerHTML = ""; disegnaTris(t);
   d.innerHTML = ""; disegnaDama(d);
-  c.innerHTML = "";
-  var giochi = [["Forza 4", cfg.forza4 && cfg.forza4.punti], ["Tris", cfg.tris && cfg.tris.punti], ["Dama", cfg.dama && cfg.dama.punti],
-                ["2048 · record", record("2048")], ["Snake · record", record("snake")]];
-  var vinte = [0, 0], testa = el("div", "cl-riga cl-nomi"); testa.appendChild(el("span"));
-  [0, 1].forEach(function (q) { var n = el("b", "cl-p p" + q); n.textContent = cfg.nomi[q].split(" ")[0]; testa.appendChild(n); });
-  c.appendChild(testa);
-  giochi.forEach(function (x) {
-    var p = x[1] || [0, 0], r = el("div", "cl-riga"), n = el("span", "cl-gioco"); n.textContent = x[0]; r.appendChild(n);
-    [0, 1].forEach(function (q) {
-      var v = el("b", "cl-p p" + q + (p[q] > p[1 - q] ? " primo" : "")); v.textContent = (p[q] > p[1 - q] ? "👑 " : "") + p[q]; r.appendChild(v);
-    });
-    if (p[0] > p[1]) vinte[0]++; else if (p[1] > p[0]) vinte[1]++;
-    c.appendChild(r);
-  });
-  var tot = el("div", "cl-tot");
-  tot.textContent = vinte[0] === vinte[1] ? "Siete pari! 🤝" : "In testa: " + cfg.nomi[vinte[0] > vinte[1] ? 0 : 1] + " (" + Math.max(vinte[0], vinte[1]) + " giochi su 5)";
-  c.appendChild(tot);
+  f4Disegna($("f4-griglia"), $("f4-info"));
+  if (GRANDE) disegnaGrande();
+}
+function disegnaGrande() {
+  var c = $("gg-corpo"); c.innerHTML = "";
+  if (GRANDE === "forza4") { var i = el("div", "f4-info"), gr = el("div", "f4-griglia"); c.appendChild(i); c.appendChild(gr); f4Disegna(gr, i); }
+  else if (GRANDE === "dama") disegnaDama(c);
+  else disegnaTris(c);
+}
+function apriGrande(n) { GRANDE = n; $("gg-titolo").textContent = TITOLI_SALA[n]; $("gioco-grande").classList.add("on"); disegnaGrande(); }
+function chiudiGrande() { GRANDE = null; $("gioco-grande").classList.remove("on"); disegnaSala(); }
+function avviaSala() {
+  if (!SUL_TABLET) return;
+  [].forEach.call(document.querySelectorAll(".gioco-scheda"), function (s) { s.onclick = function () { apriGrande(s.getAttribute("data-gioco")); }; });
+  $("gg-chiudi").onclick = chiudiGrande;
+  $("gioco-grande").onclick = function (e) { if (e.target === this) chiudiGrande(); };
+  disegnaSala();
 }
 
 function disegnaGiochi() {
