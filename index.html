@@ -263,7 +263,7 @@
   .vuoto { color: var(--muted); font-size: 2.1vh; padding: 10px 4px; border: 0; }
 
   /* --- carosello foto --- */
-  #card-foto { padding: 0; overflow: hidden; }
+  #card-foto { padding: 0; overflow: hidden; flex: 1; min-height: 0; }
   #carosello { position: relative; flex: 1; min-height: 0; background: var(--line); }
   #carosello { overflow: hidden; }
   #carosello img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1.2s; }
@@ -353,9 +353,9 @@
 
   .griglia2 > .col-cielo:last-child { align-self: stretch; min-height: 0; }
   /* --- tragitti casa → lavoro --- */
-  #card-tragitti { flex: none; display: flex; flex-direction: column; }
+  #card-tragitti { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   #card-tragitti h2 small { margin-left: auto; font-size: 1.7vh; color: var(--muted); font-weight: 400; }
-  #tr-mappa { height: 21vh; border-radius: 12px; overflow: hidden; background: var(--line); z-index: 0; }
+  #tr-mappa { flex: 1; min-height: 14vh; border-radius: 12px; overflow: hidden; background: var(--line); z-index: 0; }
   #tr-mappa .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,.7); }
   .tr-pin span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: #fff; font: 700 13px/1 sans-serif;
                  border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
@@ -396,9 +396,12 @@
   @keyframes compare { from { opacity: 0; } }
   @keyframes sale-cuore { to { transform: translateY(-115vh) rotate(25deg); opacity: 0; } }
 
-  /* --- pagina 3: per ora vuota --- */
-  #pagina-3 { display: grid; place-items: center; }
-  .pagina-vuota { color: var(--muted); font-size: 2.2vh; text-align: center; opacity: .6; }
+  /* --- pagina 3: Forza 4 in grande --- */
+  #pagina-3 { display: grid; place-items: center; padding: 14px 14px 22px; }
+  #pagina-3 #card-forza4 { width: min(92vw, 112vh); padding: 2.4vh 2.4vw; }
+  #pagina-3 #card-forza4 h2 { font-size: 3.2vh; }
+  #pagina-3 .f4-info { font-size: 2.4vh; }
+  #pagina-3 .f4-griglia { width: min(100%, 74vh); gap: .9vh; padding: 1.2vh; border-radius: 2vh; }
 
   /* --- chi sta tornando (dal telefono) --- */
   #rientri { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; flex-direction: column; gap: .8vh; align-items: center; pointer-events: none; }
@@ -540,13 +543,6 @@
       <div class="bus-lista" id="bus-lista"></div>
       <div class="nota-txt" id="bus-vuoto">Scegliete le fermate vicino a casa. <button class="btn-piccolo" id="bus-imposta">Imposta</button></div>
     </section>
-    <section class="card riempi" id="card-foto">
-      <div id="carosello">
-        <div class="sfondo" id="sfA"></div><div class="sfondo" id="sfB"></div>
-        <img id="carA" alt=""><img id="carB" alt="">
-        <div id="car-vuoto">Nessuna foto per ora.<br>Aggiungile dal telefono (scheda Foto) o da ⚙.</div>
-      </div>
-    </section>
   </div>
 </div>
 
@@ -606,10 +602,12 @@
       <button class="btn-piccolo" id="disp-altri" hidden></button>
       <div class="nota-txt" id="disp-stato"></div>
     </section>
-    <section class="card" id="card-forza4">
-      <h2>Forza 4 <small>tocca una colonna</small></h2>
-      <div class="f4-info" id="f4-info"></div>
-      <div class="f4-griglia" id="f4-griglia"></div>
+    <section class="card riempi" id="card-foto">
+      <div id="carosello">
+        <div class="sfondo" id="sfA"></div><div class="sfondo" id="sfB"></div>
+        <img id="carA" alt=""><img id="carB" alt="">
+        <div id="car-vuoto">Nessuna foto per ora.<br>Aggiungile dal telefono (scheda Foto) o da ⚙.</div>
+      </div>
     </section>
     </div>
     <div class="col-cielo">
@@ -628,9 +626,13 @@
     </div>
   </div>
 </div>
-<!-- terza schermata: per ora vuota -->
+<!-- terza schermata: Forza 4 in grande -->
 <div class="pagina" id="pagina-3">
-  <div class="pagina-vuota">♥<br>Pagina libera</div>
+    <section class="card" id="card-forza4">
+      <h2>Forza 4 <small>tocca una colonna</small></h2>
+      <div class="f4-info" id="f4-info"></div>
+      <div class="f4-griglia" id="f4-griglia"></div>
+    </section>
 </div>
 </div>
 <!-- il gatto di casa, sopra tutta l'interfaccia -->
@@ -813,16 +815,16 @@
   </div>
 </div>
 
-<script src="comune.js?v=41"></script>
-<script src="rete.js?v=41"></script>
-<script src="radio.js?v=41"></script>
-<script src="forza4.js?v=41"></script>
+<script src="comune.js?v=42"></script>
+<script src="rete.js?v=42"></script>
+<script src="radio.js?v=42"></script>
+<script src="forza4.js?v=42"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=41"></script>
-<script src="bus.js?v=41"></script>
-<script src="spesa.js?v=41"></script>
-<script src="telecomando.js?v=41"></script>
-<script src="gatto.js?v=41"></script>
+<script src="tragitti.js?v=42"></script>
+<script src="bus.js?v=42"></script>
+<script src="spesa.js?v=42"></script>
+<script src="telecomando.js?v=42"></script>
+<script src="gatto.js?v=42"></script>
 <script>
 
 // ================= orologio =================
