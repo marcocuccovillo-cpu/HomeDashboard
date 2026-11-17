@@ -286,7 +286,7 @@ function disegnaConsoleTel(box) {
   c.appendChild(b); c.appendChild(st); box.appendChild(c);
   var r = el("div", "card");
   r.innerHTML = "<h3>Giochi della console</h3>";
-  [["tron", "Tron a due"], ["tank", "Carri armati"]].forEach(function (x) { var d = el("div", "titolo"); d.style.margin = "6px 0"; var n = el("span"); n.textContent = x[1]; d.appendChild(n); r.appendChild(d); classifica(r, x[0]); });
+  [["tron", "Tron a due"], ["tank", "Carri armati"], ["pong", "Pong a due"], ["serpi", "Serpenti"], ["sumo", "Sumo"]].forEach(function (x) { var d = el("div", "titolo"); d.style.margin = "6px 0"; var n = el("span"); n.textContent = x[1]; d.appendChild(n); r.appendChild(d); classifica(r, x[0]); });
   box.appendChild(r);
 }
 

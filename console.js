@@ -24,6 +24,9 @@ var CN = { pc: [null, null], dc: [null, null], offerta: [null, null], usata: [""
 var GIOCHI_CONS = [
   { id: "tron", nome: "TRON A DUE", spiega: "Moto di luce: non sbattere contro le scie. Vince chi arriva a 3." },
   { id: "tank", nome: "CARRI ARMATI", spiega: "Su/giù per muoverti, sinistra/destra per girare, A per sparare. I colpi rimbalzano! Vince chi arriva a 5." },
+  { id: "pong", nome: "PONG A DUE", spiega: "Su e giù per muovere la racchetta. La palla accelera a ogni colpo. Vince chi arriva a 7." },
+  { id: "serpi", nome: "SERPENTI", spiega: "Mangia le mele e allungati. Perde chi sbatte contro muri, code o l'altro. Vince chi arriva a 3." },
+  { id: "sumo", nome: "SUMO", spiega: "Spingi l'altro fuori dall'arena che si restringe. A = scatto. Vince chi arriva a 3." },
   { id: "party", nome: "DISEGNA E INDOVINA", spiega: "Party con gli ospiti: si entra inquadrando il QR, a turno uno disegna e gli altri indovinano." }
 ];
 
@@ -97,7 +100,7 @@ function tela() {
   CV.addEventListener("click", function (e) {   // anche toccando lo schermo del tablet si sceglie il gioco
     if (CN.scena !== "menu") return;
     var r = CV.getBoundingClientRect(), y = (e.clientY - r.top) / r.height * H;
-    GIOCHI_CONS.forEach(function (g, i) { if (Math.abs(y - (88 + i * 17)) < 8) { CN.sel = i; avviaGioco(); } });
+    GIOCHI_CONS.forEach(function (g, i) { if (Math.abs(y - (84 + i * 11)) < 5.5) { CN.sel = i; avviaGioco(); } });
   });
 }
 var COL = { fondo: "#05060a", griglia: "#0d1626", testo: "#d8f3ff", p0: "#ff8a3d", p1: "#3de0d2", muro: "#3a4c7a", rosso: "#ff3b5c" };
@@ -122,15 +125,16 @@ function disegnaMenu() {
     scrivi(c ? "JOYPAD OK" : u ? "TASTIERA" : "CPU", x, 66, 6, c ? "#7dff9a" : "#8aa0b8");
   });
   GIOCHI_CONS.forEach(function (g, i) {
-    var y = 88 + i * 17, s = i === CN.sel, r = record(g.id);
-    if (s) { CX.fillStyle = "#1c2a48"; CX.fillRect(40, y - 8, W - 80, 16); scrivi("▶", 50, y, 8, COL.rosso); }
-    scrivi(g.nome, W / 2, y - 1, 9, s ? "#fff" : "#9fb4cc");
-    if (g.id !== "party") scrivi(nomeCorto(0) + " " + r[0] + " - " + r[1] + " " + nomeCorto(1), W / 2, y + 6, 5, "#6c84a3");
+    var y = 84 + i * 11, s = i === CN.sel;
+    if (s) { CX.fillStyle = "#1c2a48"; CX.fillRect(60, y - 5, W - 120, 10); scrivi("▶", 68, y, 7, COL.rosso); }
+    scrivi(g.nome, W / 2, y, 8, s ? "#fff" : "#7f95b0");
   });
-  scrivi(GIOCHI_CONS[CN.sel].spiega, W / 2, 140, 5, "#9fb4cc");
+  var gs = GIOCHI_CONS[CN.sel], r = record(gs.id);
+  if (gs.id !== "party") scrivi("RECORD  " + nomeCorto(0) + " " + r[0] + " - " + r[1] + " " + nomeCorto(1), W / 2, 152, 6, "#ffd75e");
+  scrivi(gs.spiega, W / 2, 160, 5, "#9fb4cc");
   var lampo = Math.floor(Date.now() / 500) % 2;
-  scrivi(lampo ? "PREMI A PER GIOCARE" : "", W / 2, 156, 7, "#ffd75e");
-  scrivi("SUL TELEFONO: GIOCHI → CONSOLE → COLLEGA IL JOYPAD", W / 2, 171, 5, "#5d7391");
+  scrivi(lampo ? "PREMI A PER GIOCARE" : "", W / 2, 169, 6, "#ffd75e");
+  scrivi("SUL TELEFONO: GIOCHI → 🎮 → COLLEGA IL JOYPAD", W / 2, 177, 4, "#5d7391");
 }
 function disegnaMenuSePronto() { if (CN.scena === "menu" && CX) disegnaMenu(); }
 
@@ -139,10 +143,10 @@ var PARTITA = null;
 function avviaGioco() {
   var g = GIOCHI_CONS[CN.sel]; suono(660, 80); suono(990, 140);
   if (g.id === "party") { CN.scena = "party"; apriParty(); return; }
-  PARTITA = { gioco: g.id, punti: [0, 0], fine: false, msg: "", tMsg: 0, vince: g.id === "tron" ? 3 : 5 };
+  PARTITA = { gioco: g.id, punti: [0, 0], fine: false, msg: "", tMsg: 0, vince: { tron: 3, tank: 5, pong: 7, serpi: 3, sumo: 3 }[g.id] };
   CN.scena = "gioco";
   [0, 1].forEach(function (p) { manda(p, { t: "msg", testo: g.nome.toLowerCase() }); });
-  if (g.id === "tron") tronRound(); else tankRound();
+  GIOCHI_FN[g.id].round();
 }
 function puntoA(p) {   // p segna (p = null: pareggio del round)
   if (p !== null) { PARTITA.punti[p]++; vibra(p, 120); vibra(1 - p, 400); suono(p ? 523 : 392, 300, "sawtooth", .05); }
@@ -270,6 +274,150 @@ function tankDisegna() {
   barraPunti();
 }
 
+// ---------------------------------------------------------------- PONG A DUE
+var PG = null;
+function pongRound(chi) {
+  var v = chi === undefined ? (Math.random() < .5 ? 1 : -1) : (chi ? 1 : -1);   // la palla va verso chi ha subito il punto
+  PG = { y: [97, 97], bx: W / 2, by: 97, vx: 110 * v, vy: (Math.random() - .5) * 90, via: Date.now() + 1000, colpi: 0 };
+}
+function pongPasso(dt) {
+  if (Date.now() < PG.via || PARTITA.fine || Date.now() < PARTITA.tMsg) return;
+  [0, 1].forEach(function (p) {
+    var su, giu;
+    if (umano(p)) { su = CN.tasti[p].su; giu = CN.tasti[p].giu; }
+    else { var verso = (p === 0 ? PG.vx < 0 : PG.vx > 0), meta = verso ? PG.by + PG.vy * .08 : 97, d = meta - PG.y[p]; su = d < -6; giu = d > 6; }
+    PG.y[p] = Math.max(14 + 15, Math.min(H - 15, PG.y[p] + ((giu ? 1 : 0) - (su ? 1 : 0)) * (umano(p) ? 150 : 105) * dt));
+  });
+  PG.bx += PG.vx * dt; PG.by += PG.vy * dt;
+  if (PG.by < 17 || PG.by > H - 3) { PG.vy = -PG.vy; PG.by = Math.max(17, Math.min(H - 3, PG.by)); suono(400, 25, "square", .03); }
+  [0, 1].forEach(function (p) {
+    var x = p ? W - 12 : 12;
+    if ((p ? PG.vx > 0 : PG.vx < 0) && Math.abs(PG.bx - x) < 3 && Math.abs(PG.by - PG.y[p]) < 16) {
+      var off = (PG.by - PG.y[p]) / 15; PG.colpi++;
+      var vel = Math.min(260, Math.hypot(PG.vx, PG.vy) * 1.06);
+      PG.vx = (p ? -1 : 1) * vel * Math.cos(off * .9); PG.vy = vel * Math.sin(off * .9);
+      PG.bx = x + (p ? -3 : 3); suono(p ? 660 : 520, 40); vibra(p, 25);
+    }
+  });
+  if (PG.bx < -4 || PG.bx > W + 4) { var chi = PG.bx < 0 ? 1 : 0; puntoA(chi); if (!PARTITA.fine) { var perso = 1 - chi; setTimeout(function () { pongRound(perso); }, 1600); } }
+}
+function pongDisegna() {
+  CX.fillStyle = COL.fondo; CX.fillRect(0, 0, W, H);
+  for (var y = 16; y < H; y += 8) { CX.fillStyle = "#1c2a48"; CX.fillRect(W / 2 - 1, y, 2, 4); }
+  CX.fillStyle = COL.muro; CX.fillRect(0, 14, W, 1); CX.fillRect(0, H - 1, W, 1);
+  scrivi(String(PARTITA.punti[0]), W / 2 - 30, 34, 20, "rgba(255,138,61,.35)"); scrivi(String(PARTITA.punti[1]), W / 2 + 30, 34, 20, "rgba(61,224,210,.35)");
+  CX.fillStyle = COL.p0; CX.fillRect(8, PG.y[0] - 15, 4, 30); CX.fillStyle = COL.p1; CX.fillRect(W - 12, PG.y[1] - 15, 4, 30);
+  CX.fillStyle = "#fff"; CX.fillRect(Math.round(PG.bx) - 2, Math.round(PG.by) - 2, 4, 4);
+  barraPunti();
+}
+
+// ---------------------------------------------------------------- SERPENTI
+var SP = null;
+function serpiRound() {
+  SP = { s: [{ c: [[14, 21], [13, 21], [12, 21], [11, 21]], d: "dx", vuole: "dx" }, { c: [[65, 21], [66, 21], [67, 21], [68, 21]], d: "sx", vuole: "sx" }],
+         mele: [], via: Date.now() + 1200, acc: 0 };
+  while (SP.mele.length < 4) serpiMela();
+}
+function serpiOccupato(x, y) { return SP.s.some(function (s) { return s.c.some(function (q) { return q[0] === x && q[1] === y; }); }); }
+function serpiMela() {
+  for (var k = 0; k < 200; k++) {
+    var x = 2 + Math.floor(Math.random() * (TRON_W - 4)), y = 2 + Math.floor(Math.random() * (TRON_H - 4));
+    if (!serpiOccupato(x, y) && !SP.mele.some(function (m) { return m[0] === x && m[1] === y; })) { SP.mele.push([x, y]); return; }
+  }
+}
+function serpiLibero(x, y) { return x >= 0 && y >= 0 && x < TRON_W && y < TRON_H && !serpiOccupato(x, y); }
+function serpiBot(p) {
+  var s = SP.s[p], t = s.c[0], m = SP.mele.slice().sort(function (a, b) { return (Math.abs(a[0] - t[0]) + Math.abs(a[1] - t[1])) - (Math.abs(b[0] - t[0]) + Math.abs(b[1] - t[1])); })[0];
+  var scelte = ["su", "giu", "sx", "dx"].filter(function (d) { return d !== OPPOSTA[s.d] && serpiLibero(t[0] + PASSO[d][0], t[1] + PASSO[d][1]); });
+  if (!scelte.length) return;
+  scelte.sort(function (a, b) {
+    function dist(d) { var x = t[0] + PASSO[d][0], y = t[1] + PASSO[d][1]; return m ? Math.abs(m[0] - x) + Math.abs(m[1] - y) : 0; }
+    return dist(a) - dist(b);
+  });
+  s.vuole = scelte[0];
+}
+function serpiPasso(dt, ev) {
+  ev.forEach(function (e) { if (PASSO[e.k]) SP.s[e.p].vuole = e.k; });
+  if (Date.now() < SP.via || PARTITA.fine || Date.now() < PARTITA.tMsg) return;
+  SP.acc += dt; if (SP.acc < .09) return; SP.acc -= .09;
+  [0, 1].forEach(function (p) { if (!umano(p)) serpiBot(p); });
+  var teste = SP.s.map(function (s) { if (s.vuole !== OPPOSTA[s.d]) s.d = s.vuole; return [s.c[0][0] + PASSO[s.d][0], s.c[0][1] + PASSO[s.d][1]]; });
+  var mangia = teste.map(function (t) { return SP.mele.findIndex(function (m) { return m[0] === t[0] && m[1] === t[1]; }); });
+  SP.s.forEach(function (s, p) { if (mangia[p] < 0) s.c.pop(); });   // la coda si sposta prima del controllo
+  var morti = teste.map(function (t) { return !serpiLibero(t[0], t[1]); });
+  if (teste[0][0] === teste[1][0] && teste[0][1] === teste[1][1]) morti = [true, true];
+  if (morti[0] || morti[1]) { suono(110, 300, "sawtooth", .07); puntoA(morti[0] && morti[1] ? null : morti[0] ? 1 : 0); if (!PARTITA.fine) setTimeout(serpiRound, 1600); return; }
+  SP.s.forEach(function (s, p) {
+    s.c.unshift(teste[p]);
+    if (mangia[p] >= 0) { SP.mele.splice(mangia[p], 1); serpiMela(); suono(p ? 880 : 740, 50); vibra(p, 20); }
+  });
+}
+function serpiDisegna() {
+  CX.fillStyle = COL.fondo; CX.fillRect(0, 0, W, H);
+  CX.strokeStyle = COL.muro; CX.strokeRect(.5, TRON_Y0 + .5, W - 1, TRON_H * 4 - 1);
+  SP.mele.forEach(function (m) { CX.fillStyle = COL.rosso; CX.fillRect(m[0] * 4 + .5, TRON_Y0 + m[1] * 4 + .5, 3, 3); CX.fillStyle = "#7dff9a"; CX.fillRect(m[0] * 4 + 2, TRON_Y0 + m[1] * 4 - .5, 1, 1); });
+  SP.s.forEach(function (s, p) {
+    s.c.forEach(function (q, i) { CX.fillStyle = i ? (p ? COL.p1 : COL.p0) : "#fff"; CX.globalAlpha = i ? .85 - Math.min(.45, i * .01) : 1; CX.fillRect(q[0] * 4, TRON_Y0 + q[1] * 4, 4, 4); });
+    CX.globalAlpha = 1;
+  });
+  if (Date.now() < SP.via) scrivi("VIA!", W / 2, H / 2, 16, "#fff");
+  barraPunti();
+}
+
+// ---------------------------------------------------------------- SUMO
+var SU = null, SUMO_C = [160, 98];
+function sumoRound() {
+  SU = { b: [{ x: 115, y: 98, vx: 0, vy: 0, scatto: 0 }, { x: 205, y: 98, vx: 0, vy: 0, scatto: 0 }], r: 76, via: Date.now() + 1200, t0: Date.now() + 1200 };
+}
+function sumoPasso(dt, ev) {
+  if (Date.now() < SU.via || PARTITA.fine || Date.now() < PARTITA.tMsg) return;
+  SU.r = Math.max(34, 76 - (Date.now() - SU.t0) / 1000 * 1.4);   // l'arena si restringe
+  SU.b.forEach(function (b, p) {
+    var ax = 0, ay = 0, scatta = false, k = CN.tasti[p];
+    if (umano(p)) { ax = (k.dx ? 1 : 0) - (k.sx ? 1 : 0); ay = (k.giu ? 1 : 0) - (k.su ? 1 : 0); scatta = ev.some(function (e) { return e.p === p && e.k === "a"; }); }
+    else {
+      var o = SU.b[1 - p], dx = o.x - b.x, dy = o.y - b.y, dc = Math.hypot(b.x - SUMO_C[0], b.y - SUMO_C[1]);
+      if (dc > SU.r * .75) { ax = SUMO_C[0] - b.x; ay = SUMO_C[1] - b.y; } else { ax = dx; ay = dy; }
+      var l = Math.hypot(ax, ay) || 1; ax /= l; ay /= l;
+      scatta = Math.hypot(dx, dy) < 34 && Math.random() < dt * 2;
+    }
+    var l2 = Math.hypot(ax, ay); if (l2 > 1) { ax /= l2; ay /= l2; }
+    b.vx += ax * 160 * dt; b.vy += ay * 160 * dt;
+    b.scatto -= dt;
+    if (scatta && b.scatto <= 0 && (ax || ay)) { b.vx += ax * 110; b.vy += ay * 110; b.scatto = 1.2; suono(p ? 330 : 290, 90, "sawtooth", .04); vibra(p, 40); }
+    b.vx *= Math.pow(.18, dt); b.vy *= Math.pow(.18, dt);
+    b.x += b.vx * dt; b.y += b.vy * dt;
+  });
+  var a = SU.b[0], c = SU.b[1], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy) || 1;
+  if (d < 18) {   // urto: si respingono, il più veloce spinge di più
+    var nx = dx / d, ny = dy / d, rel = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny;
+    if (rel > 0) { a.vx -= rel * nx; a.vy -= rel * ny; c.vx += rel * nx; c.vy += rel * ny; suono(180, 40, "square", .05); vibra(0, 30); vibra(1, 30); }
+    var sp = (18 - d) / 2; a.x -= nx * sp; a.y -= ny * sp; c.x += nx * sp; c.y += ny * sp;
+  }
+  var fuori = SU.b.map(function (b) { return Math.hypot(b.x - SUMO_C[0], b.y - SUMO_C[1]) > SU.r + 4; });
+  if (fuori[0] || fuori[1]) { puntoA(fuori[0] && fuori[1] ? null : fuori[0] ? 1 : 0); if (!PARTITA.fine) setTimeout(sumoRound, 1600); }
+}
+function sumoDisegna() {
+  CX.fillStyle = COL.fondo; CX.fillRect(0, 0, W, H);
+  CX.beginPath(); CX.arc(SUMO_C[0], SUMO_C[1], SU.r, 0, 7); CX.fillStyle = "#14203a"; CX.fill();
+  CX.lineWidth = 2; CX.strokeStyle = SU.r < 45 ? COL.rosso : "#d8f3ff"; CX.stroke();
+  CX.beginPath(); CX.arc(SUMO_C[0], SUMO_C[1], SU.r * .55, 0, 7); CX.lineWidth = 1; CX.strokeStyle = "#22345c"; CX.stroke();
+  SU.b.forEach(function (b, p) {
+    CX.beginPath(); CX.arc(b.x, b.y, 9, 0, 7); CX.fillStyle = p ? COL.p1 : COL.p0; CX.fill();
+    CX.beginPath(); CX.arc(b.x - 3, b.y - 3, 3, 0, 7); CX.fillStyle = "rgba(255,255,255,.55)"; CX.fill();
+    if (b.scatto > 0) { CX.fillStyle = "#334"; CX.fillRect(b.x - 8, b.y + 12, 16, 2); CX.fillStyle = "#ffd75e"; CX.fillRect(b.x - 8, b.y + 12, 16 * (1 - b.scatto / 1.2), 2); }
+  });
+  if (Date.now() < SU.via) scrivi("HAKKEYOI!", W / 2, H / 2, 14, "#fff");
+  barraPunti();
+}
+var GIOCHI_FN = {
+  tron: { round: function () { tronRound(); } },
+  tank: { round: function () { tankRound(); }, passo: function (dt) { tankAggiorna(dt); }, disegna: function () { tankDisegna(); } },
+  pong: { round: function () { pongRound(); }, passo: pongPasso, disegna: pongDisegna },
+  serpi: { round: serpiRound, passo: serpiPasso, disegna: serpiDisegna },
+  sumo: { round: sumoRound, passo: sumoPasso, disegna: sumoDisegna }
+};
+
 // ---------------------------------------------------------------- ciclo principale
 function cicloConsole(t) {
   if (!CN.attivo) { CN.ciclo = false; return; }
@@ -295,7 +443,7 @@ function cicloConsole(t) {
     CN.accTron = (CN.accTron || 0) + dt;
     while (CN.accTron > .075) { CN.accTron -= .075; tronAggiorna(); }
     tronDisegna();
-  } else { CN.eventi = ev; tankAggiorna(dt); CN.eventi = []; tankDisegna(); }
+  } else { CN.eventi = ev; GIOCHI_FN[PARTITA.gioco].passo(dt, ev); CN.eventi = []; GIOCHI_FN[PARTITA.gioco].disegna(); }
 }
 function consoleVisibile(si) {   // la pagina 3 è in vista (o no)
   if (!consoleSulTablet()) return;
@@ -556,5 +704,5 @@ function pyClassifica() { return PY.giocatori.slice().sort(function (a, b) { ret
 
 // le uniche cose visibili da fuori
 window.consoleVisibile = consoleVisibile; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
-window.CONSOLE_DEBUG = { py: function () { return PY; }, CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
+window.CONSOLE_DEBUG = { avvia: function (id) { CN.sel = GIOCHI_CONS.findIndex(function (g) { return g.id === id; }); avviaGioco(); }, giochi: function () { return { pong: PG, serpi: SP, sumo: SU }; }, py: function () { return PY; }, CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
 })();
