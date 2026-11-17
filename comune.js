@@ -165,6 +165,7 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
   viaggi.forEach(function (v) { f["viaggio." + v.id] = { nome: v.nome, paese: v.paese || "", lat: v.lat, lon: v.lon, stato: v.stato, data: v.data || "" }; });
   if (cfg.forza4) f["gioco.forza4"] = cfg.forza4;
   if (cfg.tris) f["gioco.tris"] = cfg.tris;
+  if (cfg.reteCasa) f["rete.casa"] = cfg.reteCasa;
   if (cfg.dama) f["gioco.dama"] = cfg.dama;
   if (cfg.record) Object.keys(cfg.record).forEach(function (g) {   // record di ognuno su una chiave sua: due telefoni non si pestano
     [0, 1].forEach(function (p) { if (cfg.record[g][p]) f["gioco.record." + g + "." + p] = cfg.record[g][p]; });
@@ -230,6 +231,7 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   var nn = [], ss = [], vv = [];
   if (val("gioco.forza4")) cfg.forza4 = val("gioco.forza4").v;
   if (val("gioco.tris")) cfg.tris = val("gioco.tris").v;
+  if (val("rete.casa")) cfg.reteCasa = val("rete.casa").v;
   if (val("gioco.dama")) cfg.dama = val("gioco.dama").v;
   cfg.record = {};
   ["2048", "snake"].forEach(function (g) { cfg.record[g] = [0, 1].map(function (p) { var e = val("gioco.record." + g + "." + p); return e ? e.v : 0; }); });

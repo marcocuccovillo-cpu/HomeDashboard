@@ -189,7 +189,7 @@
   nav { position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 6; display: flex; gap: 2px;
         background: color-mix(in srgb, var(--card) 92%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
         border-radius: 24px; padding: 6px; box-shadow: 0 10px 30px -10px rgba(60,20,20,.35), 0 0 0 1px var(--line); }
-  nav button { flex: 1; border: 0; background: none; padding: 7px 0 6px; font-size: 11.5px; color: var(--muted); border-radius: 18px; transition: background .2s, color .2s; }
+  nav button { flex: 1; min-width: 0; border: 0; background: none; padding: 7px 0 6px; font-size: 10.5px; letter-spacing: -.01em; color: var(--muted); border-radius: 18px; transition: background .2s, color .2s; }
   nav button svg { width: 23px; height: 23px; display: block; margin: 0 auto 2px; }
   nav button.on { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 
@@ -223,6 +223,49 @@
   .campo label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
   .riga2 { display: flex; gap: 8px; flex-wrap: wrap; }
   .nota-txt { font-size: 13px; color: var(--muted); }
+
+  /* --- rete di casa --- */
+  .rete-num { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .rete-num div { background: var(--soft); border-radius: 14px; padding: 10px 12px; }
+  .rete-num b { display: block; font-size: 30px; font-weight: 650; letter-spacing: -.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .rete-num b small { font-size: 13px; font-weight: 500; color: var(--muted); margin-left: 3px; }
+  .rete-num span { font-size: 12.5px; color: var(--muted); }
+  #rt-barre { display: flex; align-items: flex-end; gap: 2px; height: 34px; margin: 12px 0 4px; }
+  #rt-barre i { flex: 1; background: var(--accent); opacity: .5; border-radius: 2px 2px 0 0; min-height: 2px; }
+  #rt-barre i.persa { background: var(--done); height: 100% !important; opacity: .4; }
+  .rete-dati { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0 0; font-size: 14.5px; }
+  .rete-dati dt { color: var(--muted); } .rete-dati dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+  .card h3 { margin: 0 0 10px; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card h3 .stato-pill { margin-left: auto; }
+  .stato-pill, #disp-conta, #ospiti-stato { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: var(--soft); color: var(--muted); }
+  #disp-conta.pillola, #ospiti-stato.pillola { margin: 0 0 0 auto; display: inline-block; } #disp-conta::before, #ospiti-stato::before { display: none; }
+  #ospiti-stato:empty { display: none; }
+  #disp-conta.ok, #ospiti-stato.ok, .stato-pill.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  #disp-conta.no, .stato-pill.no { background: var(--accent-soft); color: var(--accent); }
+  .ospiti { display: flex; gap: 14px; align-items: center; }
+  .ospiti.spenta #ospiti-qr { opacity: .3; }
+  #ospiti-qr { width: 112px; height: 112px; flex: none; background: #fff; padding: 6px; border-radius: 12px; image-rendering: pixelated; cursor: zoom-in; }
+  .ospiti-testo { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 14px; }
+  .ospiti-riga { color: var(--muted); overflow-wrap: anywhere; } .ospiti-riga strong { color: var(--ink); font-weight: 600; font-family: ui-monospace, Menlo, monospace; }
+  .ospiti-testo small { color: var(--muted); font-size: 12px; }
+  .wifi-azioni { display: flex; gap: 8px; margin-top: 12px; }
+  .wifi-azioni button { flex: 1; border: 0; border-radius: 12px; padding: 10px; background: var(--soft); font-size: 14px; font-weight: 500; }
+  .disp-lista { list-style: none; margin: 0; padding: 0; }
+  .disp-lista li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+  .disp-lista li:first-child { border-top: 0; }
+  .disp-lista li svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+  .disp-lista .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .disp-lista .banda { font-size: 11px; color: var(--muted); background: var(--soft); border-radius: 6px; padding: 1px 6px; }
+  .disp-lista .ip, .disp-lista .banda { flex: none; }
+  .disp-lista .ip { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .disp-lista li.spento { opacity: .45; }
+  #disp-altri { width: 100%; margin-top: 8px; border: 1px solid var(--line); background: none; border-radius: 12px; padding: 9px; font-size: 14px; color: var(--muted); }
+  #disp-stato { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+  #disp-stato a { color: var(--accent); }
+  #qr-grande { position: fixed; inset: 0; z-index: 13; background: rgba(0,0,0,.8); display: none; place-items: center; padding: 24px; }
+  #qr-grande.on { display: grid; }
+  #qr-grande img { width: min(86vw, 420px); background: #fff; padding: 14px; border-radius: 20px; image-rendering: pixelated; }
+  #qr-grande p { color: #fff; text-align: center; margin: 14px 0 0; font-size: 15px; }
 
   /* --- giochi --- */
   .seg.giochi-scelta { margin: 0 0 14px; background: var(--soft); border: 0; padding: 4px; border-radius: 14px; gap: 4px; }
@@ -344,6 +387,44 @@
     <div id="giochi-box"></div>
   </section>
 
+  <section class="scheda" id="s-rete">
+    <div class="titolo"><h2>Rete di casa</h2></div>
+    <div class="card">
+      <h3>Connessione <span class="stato-pill" id="rt-stato">…</span></h3>
+      <div class="rete-num">
+        <div><b id="rt-down">–<small>Mbps</small></b><span>download</span></div>
+        <div><b id="rt-ping">–<small>ms</small></b><span>latenza</span></div>
+      </div>
+      <div id="rt-barre" aria-label="Latenza dell'ultima mezz'ora"></div>
+      <dl class="rete-dati">
+        <dt>Operatore</dt><dd id="rt-isp">–</dd>
+        <dt>IP pubblico</dt><dd id="rt-ip">–</dd>
+        <dt>Zona</dt><dd id="rt-zona">–</dd>
+      </dl>
+      <p class="spiega" id="rt-nota"></p>
+    </div>
+    <div class="card">
+      <h3>Wi‑Fi <span id="ospiti-stato"></span></h3>
+      <div class="spiega" id="wifi-vuoto">Il nome e la password arrivano dal lettore in Termux sul tablet.</div>
+      <div class="ospiti" id="ospiti" hidden>
+        <img id="ospiti-qr" alt="QR code della rete Wi-Fi di casa">
+        <div class="ospiti-testo">
+          <span class="ospiti-riga">Rete <strong id="ospiti-ssid"></strong></span>
+          <span class="ospiti-riga" id="ospiti-5-riga" hidden>5 GHz <strong id="ospiti-ssid5"></strong></span>
+          <span class="ospiti-riga">Password <strong id="ospiti-pw"></strong></span>
+          <small>Tocca il QR per mostrarlo in grande a un ospite.</small>
+        </div>
+      </div>
+      <div class="wifi-azioni" id="wifi-azioni" hidden><button type="button" id="wifi-copia">Copia password</button><button type="button" id="wifi-condividi">Condividi</button></div>
+    </div>
+    <div class="card">
+      <h3>Dispositivi <span id="disp-conta">…</span></h3>
+      <ul class="disp-lista" id="disp-lista"></ul>
+      <button type="button" id="disp-altri" hidden></button>
+      <div id="disp-stato"></div>
+    </div>
+  </section>
+
   <section class="scheda" id="s-foto">
     <div class="titolo"><h2>Foto</h2></div>
     <label class="carica">Aggiungi foto<input type="file" id="foto-input" accept="image/*" multiple hidden></label>
@@ -359,8 +440,11 @@
   <button data-s="turni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Turni</button>
   <button data-s="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/></svg>Promemoria</button>
   <button data-s="giochi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="17.5" cy="13.8" r=".6" fill="currentColor"/></svg>Giochi</button>
+  <button data-s="rete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"/><circle cx="12" cy="19.3" r="1.1" fill="currentColor" stroke="none"/></svg>Rete</button>
   <button data-s="foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 3.5 3 3-2.5L20 17"/></svg>Foto</button>
 </nav>
+
+<div id="qr-grande"><div><img id="qr-grande-img" alt="QR code del Wi-Fi"><p id="qr-grande-testo"></p></div></div>
 
 <!-- minichat (solo telefono) -->
 <button id="chat-btn" type="button" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 3.5V15.5H4z"/></svg><b hidden></b></button>
@@ -437,9 +521,10 @@
   </div>
 </div>
 
-<script src="comune.js?v=29"></script>
-<script src="forza4.js?v=29"></script>
-<script src="giochi.js?v=29"></script>
+<script src="comune.js?v=30"></script>
+<script src="forza4.js?v=30"></script>
+<script src="giochi.js?v=30"></script>
+<script src="rete.js?v=30"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -449,6 +534,7 @@ function mostraScheda(n) {
   [].forEach.call(document.querySelectorAll("nav button"), function (b) { b.classList.toggle("on", b.getAttribute("data-s") === n); });
   window.scrollTo(0, 0);
   if (n === "foto") disegnaFoto();
+  if (n === "rete") { disegnaReteTel(); leggiDispositivi(); }
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
 }
 [].forEach.call(document.querySelectorAll("nav button"), function (b) { b.onclick = function () { mostraScheda(b.getAttribute("data-s")); }; });
@@ -765,6 +851,48 @@ $("foto-input").onchange = function () {
   }, Promise.resolve()).catch(function () { alert("Non sono riuscito a caricare tutte le foto. Riprova."); }).then(disegnaFoto);
 };
 
+// ================= rete di casa =================
+// Velocità, latenza e operatore li misura il tablet (sempre sul Wi-Fi di casa) e li condivide in cfg.reteCasa;
+// Wi-Fi e dispositivi arrivano dal lettore in Termux (dispositivi.json), letti con lo stesso codice del tablet (rete.js).
+function disegnaReteTel() {
+  var r = cfg.reteCasa, st = $("rt-stato");
+  function testo(id, t) { var e = $(id); e.firstChild ? e.firstChild.nodeValue = t : e.textContent = t; }
+  if (!r) {
+    st.textContent = "–"; st.className = "stato-pill";
+    $("rt-nota").textContent = "Le misure arrivano dal tablet: aprite la sua seconda pagina almeno una volta dopo l'aggiornamento.";
+    return;
+  }
+  var vecchio = Date.now() - r.quando > 90 * 60000;
+  st.textContent = vecchio ? "nessuna notizia" : "online"; st.className = "stato-pill " + (vecchio ? "no" : "ok");
+  testo("rt-down", r.mbps == null ? "–" : r.mbps >= 100 ? String(Math.round(r.mbps)) : r.mbps.toFixed(1));
+  testo("rt-ping", r.ping == null ? "–" : String(r.ping));
+  $("rt-isp").textContent = r.isp || "–"; $("rt-ip").textContent = r.ip || "–"; $("rt-zona").textContent = r.zona || "–";
+  var box = $("rt-barre"); box.innerHTML = "";
+  var s = r.storico || [], max = Math.max(100, Math.max.apply(null, s.filter(function (x) { return x != null; }).concat([0])));
+  s.forEach(function (v) { var b = el("i"); if (v == null) b.className = "persa"; else b.style.height = Math.max(4, v / max * 100) + "%"; box.appendChild(b); });
+  $("rt-nota").textContent = "Misurato dal tablet " + fraQuanto(r.quando) + (r.quandoVel ? " · velocità " + fraQuanto(r.quandoVel) : "") +
+    (vecchio ? ". Il tablet non manda notizie da un po': è acceso e connesso?" : ".");
+}
+function dopoOspiti(o) {   // dal codice del tablet: nome e password del Wi-Fi sono pronti
+  $("wifi-azioni").hidden = !(o && o.password);
+  if (!o) return;
+  $("wifi-copia").onclick = function () {
+    var b = this;
+    (navigator.clipboard ? navigator.clipboard.writeText(o.password) : Promise.reject()).then(function () { b.textContent = "Copiata ✓"; }, function () { b.textContent = "Non riesco a copiarla"; })
+      .then(function () { setTimeout(function () { b.textContent = "Copia password"; }, 2000); });
+  };
+  $("wifi-condividi").hidden = !navigator.share;
+  $("wifi-condividi").onclick = function () { navigator.share({ title: "Wi‑Fi di casa", text: "Wi‑Fi: " + o.ssid + "\nPassword: " + o.password }).catch(function () {}); };
+  $("ospiti-qr").onclick = function () {
+    if (!o.qr) return;
+    $("qr-grande-img").src = "data:image/png;base64," + o.qr; $("qr-grande-testo").textContent = o.ssid;
+    $("qr-grande").classList.add("on");
+  };
+}
+$("qr-grande").onclick = function () { this.classList.remove("on"); };
+$("disp-altri").onclick = function () { dispTutti = !dispTutti; disegnaDispositivi(); };
+setInterval(function () { if (scheda === "rete" && document.visibilityState === "visible") { leggiDispositivi(); disegnaReteTel(); } }, 60000);
+
 // ================= minichat =================
 // I messaggi vivono solo nel registro condiviso (chiavi "msg.<id>"), cifrati come il resto: il tablet li ignora.
 var CHAT_MAX = 150, io = leggi("telefono_io", null), chatAperta = false, chatVisti = -1;
@@ -892,10 +1020,10 @@ $("imp-salva-codice").onclick = function () {
   });
 };
 $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Per rientrare servirà la password.")) esci(); };
-function dopoSblocco() { if (scheda === "foto") disegnaFoto(); }
+function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
 
 // ================= avvio =================
-function ridisegna() { disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
+function ridisegna() { disegnaReteTel(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
 avviaGiochi();
 mostraScheda(scheda);
 cambiaVista(vista);

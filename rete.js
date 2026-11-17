@@ -85,9 +85,23 @@ function misuraVelocita() {   // scarica ~4 MB (tre copie in parallelo) e calcol
   conTimeout(Promise.all([scarica(0), scarica(1), scarica(2)]), 30000).then(function () {
     var s = (performance.now() - t0) / 1000;
     reteVel = { mbps: byte * 8 / s / 1e6, quando: Date.now() }; salva("rete_velocita", reteVel);
+    condividiRete();
   }, function () {}).then(function () { reteMisuraInCorso = false; disegnaRete(); });
 }
 
+// il tablet condivide le sue misure (cifrate, come i turni) così il telefono vede la rete di casa anche da fuori
+function condividiRete() {
+  if (!$("card-rete") || !window.salvaCfg) return;   // solo il tablet, che è sempre sul Wi-Fi di casa
+  var validi = reteStorico.slice(-10).filter(function (x) { return x != null; }).sort(function (a, b) { return a - b; });
+  cfg.reteCasa = {
+    quando: Date.now(),
+    mbps: reteVel ? Math.round(reteVel.mbps * 10) / 10 : null, quandoVel: reteVel ? reteVel.quando : null,
+    ping: validi.length ? validi[Math.floor(validi.length / 2)] : null,
+    storico: reteStorico.slice(-30),
+    ip: reteInfo ? reteInfo.ip : "", isp: reteInfo ? reteInfo.isp : "", zona: reteInfo ? reteInfo.zona : ""
+  };
+  salvaCfg();
+}
 function reteVisibile() {   // quando si apre la schermata: misura da sola se l'ultima volta è di più di un'ora fa
   disegnaRete(); leggiDispositivi();
   if (!reteVel || Date.now() - reteVel.quando > 60 * 60 * 1000) misuraVelocita();
@@ -117,6 +131,7 @@ function leggiDispositivi() {
 function disegnaOspiti() {   // rete Wi-Fi di casa letta dal lettore in Termux, con il QR già pronto
   var o = dispDati && (dispDati.wifi || dispDati.ospiti), box = $("ospiti"); if (!box) return;
   if ($("wifi-vuoto")) $("wifi-vuoto").hidden = !!(o && o.ssid);
+  if (window.dopoOspiti) dopoOspiti(o);
   if (!o || !o.ssid) { box.hidden = true; return; }
   box.hidden = false; box.classList.toggle("spenta", !o.attivo);
   if (o.qr) $("ospiti-qr").src = "data:image/png;base64," + o.qr;
@@ -216,5 +231,6 @@ function avviaRete() {
   misuraLatenza(); setInterval(misuraLatenza, 60 * 1000);
   if (!reteInfo || Date.now() - reteInfo.quando > 30 * 60 * 1000) leggiInfoRete();
   setInterval(leggiInfoRete, 30 * 60 * 1000);
+  setTimeout(condividiRete, 20000); setInterval(condividiRete, 30 * 60 * 1000);   // ogni mezz'ora le misure vanno anche ai telefoni
   setInterval(disegnaRete, 30 * 1000);   // aggiorna "x min fa"
 }
