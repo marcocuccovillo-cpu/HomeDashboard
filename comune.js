@@ -235,8 +235,11 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
   if (val("rete.casa")) cfg.reteCasa = val("rete.casa").v;
   if (val("tablet.stato")) cfg.statoTablet = val("tablet.stato").v;
   if (val("gioco.dama")) cfg.dama = val("gioco.dama").v;
-  cfg.record = {};
-  ["2048", "snake"].forEach(function (g) { cfg.record[g] = [0, 1].map(function (p) { var e = val("gioco.record." + g + "." + p); return e ? e.v : 0; }); });
+  cfg.record = {};   // record di qualsiasi gioco: "gioco.record.<gioco>.<persona>"
+  Object.keys(reg).forEach(function (k) {
+    var m = /^gioco\.record\.(.+)\.([01])$/.exec(k), e = m && val(k); if (!e) return;
+    cfg.record[m[1]] = cfg.record[m[1]] || [0, 0]; cfg.record[m[1]][+m[2]] = e.v;
+  });
   var tv = function (k) { var e = val("tragitto." + k); return e ? e.v : null; };
   cfg.bus = { fermate: val("bus.fermate") ? val("bus.fermate").v : [], linee: val("bus.linee") ? val("bus.linee").v : "" };
   cfg.tragitti = { casa: tv("casa"), lavoro: [tv("lavoro.0"), tv("lavoro.1")], mezzo: [tv("mezzo.0") || "auto", tv("mezzo.1") || "auto"], chiave: tv("chiave") || "" };

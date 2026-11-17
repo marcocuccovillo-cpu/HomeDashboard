@@ -276,6 +276,20 @@ function disegnaSnake(box) {
   setTimeout(snDisegnaCanvas, 0);
 }
 
+// ================================================================ console: il telefono diventa un joypad
+function disegnaConsoleTel(box) {
+  var c = el("div", "card jp-card");
+  c.innerHTML = '<div class="grande">🎮</div><h3 style="justify-content:center">Console di casa</h3>' +
+    '<p>Apri la <b>pagina 3</b> del tablet (scorri a destra due volte), poi collega il tuo telefono come joypad. Dovete essere sul Wi‑Fi di casa.</p>';
+  var b = el("button", "btn pieno"); b.type = "button"; b.textContent = "Collega il joypad"; b.onclick = collegaJoypad;
+  var st = el("p"); st.id = "jp-stato"; st.textContent = JP.stato || "";
+  c.appendChild(b); c.appendChild(st); box.appendChild(c);
+  var r = el("div", "card");
+  r.innerHTML = "<h3>Giochi della console</h3>";
+  [["tron", "Tron a due"], ["tank", "Carri armati"]].forEach(function (x) { var d = el("div", "titolo"); d.style.margin = "6px 0"; var n = el("span"); n.textContent = x[1]; d.appendChild(n); r.appendChild(d); classifica(r, x[0]); });
+  box.appendChild(r);
+}
+
 // ================================================================ scheda
 function disegnaGiochi() {
   var box = $("giochi-box"); if (!box) return;
@@ -286,6 +300,7 @@ function disegnaGiochi() {
   if (GIOCO === "tris") disegnaTris(box);
   else if (GIOCO === "dama") disegnaDama(box);
   else if (GIOCO === "2048") disegna2048(box);
+  else if (GIOCO === "console") disegnaConsoleTel(box);
   else disegnaSnake(box);
 }
 function avviaGiochi() {

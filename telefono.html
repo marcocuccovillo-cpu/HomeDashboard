@@ -324,6 +324,31 @@
   .fine-gioco { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(250,245,240,.75); font-size: 20px; font-weight: 700; color: var(--ink); text-align: center; pointer-events: none; }
   @media (prefers-color-scheme: dark) { .fine-gioco { background: rgba(18,16,19,.7); } }
 
+  /* --- joypad della console --- */
+  .jp-card { text-align: center; padding: 22px 16px; }
+  .jp-card .grande { font-size: 54px; line-height: 1; }
+  .jp-card p { color: var(--muted); font-size: 14px; }
+  #jp-stato { min-height: 20px; font-size: 14px; color: var(--accent); font-weight: 500; }
+  #joypad { position: fixed; inset: 0; z-index: 20; display: none; background: radial-gradient(circle at 50% 30%, #2b2f3d, #12141b); color: #e8ecf6;
+            user-select: none; -webkit-user-select: none; touch-action: none; --jc: #ff8a3d; }
+  #joypad.p1 { --jc: #3de0d2; }
+  #joypad.on { display: grid; grid-template-rows: auto 1fr; }
+  .jp-testa { display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 16px 6px; }
+  .jp-testa b { color: var(--jc); font: 800 18px/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; }
+  #jp-testo { flex: 1; font-size: 13px; opacity: .75; text-align: center; }
+  #jp-esci { border: 1px solid rgba(255,255,255,.2); background: none; color: inherit; border-radius: 10px; padding: 6px 10px; font-size: 13px; }
+  .jp-corpo { display: flex; align-items: center; justify-content: space-around; gap: 10px; padding: 10px 14px calc(18px + env(safe-area-inset-bottom)); flex-wrap: wrap; }
+  .jp-croce { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(3, 62px); gap: 4px; }
+  .jp-croce button, .jp-ab button, .jp-menu { border: 0; color: #fff; font: 800 22px/1 sans-serif; touch-action: none; }
+  .jp-croce button { background: #3a3f52; border-radius: 12px; box-shadow: 0 5px 0 #1e212c; }
+  .jp-croce .su { grid-column: 2; grid-row: 1; } .jp-croce .sx { grid-column: 1; grid-row: 2; } .jp-croce .dx { grid-column: 3; grid-row: 2; } .jp-croce .giu { grid-column: 2; grid-row: 3; }
+  .jp-croce .centro { grid-column: 2; grid-row: 2; background: #2c303f; box-shadow: none; border-radius: 50%; }
+  .jp-ab { display: grid; grid-template-columns: 86px 86px; gap: 14px; transform: rotate(-12deg); }
+  .jp-ab button { width: 86px; height: 86px; border-radius: 50%; background: var(--jc); box-shadow: 0 6px 0 rgba(0,0,0,.35); color: #12141b; }
+  .jp-ab .b { margin-top: 40px; background: #8c93a8; }
+  .jp-menu { background: #3a3f52; border-radius: 20px; padding: 8px 18px; font-size: 13px; box-shadow: 0 4px 0 #1e212c; }
+  #joypad .premuto { transform: translateY(4px); box-shadow: none !important; filter: brightness(1.25); }
+
   /* --- minichat: pulsantino nell'angolo e pannello che sale --- */
   #chat-btn { position: fixed; right: 14px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 7; width: 40px; height: 40px;
               border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: var(--accent);
@@ -412,7 +437,7 @@
 
   <section class="scheda" id="s-giochi">
     <div class="titolo"><h2>Giochi</h2></div>
-    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
+    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button><button type="button" data-v="console">🎮</button></div>
     <div id="giochi-box"></div>
   </section>
 
@@ -474,6 +499,16 @@
 </nav>
 
 <div id="qr-grande"><div><img id="qr-grande-img" alt="QR code del Wi-Fi"><p id="qr-grande-testo"></p></div></div>
+
+<!-- joypad della console (tablet, pagina 3) -->
+<div id="joypad">
+  <div class="jp-testa"><b id="jp-nome"></b><span id="jp-testo"></span><button type="button" id="jp-esci">Esci</button></div>
+  <div class="jp-corpo">
+    <div class="jp-croce"><button class="su" data-k="su">▲</button><button class="sx" data-k="sx">◀</button><span class="centro"></span><button class="dx" data-k="dx">▶</button><button class="giu" data-k="giu">▼</button></div>
+    <button class="jp-menu" data-k="menu">MENU</button>
+    <div class="jp-ab"><button class="b" data-k="b">B</button><button class="a" data-k="a">A</button></div>
+  </div>
+</div>
 
 <!-- minichat (solo telefono) -->
 <button id="chat-btn" type="button" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 3.5V15.5H4z"/></svg><b hidden></b></button>
@@ -561,12 +596,13 @@
   </div>
 </div>
 
-<script src="comune.js?v=31"></script>
-<script src="forza4.js?v=31"></script>
-<script src="giochi.js?v=31"></script>
-<script src="rete.js?v=31"></script>
-<script src="tragitti.js?v=31"></script>
-<script src="telecomando.js?v=31"></script>
+<script src="comune.js?v=32"></script>
+<script src="forza4.js?v=32"></script>
+<script src="giochi.js?v=32"></script>
+<script src="rete.js?v=32"></script>
+<script src="tragitti.js?v=32"></script>
+<script src="telecomando.js?v=32"></script>
+<script src="console.js?v=32"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1155,7 +1191,7 @@ function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "r
 
 // ================= avvio =================
 function ridisegna() { disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
-avviaGiochi();
+avviaGiochi(); avviaJoypad();
 mostraScheda(scheda);
 cambiaVista(vista);
 ridisegna();
