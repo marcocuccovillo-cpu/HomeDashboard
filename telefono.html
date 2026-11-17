@@ -256,6 +256,18 @@
   .sp-vuota { color: var(--muted); font-size: 14px; padding: 8px 0; }
   .sp-presi { width: 100%; margin-top: 12px; border: 1px solid var(--line); background: none; border-radius: 12px; padding: 10px; font-size: 14px; color: var(--muted); }
 
+  /* --- appuntamenti --- */
+  .app-piu { border: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 22px; line-height: 1; padding: 0; }
+  .app-piu.piccolo { width: 26px; height: 26px; font-size: 17px; margin-left: 6px; background: var(--accent-soft); color: var(--accent); }
+  .app-riga { width: 100%; border: 0; background: none; text-align: left; display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; color: var(--ink); }
+  .app-riga b { flex: none; min-width: 64px; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .app-riga span { flex: 1; min-width: 0; }
+  .app-riga i { font-style: normal; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .giorno .app-riga { padding: 8px 0 6px; font-size: 14.5px; }
+  .giorno .app-riga::before { content: "●"; color: var(--accent); font-size: 10px; }
+  .app-vuoto { color: var(--muted); font-size: 14px; padding: 4px 0; }
+  .ea-campo { padding: 11px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 16px; min-width: 0; }
+
   /* --- pensavo a te --- */
   #btn-pensiero { border: 0; background: rgba(255,255,255,.2); color: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
   #btn-pensiero.inviato { background: #fff; color: #b8172d; }
@@ -413,6 +425,10 @@
   <section class="scheda" id="s-oggi">
     <div class="eroe" id="eroe"></div>
     <div id="oggi-turni"></div>
+    <div class="card" id="card-app">
+      <div class="titolo" style="margin-top:0"><h2>Appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+      <div id="app-lista"></div>
+    </div>
     <div class="card" id="card-tc">
       <div class="titolo" style="margin-top:0"><h2>Tablet di casa</h2><span class="spiega" style="margin:0">telecomando</span></div>
       <div class="tc-riga"><b>Radio</b><select id="tc-stazione"></select><button type="button" class="tc-btn pieno" id="tc-radio">▶</button>
@@ -565,6 +581,17 @@
   </form>
 </div>
 
+<!-- appuntamento (lo stesso calendario del tablet) -->
+<div class="velo" id="ed-app">
+  <form class="foglio">
+    <h3 id="ea-titolo">Nuovo appuntamento</h3>
+    <div class="campo"><input type="text" id="ea-testo" placeholder="Cosa? (es. dentista, cena da Giulia)" autocomplete="off" maxlength="80"></div>
+    <div class="riga2"><input type="date" id="ea-data" class="ea-campo" style="flex:1.4"><input type="time" id="ea-ora" class="ea-campo" style="flex:1" aria-label="Ora (facoltativa)"></div>
+    <p class="spiega">L'ora è facoltativa. Compare anche sul calendario del tablet (pagina 4).</p>
+    <div class="azioni"><button type="button" class="btn rosso sx" id="ea-elimina">Elimina</button><button type="button" class="btn chiudi">Annulla</button><button class="btn pieno">Salva</button></div>
+  </form>
+</div>
+
 <!-- modifica bigliettino -->
 <div class="velo" id="ed-nota">
   <form class="foglio">
@@ -603,14 +630,14 @@
   </div>
 </div>
 
-<script src="comune.js?v=46"></script>
-<script src="forza4.js?v=46"></script>
-<script src="giochi.js?v=46"></script>
-<script src="rete.js?v=46"></script>
-<script src="tragitti.js?v=46"></script>
-<script src="suoni.js?v=46"></script>
-<script src="telecomando.js?v=46"></script>
-<script src="spesa.js?v=46"></script>
+<script src="comune.js?v=47"></script>
+<script src="forza4.js?v=47"></script>
+<script src="giochi.js?v=47"></script>
+<script src="rete.js?v=47"></script>
+<script src="tragitti.js?v=47"></script>
+<script src="suoni.js?v=47"></script>
+<script src="telecomando.js?v=47"></script>
+<script src="spesa.js?v=47"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -687,8 +714,13 @@ function disegnaGiorni() {   // da oggi alla fine della prossima settimana, con 
       dt.appendChild(b); dt.appendChild(sp);
       var ins = insieme(d);
       if (ins) { var c = el("span", "tag"); c.textContent = ins === "giorno" ? "♥ liberi insieme" : "♡ serata insieme"; dt.appendChild(c); }
+      var piu = el("button", "app-piu piccolo"); piu.type = "button"; piu.textContent = "+"; piu.setAttribute("aria-label", "Appuntamento in questo giorno");
+      (function (k) { piu.onclick = function () { modificaApp(null, k); }; })(k);
+      piu.style.marginLeft = ins ? "6px" : "auto";
+      dt.appendChild(piu);
       r.appendChild(dt);
       [0, 1].forEach(function (p) { rigaTurno(r, d, p, k === oggi); });
+      appDelGiorno(k).forEach(function (e) { r.appendChild(rigaApp(e, false)); });
       box.appendChild(r);
     }
   });
@@ -961,6 +993,51 @@ function mostraVistaNote(v) {
 }
 $("note-vista").onclick = function (e) { var b = e.target.closest("button"); if (b) mostraVistaNote(b.getAttribute("data-v")); };
 function contaSpesaTab() { var n = spesa.filter(function (v) { return !v.fatto; }).length; $("spesa-conta-tab").textContent = n ? n + " da prendere" : "lista vuota"; }
+
+// ================= appuntamenti (stesso calendario del tablet: cfg.eventi) =================
+function appTutti() { cfg.eventi = cfg.eventi || []; return cfg.eventi; }
+function appDelGiorno(k) { return appTutti().filter(function (e) { return e.data === k; }).sort(function (a, b) { return (a.ora || "99").localeCompare(b.ora || "99"); }); }
+function quandoApp(k) {
+  var d = daIso(k), oggi = iso(new Date()), dom = iso(piuGiorni(new Date(), 1));
+  return k === oggi ? "Oggi" : k === dom ? "Domani" : GIORNI_LUN[(d.getDay() + 6) % 7] + " " + d.getDate() + (d.getMonth() !== new Date().getMonth() ? " " + MESI[d.getMonth()].slice(0, 3) : "");
+}
+function rigaApp(e, conData) {
+  var r = el("button", "app-riga"); r.type = "button";
+  if (conData) { var q = el("b"); q.textContent = quandoApp(e.data); r.appendChild(q); }
+  var t = el("span"); t.textContent = e.testo; r.appendChild(t);
+  if (e.ora) { var o = el("i"); o.textContent = e.ora; r.appendChild(o); }
+  r.onclick = function () { modificaApp(e); };
+  return r;
+}
+function disegnaApp() {   // in Oggi: i prossimi 14 giorni
+  var box = $("app-lista"); if (!box) return;
+  var oggi = iso(new Date()), fine = iso(piuGiorni(new Date(), 14));
+  var l = appTutti().filter(function (e) { return e.data >= oggi && e.data <= fine; })
+    .sort(function (a, b) { return a.data.localeCompare(b.data) || (a.ora || "99").localeCompare(b.ora || "99"); });
+  box.innerHTML = "";
+  if (!l.length) { var v = el("div", "app-vuoto"); v.textContent = "Niente nei prossimi 14 giorni. Tocca + per aggiungere."; box.appendChild(v); return; }
+  l.forEach(function (e) { box.appendChild(rigaApp(e, true)); });
+}
+var ea = null;
+function modificaApp(e, giorno) {
+  ea = e;
+  $("ea-titolo").textContent = e ? "Appuntamento" : "Nuovo appuntamento";
+  $("ea-testo").value = e ? e.testo : ""; $("ea-data").value = e ? e.data : (giorno || iso(new Date())); $("ea-ora").value = e ? (e.ora || "") : "";
+  $("ea-elimina").style.visibility = e ? "visible" : "hidden";
+  apri("ed-app"); if (!e) setTimeout(function () { $("ea-testo").focus(); }, 80);
+}
+$("app-nuovo").onclick = function () { modificaApp(null); };
+$("ed-app").querySelector("form").onsubmit = function (ev) {
+  ev.preventDefault();
+  var testo = $("ea-testo").value.trim(), data = $("ea-data").value; if (!testo || !data) { $("ea-testo").focus(); return; }
+  if (ea) { ea.testo = testo.slice(0, 80); ea.data = data; ea.ora = $("ea-ora").value || ""; }
+  else appTutti().push({ id: nuovoId(), data: data, ora: $("ea-ora").value || "", testo: testo.slice(0, 80) });
+  salvaCfg(); chiudi("ed-app"); ridisegna();
+};
+$("ea-elimina").onclick = function () {
+  if (!ea) return;
+  cfg.eventi = appTutti().filter(function (x) { return x !== ea; }); salvaCfg(); chiudi("ed-app"); ridisegna();
+};
 
 // ================= sto tornando =================
 // Ora di arrivo: dalla posizione del telefono (se la dai) a casa, altrimenti il tragitto lavoro → casa.
@@ -1242,7 +1319,7 @@ $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Pe
 function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
 
 // ================= avvio =================
-function ridisegna() { ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
+function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
 avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote);
 mostraScheda(scheda);
 cambiaVista(vista);
