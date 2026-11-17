@@ -23,7 +23,8 @@ var CN = { pc: [null, null], dc: [null, null], offerta: [null, null], usata: [""
            tasti: [{}, {}], eventi: [], scena: "menu", sel: 0, attivo: false, tSync: null, ac: null };
 var GIOCHI_CONS = [
   { id: "tron", nome: "TRON A DUE", spiega: "Moto di luce: non sbattere contro le scie. Vince chi arriva a 3." },
-  { id: "tank", nome: "CARRI ARMATI", spiega: "Su/giù per muoverti, sinistra/destra per girare, A per sparare. I colpi rimbalzano! Vince chi arriva a 5." }
+  { id: "tank", nome: "CARRI ARMATI", spiega: "Su/giù per muoverti, sinistra/destra per girare, A per sparare. I colpi rimbalzano! Vince chi arriva a 5." },
+  { id: "party", nome: "DISEGNA E INDOVINA", spiega: "Party con gli ospiti: si entra inquadrando il QR, a turno uno disegna e gli altri indovinano." }
 ];
 
 function consoleSulTablet() { return !!$("card-console"); }
@@ -96,7 +97,7 @@ function tela() {
   CV.addEventListener("click", function (e) {   // anche toccando lo schermo del tablet si sceglie il gioco
     if (CN.scena !== "menu") return;
     var r = CV.getBoundingClientRect(), y = (e.clientY - r.top) / r.height * H;
-    GIOCHI_CONS.forEach(function (g, i) { if (Math.abs(y - (92 + i * 20)) < 9) { CN.sel = i; avviaGioco(); } });
+    GIOCHI_CONS.forEach(function (g, i) { if (Math.abs(y - (88 + i * 17)) < 8) { CN.sel = i; avviaGioco(); } });
   });
 }
 var COL = { fondo: "#05060a", griglia: "#0d1626", testo: "#d8f3ff", p0: "#ff8a3d", p1: "#3de0d2", muro: "#3a4c7a", rosso: "#ff3b5c" };
@@ -121,10 +122,10 @@ function disegnaMenu() {
     scrivi(c ? "JOYPAD OK" : u ? "TASTIERA" : "CPU", x, 66, 6, c ? "#7dff9a" : "#8aa0b8");
   });
   GIOCHI_CONS.forEach(function (g, i) {
-    var y = 92 + i * 20, s = i === CN.sel, r = record(g.id);
+    var y = 88 + i * 17, s = i === CN.sel, r = record(g.id);
     if (s) { CX.fillStyle = "#1c2a48"; CX.fillRect(40, y - 8, W - 80, 16); scrivi("▶", 50, y, 8, COL.rosso); }
     scrivi(g.nome, W / 2, y - 1, 9, s ? "#fff" : "#9fb4cc");
-    scrivi(nomeCorto(0) + " " + r[0] + " - " + r[1] + " " + nomeCorto(1), W / 2, y + 6, 5, "#6c84a3");
+    if (g.id !== "party") scrivi(nomeCorto(0) + " " + r[0] + " - " + r[1] + " " + nomeCorto(1), W / 2, y + 6, 5, "#6c84a3");
   });
   scrivi(GIOCHI_CONS[CN.sel].spiega, W / 2, 140, 5, "#9fb4cc");
   var lampo = Math.floor(Date.now() / 500) % 2;
@@ -137,6 +138,7 @@ function disegnaMenuSePronto() { if (CN.scena === "menu" && CX) disegnaMenu(); }
 var PARTITA = null;
 function avviaGioco() {
   var g = GIOCHI_CONS[CN.sel]; suono(660, 80); suono(990, 140);
+  if (g.id === "party") { CN.scena = "party"; apriParty(); return; }
   PARTITA = { gioco: g.id, punti: [0, 0], fine: false, msg: "", tMsg: 0, vince: g.id === "tron" ? 3 : 5 };
   CN.scena = "gioco";
   [0, 1].forEach(function (p) { manda(p, { t: "msg", testo: g.nome.toLowerCase() }); });
@@ -282,6 +284,10 @@ function cicloConsole(t) {
     if (CN.scena === "menu") disegnaMenu();
     return;
   }
+  if (CN.scena === "party") {
+    ev.forEach(function (e) { if (e.k === "b" || e.k === "menu") chiudiParty(); else if (e.k === "a") partyA(); });
+    partyTempo(); return;
+  }
   if (PARTITA.fine) ev.forEach(function (e) { if (e.k === "a") avviaGioco(); });
   if (ev.some(function (e) { return e.k === "b" || e.k === "menu"; })) { CN.scena = "menu"; suono(330, 80); return; }
   if (PARTITA.gioco === "tron") {
@@ -372,7 +378,183 @@ function avviaJoypad() {
   $("jp-esci").onclick = function () { chiudiJoypad(); if (window.disegnaGiochi) disegnaGiochi(); };
 }
 
+// =====================================================================================================
+// PARTY: "Disegna e indovina" con gli ospiti. Si entra dal QR (ospite.html), senza password.
+// Per presentarsi tablet e ospiti usano ntfy.sh (pubblico, gratuito) con messaggi cifrati AES-GCM:
+// la chiave sta solo nel QR (dopo il #, che non arriva a nessun server). Poi WebRTC diretto come i joypad.
+// =====================================================================================================
+var PY = null, NTFY = window.NTFY_BASE || "https://ntfy.sh/";   // NTFY_BASE: solo per le prove
+var PAROLE = ["gatto", "casa", "sole", "luna", "albero", "pizza", "bicicletta", "treno", "aereo", "chitarra", "ombrello", "occhiali", "fiore", "pesce",
+  "elefante", "giraffa", "castello", "torre", "ponte", "montagna", "spiaggia", "nave", "razzo", "robot", "cuore", "stella", "fantasma", "pupazzo di neve",
+  "tortellini", "gelato", "caffè", "tazza", "forchetta", "telefono", "computer", "televisione", "orologio", "sveglia", "lampadina", "chiave", "lucchetto",
+  "scala", "finestra", "porta", "letto", "divano", "sedia", "tavolo", "candela", "regalo", "torta", "palloncino", "aquilone", "farfalla", "ape", "ragno",
+  "serpente", "coccodrillo", "pinguino", "orso", "cane", "coniglio", "topo", "gallina", "mucca", "maiale", "cavallo", "drago", "unicorno", "sirena",
+  "pirata", "corona", "spada", "scudo", "arcobaleno", "nuvola", "pioggia", "fulmine", "neve", "vulcano", "isola", "deserto", "cactus", "fungo", "mela",
+  "banana", "anguria", "carota", "pomodoro", "uovo", "panino", "hamburger", "spaghetti", "cappello", "scarpa", "calzino", "maglietta", "cravatta",
+  "zaino", "valigia", "macchina", "autobus", "semaforo", "ambulanza", "trattore", "elicottero", "sottomarino", "faro", "tenda", "fuoco", "pallone",
+  "racchetta", "bowling", "scacchi", "dado", "carta da gioco", "microfono", "batteria", "pianoforte", "violino", "pennello", "forbici", "matita",
+  "libro", "occhio", "naso", "mano", "piede", "dente", "spazzolino", "doccia", "vasca", "lavatrice", "frigorifero", "portici", "due torri", "mortadella"];
+function b64u(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function daB64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), function (c) { return c.charCodeAt(0); }); }
+function pyCifra(o) {
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, PY.chiave, new TextEncoder().encode(JSON.stringify(o))).then(function (c) {
+    var t = new Uint8Array(12 + c.byteLength); t.set(iv); t.set(new Uint8Array(c), 12); return b64u(t);
+  });
+}
+function pyDecifra(s) {
+  var b = daB64u(s);
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: b.slice(0, 12) }, PY.chiave, b.slice(12)).then(function (p) { return JSON.parse(new TextDecoder().decode(p)); });
+}
+function pyPubblica(o) { return pyCifra(o).then(function (c) { return fetch(NTFY + PY.stanza, { method: "POST", body: c }); }); }
+function htmlPy(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+function apriParty() {
+  var grezza = crypto.getRandomValues(new Uint8Array(16));
+  PY = { stanza: "h2l-" + b64u(crypto.getRandomValues(new Uint8Array(12))), giocatori: [], fase: "attesa", turno: -1, parola: "", fine: 0, indovinati: [], storico: [], usate: {} };
+  crypto.subtle.importKey("raw", grezza, "AES-GCM", false, ["encrypt", "decrypt"]).then(function (k) {
+    PY.chiave = k;
+    PY.url = location.origin + location.pathname.replace(/[^/]*$/, "") + "ospite.html#s=" + PY.stanza + "&k=" + b64u(grezza);
+    PY.es = new EventSource(NTFY + PY.stanza + "/sse");
+    PY.es.onmessage = function (e) {
+      var m; try { m = JSON.parse(e.data); } catch (er) { return; }
+      if (!m.message) return;
+      pyDecifra(m.message).then(pyMessaggio, function () {});
+    };
+    disegnaParty();
+  });
+  var box = $("party"); box.hidden = false;
+  disegnaParty();
+}
+function chiudiParty() {
+  if (!PY) return;
+  if (PY.es) PY.es.close();
+  PY.giocatori.forEach(function (g) { try { g.pc.close(); } catch (e) {} });
+  PY = null; $("party").hidden = true; CN.scena = "menu"; suono(330, 80);
+}
+function pyMessaggio(m) {   // dagli ospiti, tramite ntfy: "ciao" (vuole entrare) e "risposta" (aggancio)
+  if (!PY) return;
+  if (m.tipo === "ciao" && m.id && !PY.giocatori.some(function (g) { return g.id === m.id; })) {
+    if (PY.giocatori.length >= 10) return;
+    var g = { id: m.id, nome: String(m.nome || "Ospite").slice(0, 16), punti: 0, colore: ["#ff8a3d", "#3de0d2", "#ff3b5c", "#ffd75e", "#9b7bff", "#7dff9a", "#ff7bd5", "#5db8ff", "#ffffff", "#c8a26b"][PY.giocatori.length], dc: null };
+    PY.giocatori.push(g);
+    var pc = new RTCPeerConnection({ iceServers: CONS.STUN }); g.pc = pc;
+    var dc = pc.createDataChannel("party", { ordered: true }); g.dc = dc;
+    dc.onopen = function () { suono(880, 90); suono(1320, 120); pyStato(g); disegnaParty(); };
+    dc.onclose = function () { disegnaParty(); };
+    dc.onmessage = function (e) { try { pyDaOspite(g, JSON.parse(e.data)); } catch (er) {} };
+    pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () { return attendiIce(pc); })
+      .then(function () { return pyPubblica({ tipo: "offerta", id: g.id, sdp: pc.localDescription.sdp }); });
+    disegnaParty();
+  } else if (m.tipo === "risposta") {
+    var x = PY.giocatori.filter(function (g) { return g.id === m.id; })[0];
+    if (x && x.pc.signalingState === "have-local-offer") x.pc.setRemoteDescription({ type: "answer", sdp: m.sdp }).catch(function () {});
+  }
+}
+function pyAttivi() { return PY.giocatori.filter(function (g) { return g.dc && g.dc.readyState === "open"; }); }
+function pyManda(g, o) { if (g.dc && g.dc.readyState === "open") try { g.dc.send(JSON.stringify(o)); } catch (e) {} }
+function pyStato(g) {   // a ciascuno quello che deve vedere
+  var d = PY.giocatori[PY.turno], disegno = d === g;
+  pyManda(g, { t: "stato", fase: PY.fase, nome: g.nome, colore: g.colore, disegna: disegno && PY.fase === "turno",
+               parola: disegno || PY.fase === "svela" ? PY.parola : "", lettere: PY.parola ? PY.parola.replace(/[^ ]/g, "_") : "",
+               chi: d ? d.nome : "", fine: PY.fine, indovinato: PY.indovinati.indexOf(g.id) >= 0,
+               classifica: PY.giocatori.map(function (x) { return { nome: x.nome, punti: x.punti, colore: x.colore }; }).sort(function (a, b) { return b.punti - a.punti; }) });
+}
+function pyTutti() { PY.giocatori.forEach(pyStato); }
+function normale(t) { return String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim(); }
+function distanza(a, b) {
+  var d = []; for (var i = 0; i <= a.length; i++) { d[i] = [i]; for (var j = 1; j <= b.length; j++) d[i][j] = i ? Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)) : j; }
+  return d[a.length][b.length];
+}
+function pyDaOspite(g, m) {
+  var d = PY.giocatori[PY.turno];
+  if (m.t === "tratto" && d === g && PY.fase === "turno") { pyTratto(m); PY.storico.push(m); return; }
+  if (m.t === "pulisci" && d === g && PY.fase === "turno") { pyPulisci(); PY.storico = []; return; }
+  if (m.t === "prova" && PY.fase === "turno" && d !== g && PY.indovinati.indexOf(g.id) < 0) {
+    var a = normale(m.testo), p = normale(PY.parola), ok = a === p || a.replace(/^(il|lo|la|i|gli|le|un|uno|una|l) /, "") === p;
+    if (ok) {
+      var resto = Math.max(0, Math.round((PY.fine - Date.now()) / 1000));
+      g.punti += 10 + Math.round(resto / 6); d.punti += 5; PY.indovinati.push(g.id);
+      pyFeed(g.nome + " ha indovinato! 🎉", g.colore); suono(988, 100); suono(1319, 160);
+      pyManda(g, { t: "esito", ok: true });
+      if (PY.indovinati.length >= pyAttivi().length - 1) pyFineTurno(); else pyTutti();
+    } else {
+      pyFeed(g.nome + ": " + m.testo.slice(0, 30), g.colore);
+      if (p.length > 3 && distanza(a, p) <= 1) pyManda(g, { t: "esito", quasi: true });
+    }
+    disegnaParty();
+  }
+}
+function pyFeed(t, col) { PY.feed = (PY.feed || []).concat([{ t: t, col: col }]).slice(-7); disegnaParty(); }
+function partyA() {   // A dal joypad (o il pulsante sul tablet): si comincia
+  if (!PY || PY.fase === "turno" || PY.fase === "svela") return;
+  if (pyAttivi().length < 2) { pyFeed("Servono almeno 2 giocatori collegati", "#ffd75e"); return; }
+  PY.giocatori.forEach(function (g) { g.punti = 0; });
+  PY.turno = -1; PY.giri = pyAttivi().length <= 3 ? 2 : 1; PY.fatti = 0; PY.feed = [];
+  pyProssimo();
+}
+function pyProssimo() {
+  var attivi = pyAttivi(); if (attivi.length < 2) { PY.fase = "attesa"; pyTutti(); disegnaParty(); return; }
+  if (PY.fatti >= attivi.length * PY.giri) { PY.fase = "classifica"; suono(784, 160); suono(1175, 300); pyTutti(); disegnaParty(); return; }
+  do { PY.turno = (PY.turno + 1) % PY.giocatori.length; } while (attivi.indexOf(PY.giocatori[PY.turno]) < 0);
+  var libere = PAROLE.filter(function (w) { return !PY.usate[w]; }); if (!libere.length) { PY.usate = {}; libere = PAROLE; }
+  PY.parola = libere[Math.floor(Math.random() * libere.length)]; PY.usate[PY.parola] = 1;
+  PY.fase = "turno"; PY.fine = Date.now() + 80000; PY.indovinati = []; PY.storico = []; PY.fatti++;
+  pyPulisci(); pyFeed("Disegna " + PY.giocatori[PY.turno].nome + "!", PY.giocatori[PY.turno].colore);
+  pyTutti(); disegnaParty();
+}
+function pyFineTurno() {
+  PY.fase = "svela"; pyFeed("Era: " + PY.parola.toUpperCase(), "#fff"); pyTutti(); disegnaParty();
+  setTimeout(function () { if (PY && PY.fase === "svela") pyProssimo(); }, 5000);
+}
+function partyTempo() {
+  if (!PY) return;
+  if (PY.fase === "turno") {
+    var s = Math.max(0, Math.ceil((PY.fine - Date.now()) / 1000)), e = $("party-tempo");
+    if (e && e.textContent !== String(s)) { e.textContent = s; if (s <= 5 && s > 0) suono(440, 60); }
+    if (s <= 0) pyFineTurno();
+  }
+}
+function pyTela() { return $("party-tela"); }
+function pyPulisci() { var c = pyTela(); if (c) c.getContext("2d").clearRect(0, 0, c.width, c.height); }
+function pyTratto(m) {
+  var c = pyTela(); if (!c || !m.p || m.p.length < 2) return;
+  var g = c.getContext("2d"); g.strokeStyle = m.col || "#fff"; g.lineWidth = (m.w || .012) * c.width; g.lineCap = g.lineJoin = "round";
+  g.beginPath(); g.moveTo(m.p[0][0] * c.width, m.p[0][1] * c.height);
+  for (var i = 1; i < m.p.length; i++) g.lineTo(m.p[i][0] * c.width, m.p[i][1] * c.height);
+  g.stroke();
+}
+function disegnaParty() {
+  var box = $("party"); if (!box || !PY) return;
+  var c = pyTela();
+  if (!c) {
+    box.innerHTML = '<div class="py-sx"><canvas id="party-tela"></canvas><div id="party-sopra"></div></div><div class="py-dx"><div class="py-testa"><b>DISEGNA E INDOVINA</b><span id="party-tempo"></span></div>' +
+      '<div id="party-lista"></div><div id="party-feed"></div><div class="py-pulsanti"><button type="button" id="party-via">▶ Inizia</button><button type="button" id="party-esci">Esci</button></div></div>';
+    c = pyTela(); var r = c.parentNode.getBoundingClientRect(); c.width = Math.round(r.width * 1.5); c.height = Math.round(r.height * 1.5);
+    $("party-via").onclick = partyA; $("party-esci").onclick = chiudiParty;
+  }
+  var sopra = $("party-sopra"), d = PY.giocatori[PY.turno];
+  if (PY.fase === "attesa" || PY.fase === "classifica") {
+    var qr = "";
+    if (PY.url && window.qrcode) { var q = qrcode(0, "L"); q.addData(PY.url); q.make(); qr = '<img alt="QR per entrare" src="' + q.createDataURL(6, 2) + '">'; }
+    sopra.innerHTML = (PY.fase === "classifica" ? '<div class="py-titolo">🏆 Vince ' + htmlPy(pyClassifica()[0].nome) + '!</div>' : '<div class="py-titolo">Inquadrate il QR per giocare</div>') +
+      qr + '<div class="py-nota">Serve il Wi‑Fi di casa · poi premete ▶ Inizia (o A sul joypad)</div>';
+    sopra.hidden = false;
+  } else if (PY.fase === "svela") { sopra.innerHTML = '<div class="py-titolo">Era: ' + htmlPy(PY.parola.toUpperCase()) + "</div>"; sopra.hidden = false; }
+  else { sopra.hidden = true; }
+  $("party-tempo").textContent = PY.fase === "turno" ? Math.max(0, Math.ceil((PY.fine - Date.now()) / 1000)) : "";
+  $("party-lista").innerHTML = pyClassifica().map(function (g) {
+    var on = g.dc && g.dc.readyState === "open";
+    return '<div class="py-g' + (g === d && PY.fase === "turno" ? " disegna" : "") + (PY.indovinati.indexOf(g.id) >= 0 ? " ok" : "") + (on ? "" : " off") + '"><i style="background:' + g.colore + '"></i><span>' +
+      htmlPy(g.nome) + (g === d && PY.fase === "turno" ? " ✏️" : "") + "</span><b>" + g.punti + "</b></div>";
+  }).join("") || '<div class="py-nota">Nessuno ancora: inquadrate il QR!</div>';
+  $("party-feed").innerHTML = (PY.feed || []).map(function (f) { return '<div style="color:' + f.col + '">' + htmlPy(f.t) + "</div>"; }).join("");
+  $("party-via").hidden = PY.fase === "turno" || PY.fase === "svela";
+  $("party-via").textContent = PY.fase === "classifica" ? "▶ Un'altra partita" : "▶ Inizia";
+}
+function pyClassifica() { return PY.giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }); }
+
 // le uniche cose visibili da fuori
 window.consoleVisibile = consoleVisibile; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
-window.CONSOLE_DEBUG = { CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
+window.CONSOLE_DEBUG = { py: function () { return PY; }, CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
 })();

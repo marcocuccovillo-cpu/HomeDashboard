@@ -387,6 +387,28 @@
                 background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.55) 100%); animation: sfarfallio 6s infinite; }
   @keyframes sfarfallio { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .85; } }
   body.in-console #gatto-strato, body.in-console #rientri { display: none; }
+  /* party "Disegna e indovina": lavagna a sinistra, giocatori e risposte a destra */
+  #party { position: absolute; inset: 0; z-index: 0; display: flex; gap: 2%; padding: 2.4%; background: #05060a; color: #e8f2ff;
+           font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .py-sx { position: relative; height: 100%; aspect-ratio: 4 / 3; background: #0b0d13; border-radius: 1.6vh; box-shadow: inset 0 0 0 .3vh #2a3550; overflow: hidden; }
+  #party-tela { width: 100%; height: 100%; display: block; }
+  #party-sopra { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6vh; background: rgba(5,6,10,.88); text-align: center; padding: 2vh; }
+  #party-sopra img { width: 34vh; height: 34vh; image-rendering: pixelated; background: #fff; border-radius: 1.2vh; padding: .6vh; }
+  .py-titolo { font-size: 3.6vh; font-weight: 800; color: #ffd75e; }
+  .py-nota { font-size: 1.7vh; color: #8aa0b8; }
+  .py-dx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1.4vh; }
+  .py-testa { display: flex; align-items: baseline; justify-content: space-between; gap: 1vw; }
+  .py-testa b { color: #ff3b5c; font-size: 2.4vh; }
+  #party-tempo { font-size: 5vh; font-weight: 800; color: #ffd75e; font-variant-numeric: tabular-nums; }
+  #party-lista { display: flex; flex-direction: column; gap: .6vh; }
+  .py-g { display: flex; align-items: center; gap: .8vw; font-size: 2.2vh; padding: .5vh .6vw; border-radius: .8vh; }
+  .py-g i { width: 1.6vh; height: 1.6vh; border-radius: 50%; flex: none; }
+  .py-g span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .py-g.disegna { background: #1c2a48; } .py-g.ok { background: rgba(125,255,154,.15); } .py-g.off { opacity: .4; }
+  #party-feed { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: .4vh; font-size: 1.8vh; }
+  .py-pulsanti { display: flex; gap: .8vw; }
+  .py-pulsanti button { flex: 1; border: 0; border-radius: 1vh; padding: 1.2vh; font: 700 2vh ui-monospace, Menlo, monospace; background: #ff3b5c; color: #fff; cursor: pointer; }
+  .py-pulsanti #party-esci { flex: none; background: #2a3550; }
 
   /* --- chi sta tornando (dal telefono) --- */
   #rientri { position: fixed; top: 1.2vh; left: 50%; transform: translateX(-50%); z-index: 8; display: flex; flex-direction: column; gap: .8vh; align-items: center; pointer-events: none; }
@@ -632,7 +654,7 @@
 <!-- terza schermata: la console di casa (i telefoni sono i joypad) -->
 <div class="pagina" id="pagina-3">
   <section class="card" id="card-console">
-    <div class="crt"><canvas id="console-tela" aria-label="Console di casa"></canvas></div>
+    <div class="crt"><canvas id="console-tela" aria-label="Console di casa"></canvas><div id="party" hidden></div></div>
   </section>
 </div>
 </div>
@@ -816,17 +838,18 @@
   </div>
 </div>
 
-<script src="comune.js?v=32"></script>
-<script src="rete.js?v=32"></script>
-<script src="giorno.js?v=32"></script>
-<script src="radio.js?v=32"></script>
-<script src="forza4.js?v=32"></script>
+<script src="comune.js?v=33"></script>
+<script src="rete.js?v=33"></script>
+<script src="giorno.js?v=33"></script>
+<script src="radio.js?v=33"></script>
+<script src="forza4.js?v=33"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=32"></script>
-<script src="bus.js?v=32"></script>
-<script src="telecomando.js?v=32"></script>
-<script src="console.js?v=32"></script>
-<script src="gatto.js?v=32"></script>
+<script src="tragitti.js?v=33"></script>
+<script src="bus.js?v=33"></script>
+<script src="telecomando.js?v=33"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="console.js?v=33"></script>
+<script src="gatto.js?v=33"></script>
 <script>
 
 // ================= orologio =================
