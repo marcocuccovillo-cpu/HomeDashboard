@@ -110,7 +110,42 @@ document.addEventListener("keydown", function (e) {
   if (!e.repeat) input(x[0], { t: "giu", k: x[1] });
 });
 document.addEventListener("keyup", function (e) { var x = TASTIERA[e.code]; if (x && CN.attivo) input(x[0], { t: "su", k: x[1] }); });
-function umano(p) { return collegato(p) || Date.now() - CN.tastiera[p] < 120000; }
+function viaLan(p) { return Date.now() - ((CN.lanVisto || [])[p] || 0) < 120000; }
+function umano(p) { return collegato(p) || viaLan(p) || Date.now() - CN.tastiera[p] < 120000; }
+
+// ---------------------------------------------------------------- piano B: joypad via Wi-Fi (passa dal lettore in Termux)
+function lanAvvia() {
+  if (CN.lan || typeof LETTORE === "undefined") return;
+  var codice = b64u(crypto.getRandomValues(new Uint8Array(12)));
+  CN.lan = { codice: codice, n: 0, url: "" }; CN.lanVisto = [0, 0];
+  fetch(LETTORE + "/joy/apri?c=" + codice, { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!j.ip) throw new Error("ip");
+    CN.lan.url = "http://" + j.ip + ":" + j.porta + "/joypad?c=" + codice; CN.lan.n = j.n || 0;
+    if (reg) regMetti("console.lan", { url: CN.lan.url, t: Date.now() });   // il telefono la trova nella sua app
+    $("console-qr-btn").hidden = false;
+    lanAscolta();
+  }).catch(function () { CN.lan = null; setTimeout(function () { if (CN.attivo) lanAvvia(); }, 30000); });   // lettore spento o vecchio
+}
+function lanAscolta() {
+  if (!CN.lan || !CN.attivo) return;
+  fetch(LETTORE + "/joy/eventi?dopo=" + CN.lan.n, { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (j) {
+    if (!CN.lan) return;
+    CN.lan.n = j.n;
+    j.eventi.forEach(function (e) { CN.lanVisto[e.p] = Date.now(); input(e.p, { t: e.t, k: e.k }); });
+    lanAscolta();
+  }).catch(function () { setTimeout(lanAscolta, 3000); });
+}
+function mostraQrLan() {   // due QR: uno per Marco, uno per Roberta
+  var box = $("console-qr"); if (!CN.lan || !CN.lan.url || !window.qrcode) return;
+  box.innerHTML = "";
+  [0, 1].forEach(function (p) {
+    var q = qrcode(0, "L"); q.addData(CN.lan.url + "&p=" + p + "&n=" + encodeURIComponent(nomeCorto(p))); q.make();
+    var d = el("div"), i = el("img"), t = el("b"); i.src = q.createDataURL(5, 2); t.textContent = cfg.nomi[p]; t.style.color = p ? "#3de0d2" : "#ff8a3d";
+    d.appendChild(i); d.appendChild(t); box.appendChild(d);
+  });
+  var n = el("p"); n.textContent = "Inquadra il tuo QR con la fotocamera: si apre il joypad via Wi‑Fi. Tocca qui per chiudere."; box.appendChild(n);
+  box.hidden = false; box.onclick = function () { box.hidden = true; };
+}
 
 // ---------------------------------------------------------------- disegno: tela con effetto CRT
 var CV = null, CX = null, W = 320, H = 180;   // risoluzione "a pixel" della console
@@ -142,7 +177,7 @@ function disegnaMenu() {
     CX.fillStyle = p ? COL.p1 : COL.p0; CX.fillRect(x - 46, 52, 92, 20);
     CX.fillStyle = COL.fondo; CX.fillRect(x - 45, 53, 90, 18);
     scrivi(nomeCorto(p), x, 59, 7, p ? COL.p1 : COL.p0);
-    scrivi(c ? "JOYPAD OK" : u ? "TASTIERA" : "CPU", x, 66, 6, c ? "#7dff9a" : "#8aa0b8");
+    scrivi(c ? "JOYPAD OK" : viaLan(p) ? "WI-FI OK" : u ? "TASTIERA" : "CPU", x, 66, 6, c || viaLan(p) ? "#7dff9a" : "#8aa0b8");
   });
   GIOCHI_CONS.forEach(function (g, i) {
     var y = 84 + i * 11, s = i === CN.sel;
@@ -487,7 +522,8 @@ function consoleVisibile(si) {   // la pagina 3 è in vista (o no)
   clearInterval(CN.tSync);
   if (si) {
     CN.tSync = setInterval(function () { sincronizza(); controllaAgganci(); }, 2000);   // agganci più svelti mentre la console è aperta
-    controllaAgganci();
+    controllaAgganci(); lanAvvia(); lanAscolta();
+    if ($("console-qr-btn") && !$("console-qr-btn").onclick) $("console-qr-btn").onclick = mostraQrLan;
     if (!CN.ciclo) { CN.ciclo = true; CN.tPrima = 0; requestAnimationFrame(cicloConsole); }
   }
 }
@@ -754,6 +790,6 @@ function disegnaParty() {
 function pyClassifica() { return PY.giocatori.slice().sort(function (a, b) { return b.punti - a.punti; }); }
 
 // le uniche cose visibili da fuori
-window.consoleVisibile = consoleVisibile; window.mostraIndirizzoVero = mostraIndirizzoVero; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
+window.consoleVisibile = consoleVisibile; window.consoleLan = function () { return regLeggi("console.lan"); }; window.mostraIndirizzoVero = mostraIndirizzoVero; window.collegaJoypad = collegaJoypad; window.avviaJoypad = avviaJoypad; window.chiudiJoypad = chiudiJoypad;
 window.CONSOLE_DEBUG = { avvia: function (id) { CN.sel = GIOCHI_CONS.findIndex(function (g) { return g.id === id; }); avviaGioco(); }, giochi: function () { return { pong: PG, serpi: SP, sumo: SU }; }, py: function () { return PY; }, CN: CN, collegato: collegato, regLeggi: regLeggi, stato: function () { return { partita: PARTITA, tron: TR2, tank: TK }; } };
 })();

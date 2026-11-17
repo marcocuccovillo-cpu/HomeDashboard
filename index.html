@@ -388,6 +388,14 @@
   @keyframes sfarfallio { 0%, 96%, 100% { opacity: 1; } 97% { opacity: .85; } }
   body.in-console #gatto-strato, body.in-console #rientri { display: none; }
   #card-console { position: relative; }
+  #console-qr-btn { position: absolute; top: 2.2vh; right: 2.2vw; z-index: 3; border: 0; border-radius: 2vh; padding: .7vh 1.2vw; background: rgba(255,255,255,.12);
+                    color: #e8f2ff; font: 600 1.7vh sans-serif; cursor: pointer; }
+  #console-qr { position: absolute; inset: 1.2vh; z-index: 4; border-radius: 2.2vh; background: rgba(5,6,10,.94); display: flex; flex-wrap: wrap; align-items: center;
+                justify-content: center; gap: 4vw; color: #e8f2ff; text-align: center; cursor: pointer; }
+  #console-qr[hidden] { display: none; }
+  #console-qr div { display: flex; flex-direction: column; gap: 1.2vh; align-items: center; font: 700 2.6vh sans-serif; }
+  #console-qr img { width: 30vh; height: 30vh; background: #fff; padding: .8vh; border-radius: 1.2vh; image-rendering: pixelated; }
+  #console-qr p { flex-basis: 100%; margin: 0; font-size: 1.8vh; color: #8aa0b8; }
   #console-ip { position: absolute; bottom: 2.2vh; left: 50%; transform: translateX(-50%); z-index: 3; border: 0; border-radius: 2vh; padding: .9vh 1.6vw;
                 background: #ffd75e; color: #12141b; font: 600 1.8vh sans-serif; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.5); }
   /* party "Disegna e indovina": lavagna a sinistra, giocatori e risposte a destra */
@@ -659,6 +667,8 @@
   <section class="card" id="card-console">
     <div class="crt"><canvas id="console-tela" aria-label="Console di casa"></canvas><div id="party" hidden></div></div>
     <button type="button" id="console-ip" hidden>📶 Un telefono non si collega? Migliora il collegamento</button>
+    <button type="button" id="console-qr-btn" hidden>📱 Joypad via Wi‑Fi</button>
+    <div id="console-qr" hidden></div>
   </section>
 </div>
 </div>
@@ -842,18 +852,18 @@
   </div>
 </div>
 
-<script src="comune.js?v=36"></script>
-<script src="rete.js?v=36"></script>
-<script src="giorno.js?v=36"></script>
-<script src="radio.js?v=36"></script>
-<script src="forza4.js?v=36"></script>
+<script src="comune.js?v=37"></script>
+<script src="rete.js?v=37"></script>
+<script src="giorno.js?v=37"></script>
+<script src="radio.js?v=37"></script>
+<script src="forza4.js?v=37"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=36"></script>
-<script src="bus.js?v=36"></script>
-<script src="telecomando.js?v=36"></script>
+<script src="tragitti.js?v=37"></script>
+<script src="bus.js?v=37"></script>
+<script src="telecomando.js?v=37"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<script src="console.js?v=36"></script>
-<script src="gatto.js?v=36"></script>
+<script src="console.js?v=37"></script>
+<script src="gatto.js?v=37"></script>
 <script>
 
 // ================= orologio =================

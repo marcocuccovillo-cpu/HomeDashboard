@@ -287,7 +287,15 @@ function disegnaConsoleTel(box) {
   chi.appendChild(cambia); c.appendChild(chi);
   var b = el("button", "btn pieno"); b.type = "button"; b.textContent = "Collega il joypad"; b.onclick = collegaJoypad;
   var st = el("p"); st.id = "jp-stato"; st.textContent = JP.stato || "";
-  c.appendChild(b); c.appendChild(st);
+  var lan = el("button", "btn"); lan.type = "button"; lan.style.marginTop = "8px"; lan.textContent = "Non si collega? Usa il joypad via Wi‑Fi";
+  lan.onclick = function () {   // piano B: pagina joypad servita dal lettore in Termux del tablet
+    sincronizza().then(function () {
+      var l = window.consoleLan && consoleLan();
+      if (!l || !l.url) { JP.stato = "Apri la pagina 3 del tablet (con il lettore in Termux aggiornato) e riprova."; disegnaGiochi(); return; }
+      window.open(l.url + "&p=" + io + "&n=" + encodeURIComponent(cfg.nomi[io]), "_blank");
+    });
+  };
+  c.appendChild(b); c.appendChild(lan); c.appendChild(st);
   if (JP.diagnosi) {   // il collegamento diretto non è riuscito: suggerimenti e un secondo tentativo
     var aiuto = el("div"); aiuto.style.cssText = "text-align:left;font-size:13.5px;color:var(--muted);margin-top:6px";
     aiuto.innerHTML = "<b>Prova così:</b><br>• stesso Wi‑Fi del tablet (non quello ospiti), dati mobili spenti per un attimo<br>• niente VPN o app che bloccano la pubblicità<br>• oppure il pulsante qui sotto: chiede il microfono solo per mostrare al tablet l'indirizzo di rete vero (non registra niente)";
