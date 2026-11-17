@@ -39,6 +39,7 @@ var TCAM = (function () {
   }
   function indirizzi() {
     var o = impostazioni(), p = o.porta || 8443, l = [];
+    if (window.TCAM_LOCALE) l.push("127.0.0.1");   // la pagina gira sul tablet stesso
     if (o.casa) l.push(o.casa);
     if (o.fuori || ipCasa()) l.push(o.fuori || ipCasa());
     return l.map(function (h) { h = h.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return "https://" + (/:\d+$/.test(h) ? h : h + ":" + p) + "/"; })

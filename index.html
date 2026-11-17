@@ -534,6 +534,11 @@
   .cmd { margin-bottom: 1vh; }
   .cmd label { display: block; font-size: 1.8vh; margin-bottom: .4vh; }
   .cmd .riga { flex-wrap: nowrap; margin: 0; }
+  /* telecamera del tablet: indicatore sempre visibile sopra a tutto; toccandolo chiunque la spegne */
+  #tcam-badge { position: fixed; z-index: 9999; top: 1vh; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 1vh;
+                border: 0; border-radius: 4vh; padding: .8vh 2.2vh; background: rgba(255,77,94,.2); color: #ff6b78; font: 600 1.9vh/1.2 inherit; cursor: pointer; }
+  #tcam-badge::before { content: ""; width: 1.3vh; height: 1.3vh; border-radius: 50%; background: #ff4d5e; animation: tcam-lampo 1.4s infinite; }
+  @keyframes tcam-lampo { 50% { opacity: .3; } }
   .campo-imp { margin-bottom: 10px; }
   .campo-imp > label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
   .campo-imp > input { width: 100%; box-sizing: border-box; }
@@ -887,6 +892,21 @@
       <div class="seg" id="seg-gatto"><button data-v="si">Sì</button><button data-v="no">No</button></div>
     </div>
 
+    <h3>Telecamera del tablet</h3>
+    <div class="nota-txt">Il tablet può fare da telecamera come i telefoni dedicati (serve il server delle telecamere acceso in Termux). Finché è accesa, in alto resta sempre «Telecamera attiva» e chiunque può spegnerla toccandolo.</div>
+    <div id="tcam-spenta">
+      <div class="campo-imp"><label>Password delle telecamere</label><input type="password" id="tcam-pw" autocomplete="off" name="x-tcam-pw"></div>
+      <div class="campo-imp"><label>Nome</label><input type="text" id="tcam-nome" autocomplete="off" name="x-tcam-nome" maxlength="24" placeholder="es. Tablet · cucina"></div>
+      <div class="riga"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="tcam-ricorda"> Riaccendila da sola se il tablet si riavvia</label></div>
+      <div class="riga"><button class="btn-pieno" id="tcam-accendi" type="button">Accendi la telecamera</button></div>
+    </div>
+    <div class="riga" id="tcam-accesa" hidden>
+      <label id="tcam-stato"></label>
+      <button class="btn-piccolo" id="tcam-gira" type="button">Cambia fotocamera</button>
+      <button class="btn-piccolo btn-rosso" id="tcam-spegni" type="button">Spegni</button>
+    </div>
+    <div class="nota-txt" id="tcam-msg"></div>
+
     <h3>Aggiornamenti</h3>
     <div class="riga">
       <label>Versione <b id="versione-app"></b></label>
@@ -916,19 +936,21 @@
   </div>
 </div>
 
-<script src="comune.js?v=55"></script>
-<script src="rete.js?v=55"></script>
-<script src="radio.js?v=55"></script>
-<script src="forza4.js?v=55"></script>
+<script src="comune.js?v=56"></script>
+<script src="rete.js?v=56"></script>
+<script src="radio.js?v=56"></script>
+<script src="forza4.js?v=56"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=55"></script>
-<script src="bus.js?v=55"></script>
-<script src="spesa.js?v=55"></script>
-<script src="giochi.js?v=55"></script>
-<script src="calendario.js?v=55"></script>
-<script src="suoni.js?v=55"></script>
-<script src="telecomando.js?v=55"></script>
-<script src="gatto.js?v=55"></script>
+<script src="tragitti.js?v=56"></script>
+<script src="bus.js?v=56"></script>
+<script src="spesa.js?v=56"></script>
+<script src="giochi.js?v=56"></script>
+<script src="calendario.js?v=56"></script>
+<script src="suoni.js?v=56"></script>
+<script src="telecomando.js?v=56"></script>
+<script src="gatto.js?v=56"></script>
+<script>window.TCAM_LOCALE = true;   /* il server delle telecamere gira proprio qui: 127.0.0.1 */</script>
+<script src="telecamera.js?v=56"></script>
 <script>
 
 // ================= orologio =================
@@ -1596,6 +1618,37 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { ridisegnaSpesa(); disegnaSala(); if (window.CAL && !CAL.giorno) disegnaCalendario(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
+// ---------------- telecamera del tablet (accesa solo a mano, sempre segnalata, spegnibile da chiunque)
+function statoTcam(st) {
+  var b = $("tcam-badge");
+  if (!b) { b = el("button", ""); b.id = "tcam-badge"; b.type = "button"; b.hidden = true; document.body.appendChild(b); b.onclick = function () { if (confirm("Spegnere la telecamera del tablet?")) spegniTcam(); }; }
+  b.hidden = !st.attiva; b.textContent = "Telecamera attiva" + (st.spettatori ? " · qualcuno guarda" : "") + " · tocca per spegnerla";
+  $("tcam-spenta").hidden = st.attiva; $("tcam-accesa").hidden = !st.attiva;
+  $("tcam-stato").textContent = st.attiva ? "«" + st.nome + "» accesa · " + (st.spettatori ? "qualcuno sta guardando" : "nessuno sta guardando") : "";
+}
+function accendiTcam(pw, nome, ricorda) {
+  $("tcam-msg").textContent = "Accendo…";
+  return TCAM.avvia(pw, nome, { onStato: statoTcam }).then(function () {
+    $("tcam-msg").textContent = ""; $("tcam-pw").value = "";
+    if (ricorda) salva("cam_tablet", { pw: pw, nome: nome }); else { try { localStorage.removeItem("cam_tablet"); } catch (e) {} }
+  }, function (e) {
+    $("tcam-msg").textContent = e && e.message ? e.message : "Non riesco ad accendere la fotocamera.";
+    (e && e.indirizzi || []).forEach(function (u) { var a = el("a"); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.style.color = "var(--accent)"; a.textContent = " Apri " + u; $("tcam-msg").appendChild(a); });
+    clearTimeout(accendiTcam.t);   // dopo un riavvio il server può non essere ancora pronto
+    if (ricorda && leggi("cam_tablet", null)) accendiTcam.t = setTimeout(function () { var r = leggi("cam_tablet", null); if (r && r.pw && !TCAM.attiva()) accendiTcam(r.pw, r.nome, true); }, 60000);
+  });
+}
+function spegniTcam() { clearTimeout(accendiTcam.t); TCAM.ferma(); try { localStorage.removeItem("cam_tablet"); } catch (e) {} }
+$("tcam-accendi").onclick = function () {
+  var pw = $("tcam-pw").value, nome = $("tcam-nome").value.trim() || "Tablet";
+  if (pw.length < 8) { $("tcam-msg").textContent = "La password ha almeno 8 caratteri."; return; }
+  accendiTcam(pw, nome, $("tcam-ricorda").checked);
+};
+$("tcam-gira").onclick = function () { TCAM.gira(); };
+$("tcam-spegni").onclick = spegniTcam;
+statoTcam({ attiva: false });
+(function () { var r = leggi("cam_tablet", null); if (r && r.pw) { $("tcam-nome").value = r.nome; $("tcam-ricorda").checked = true; accendiTcam(r.pw, r.nome || "Tablet", true); } })();
+
 tieniAcceso(); avviaCarosello(); avviaRete(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); avviaSpesa(); avviaSala(); avviaCalendario(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();
