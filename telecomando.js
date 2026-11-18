@@ -97,6 +97,7 @@ function controllaComandi() {
   salva("comandi_fatti", fatti);
   if (cambiato) { salva("cucina_registro", reg); sincronizza(); }
   pubblicaStatoTablet(); disegnaRientri(); controllaPensieriTablet();
+  if (window.controllaCompleanniTablet) controllaCompleanniTablet();
 }
 function pubblicaStatoTablet() {   // radio e timer, per il telefono; solo quando cambia qualcosa
   if (!sulTablet() || !window.radio) return;

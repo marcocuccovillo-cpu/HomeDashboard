@@ -40,6 +40,7 @@ function disegnaCalendario() {
       r.textContent = v ? turnoBreve(v) : "riposo"; c.appendChild(r);
     });
     var ev = eventiDel(key);
+    if (window.compleanniDel) compleanniDel(d).forEach(function (x) { var t = el("div", "cal-ev"); t.textContent = "🎂 " + x.nome; c.appendChild(t); });
     ev.slice(0, 2).forEach(function (e) { var x = el("div", "cal-ev"); x.textContent = (e.ora ? e.ora + " " : "") + e.testo; c.appendChild(x); });
     if (ev.length > 2) { var piu = el("div", "cal-ev piu"); piu.textContent = "+" + (ev.length - 2) + " altri"; c.appendChild(piu); }
     c.onclick = function () { apriGiornoCal(key); };
@@ -58,6 +59,7 @@ function disegnaGiornoCal() {
   var key = CAL.giorno, d = daIso(key), box = $("cal-dettaglio"), ins = insieme(d);
   box.innerHTML = "";
   var h = el("h2"); h.textContent = primaMaiuscola(GIORNI[d.getDay()]) + " " + d.getDate() + " " + MESI[d.getMonth()] + " " + d.getFullYear(); box.appendChild(h);
+  if (window.compleanniDel) compleanniDel(d).forEach(function (x) { var t = el("div", "cal-d-cuore"); var a = anniCompie(x); t.textContent = "🎂 Compleanno di " + x.nome + (a !== null ? " (" + a + " anni)" : ""); box.appendChild(t); });
   if (ins) { var c = el("div", "cal-d-cuore"); c.textContent = ins === "giorno" ? "♥ Siete liberi insieme tutto il giorno" : "♡ Serata libera insieme"; box.appendChild(c); }
   var tt = el("div", "cal-d-turni");
   [0, 1].forEach(function (p) {
