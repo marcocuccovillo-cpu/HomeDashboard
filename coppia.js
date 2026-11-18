@@ -32,7 +32,12 @@ function distanzaM(a, b) { var dx = (a.lon - b.lon) * 111320 * Math.cos(a.lat * 
     "#card-noi .noi-umori{display:flex;gap:10px;margin-bottom:12px}",
     "#card-noi .umore{flex:1;border:0;border-radius:16px;padding:12px 10px;text-align:left;background:var(--soft);color:var(--ink);display:flex;gap:10px;align-items:center;min-width:0}",
     "#card-noi .umore .em{font-size:30px;line-height:1}#card-noi .umore b{display:block;font-size:14px}#card-noi .umore small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-    ".eroe .noi-azioni{display:flex;gap:8px;margin-top:10px;position:relative;z-index:1}",
+    ".eroe .noi-eroe{position:relative;z-index:1;margin-top:10px}",
+    ".eroe .noi-pill{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}",
+    ".eroe .noi-pill button,.eroe .noi-pill span{border:0;border-radius:14px;padding:6px 11px;background:rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    ".eroe .noi-pill button:disabled{opacity:1}.eroe .noi-pill span{background:none;padding-left:2px;font-weight:500;opacity:.85}",
+    ".eroe .noi-pill .bigl-pill{background:rgba(255,236,170,.92);color:#5a4a1e}",
+    ".eroe .noi-azioni{display:flex;gap:8px;position:relative;z-index:1}",
     ".eroe .noi-azioni button{flex:1;border:0;border-radius:16px;padding:9px 4px 8px;background:rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:700;position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}",
     ".eroe .noi-azioni button .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:#fff;width:0;border-radius:0;display:block;margin:0;padding:0}",
     ".eroe .noi-azioni button .ico{display:block;font-size:22px;line-height:1.1;margin-bottom:2px}",
@@ -88,52 +93,45 @@ function testoSicuro(s) { var d = document.createElement("div"); d.textContent =
 
 // ---------------------------------------------------------------- la scheda "Noi due" in Oggi
 var premendo = false;   // mentre tieni premuto non ridisegno (si perderebbe il gesto)
+// Tutto quello "per noi" sta nel riquadro in alto con le foto: umore, bigliettini e i tre pulsanti.
 function disegnaCoppia() {
   if (premendo) return;
-  var box = $("card-noi");
-  if (!box) { box = el("div", "card"); box.id = "card-noi"; var dopo = $("oggi-turni"); dopo.parentNode.insertBefore(box, dopo); }
-  if (io === null) { box.hidden = true; return; }
-  box.hidden = false; box.innerHTML = "<h3>💞 Noi due</h3>";
-  var um = el("div", "noi-umori");
+  var vecchia = $("card-noi"); if (vecchia) vecchia.remove();   // la scheda separata di prima
+  var eroe = $("eroe"); if (!eroe) return;
+  var c = eroe.querySelector(".noi-eroe"); if (c) c.remove();
+  if (io === null) return;
+  c = el("div", "noi-eroe");
+  // umore: due pastiglie
+  var um = el("div", "noi-pill");
   [io, 1 - io].forEach(function (p) {
-    var u = umoreDi(p), b = el("button", "umore"); b.type = "button";
-    b.innerHTML = '<span class="em"></span><span style="min-width:0"><b></b><small></small></span>';
-    b.querySelector(".em").textContent = u ? u.e : (p === io ? "＋" : "·");
-    b.querySelector("b").textContent = p === io ? "Tu" : nomeDi(p);
-    b.querySelector("small").textContent = u ? u.nome : (p === io ? "come ti senti?" : "non l'ha ancora detto");
-    if (u) b.style.boxShadow = "inset 4px 0 0 " + u.colore;
-    if (p === io) b.onclick = apriUmore;
+    var u = umoreDi(p), b = el("button"); b.type = "button";
+    b.textContent = (p === io ? "Tu" : nomeDi(p)) + " " + (u ? u.e + " " + u.nome : p === io ? "＋ come ti senti?" : "· ?");
+    if (u) b.style.boxShadow = "inset 3px 0 0 " + u.colore;
+    if (p === io) b.onclick = apriUmore; else b.disabled = true;
     um.appendChild(b);
   });
-  box.appendChild(um);
+  c.appendChild(um);
+  // bigliettini per me (da aprire, o letti da poco) e lo stato del mio
+  var bl = el("div", "noi-pill");
+  biglietti().filter(function (x) { return x.per === io && !x.aperto; }).slice(0, 3).forEach(function (x) {
+    var ok = apribile(x), b = el("button", "bigl-pill"); b.type = "button";
+    b.textContent = (ok.ora ? "✉️ " : "🔒 ") + "Bigliettino da " + nomeDi(x.da) + " · " + (ok.ora ? (x.casa ? "a casa" : "aprilo") : "si apre " + ok.quando);
+    b.onclick = function () { apriBigliettoRicevuto(x); }; bl.appendChild(b);
+  });
+  biglietti().filter(function (x) { return x.per === io && x.aperto && Date.now() - x.aperto < 864e5; }).slice(0, 1).forEach(function (x) {
+    var b = el("button"); b.type = "button"; b.textContent = "📖 Rileggi il bigliettino di " + nomeDi(x.da); b.onclick = function () { leggiBiglietto(x); }; bl.appendChild(b);
+  });
+  biglietti().filter(function (x) { return x.da === io && Date.now() - x.t < 3 * 864e5; }).slice(0, 1).forEach(function (x) {
+    var s = el("span"); s.textContent = "✉️ Il tuo: " + (x.aperto ? "letto alle " + oraHM(x.aperto) + " ♥" : "non ancora aperto"); bl.appendChild(s);
+  });
+  if (bl.children.length) c.appendChild(bl);
+  // i tre pulsanti
   var az = el("div", "noi-azioni");
-  var ab = el("button"); ab.type = "button"; ab.innerHTML = "<span class='ico'>🤗</span>Abbraccio<span class='noi-carica'></span>"; tieniPremuto(ab, 1200, iniziaAbbraccio); az.appendChild(ab);
+  var ab = el("button"); ab.type = "button"; ab.title = "Tieni premuto"; ab.innerHTML = "<span class='ico'>🤗</span>Abbraccio<span class='noi-carica'></span>"; tieniPremuto(ab, 1200, iniziaAbbraccio); az.appendChild(ab);
   var bn = el("button"); bn.type = "button"; bn.innerHTML = "<span class='ico'>🌙</span>Buonanotte"; bn.onclick = function () { mandaBuonanotte(bn); }; az.appendChild(bn);
   var bi = el("button"); bi.type = "button"; bi.innerHTML = "<span class='ico'>✉️</span>Bigliettino"; bi.onclick = apriBiglietto; az.appendChild(bi);
-  var eroe = $("eroe"), vecchi = eroe && eroe.querySelector(".noi-azioni");   // i pulsanti "per noi" stanno nel riquadro con le foto
-  if (vecchi) vecchi.remove();
-  if (eroe) eroe.appendChild(az); else box.appendChild(az);
-  var sp = el("p", "spiega"); sp.textContent = "Per l'abbraccio (in alto) tieni premuto: se lo fa anche " + nomeDi(1 - io) + " entro un minuto e mezzo, vibrate tutti e due."; box.appendChild(sp);
-  biglietti().filter(function (x) { return x.per === io && !x.aperto; }).slice(0, 4).forEach(function (x) {
-    var r = el("button", "bigl"); r.type = "button";
-    var ok = apribile(x);
-    r.innerHTML = '<span class="ic">' + (ok.ora ? "✉️" : "🔒") + '</span><span><b></b><small></small></span>';
-    r.querySelector("b").textContent = "Un bigliettino da " + nomeDi(x.da);
-    r.querySelector("small").textContent = ok.ora ? (x.casa ? "si apre solo a casa · tocca per aprirlo" : "tocca per aprirlo") : "si apre " + ok.quando;
-    r.onclick = function () { apriBigliettoRicevuto(x); };
-    box.appendChild(r);
-  });
-  biglietti().filter(function (x) { return x.per === io && x.aperto && Date.now() - x.aperto < 864e5; }).slice(0, 2).forEach(function (x) {
-    var r = el("button", "bigl"); r.type = "button"; r.style.opacity = ".7";
-    r.innerHTML = '<span class="ic">📖</span><span><b></b><small>già letto · tocca per rileggerlo</small></span>';
-    r.querySelector("b").textContent = "Bigliettino da " + nomeDi(x.da);
-    r.onclick = function () { leggiBiglietto(x); };
-    box.appendChild(r);
-  });
-  biglietti().filter(function (x) { return x.da === io; }).slice(0, 2).forEach(function (x) {
-    var r = el("p", "spiega"); r.textContent = "✉️ Il tuo bigliettino per " + nomeDi(x.per) + ": " + (x.aperto ? "letto alle " + oraHM(x.aperto) + " ♥" : "non ancora aperto" + (x.dalle && x.dalle > Date.now() ? " (si apre alle " + oraHM(x.dalle) + ")" : ""));
-    box.appendChild(r);
-  });
+  c.appendChild(az);
+  eroe.appendChild(c);
 }
 function tieniPremuto(b, ms, fatto) {   // tenere premuto: una barra si riempie, poi parte
   var t = null, inizio = 0, barra = b.querySelector(".noi-carica");
