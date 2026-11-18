@@ -918,19 +918,19 @@
   </div>
 </div>
 
-<script src="comune.js?v=70"></script>
-<script src="rete.js?v=70"></script>
-<script src="radio.js?v=70"></script>
-<script src="forza4.js?v=70"></script>
+<script src="comune.js?v=71"></script>
+<script src="rete.js?v=71"></script>
+<script src="radio.js?v=71"></script>
+<script src="forza4.js?v=71"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=70"></script>
-<script src="bus.js?v=70"></script>
-<script src="spesa.js?v=70"></script>
-<script src="giochi.js?v=70"></script>
-<script src="calendario.js?v=70"></script>
-<script src="suoni.js?v=70"></script>
-<script src="telecomando.js?v=70"></script>
-<script src="gatto.js?v=70"></script>
+<script src="tragitti.js?v=71"></script>
+<script src="bus.js?v=71"></script>
+<script src="spesa.js?v=71"></script>
+<script src="giochi.js?v=71"></script>
+<script src="calendario.js?v=71"></script>
+<script src="suoni.js?v=71"></script>
+<script src="telecomando.js?v=71"></script>
+<script src="gatto.js?v=71"></script>
 <script>
 
 // ================= orologio =================
@@ -1590,7 +1590,7 @@ function aggiornaPunti() {
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
   window.paginaDove = i === 4;   // la pagina 5 si anima solo quando si vede
-  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=70";
+  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=71";
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });

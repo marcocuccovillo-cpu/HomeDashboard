@@ -59,7 +59,7 @@
   .card { background: var(--card); border-radius: 20px; box-shadow: var(--ombra); padding: 16px; margin-bottom: 14px; }
 
   /* --- oggi --- */
-  .eroe { position: relative; overflow: hidden; border-radius: 24px; padding: 20px 20px 18px; margin: 6px 0 14px; color: #fff;
+  .eroe { position: relative; overflow: hidden; border-radius: 24px; padding: 22px 20px 20px; margin: 6px 0 14px; color: #fff;
           background: linear-gradient(135deg, #e8384f 0%, #d7263d 45%, #a8122c 100%); box-shadow: 0 12px 26px -14px rgba(215,38,61,.8); }
   .eroe::after { content: "♥"; position: absolute; right: -6px; bottom: -34px; font-size: 140px; line-height: 1; opacity: .12; }
   .eroe .giorno-txt { font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
@@ -683,20 +683,20 @@
   </div>
 </div>
 
-<script src="comune.js?v=70"></script>
-<script src="forza4.js?v=70"></script>
-<script src="giochi.js?v=70"></script>
-<script src="rete.js?v=70"></script>
-<script src="tragitti.js?v=70"></script>
-<script src="suoni.js?v=70"></script>
-<script src="telecomando.js?v=70"></script>
-<script src="spesa.js?v=70"></script>
-<script src="coppia.js?v=70"></script>
-<script src="occhiata.js?v=70"></script>
-<script src="chatplus.js?v=70"></script>
-<script src="giochi2.js?v=70"></script>
-<script src="scacchi.js?v=70"></script>
-<script src="eroefoto.js?v=70"></script>
+<script src="comune.js?v=71"></script>
+<script src="forza4.js?v=71"></script>
+<script src="giochi.js?v=71"></script>
+<script src="rete.js?v=71"></script>
+<script src="tragitti.js?v=71"></script>
+<script src="suoni.js?v=71"></script>
+<script src="telecomando.js?v=71"></script>
+<script src="spesa.js?v=71"></script>
+<script src="coppia.js?v=71"></script>
+<script src="occhiata.js?v=71"></script>
+<script src="chatplus.js?v=71"></script>
+<script src="giochi2.js?v=71"></script>
+<script src="scacchi.js?v=71"></script>
+<script src="eroefoto.js?v=71"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -975,6 +975,7 @@ $("ed-nomi").querySelector("form").onsubmit = function (e) {
 
 // ================= oggi =================
 function disegnaOggi() {
+  if (window.premendo) return;   // stai tenendo premuto l'abbraccio: ridisegno dopo
   var d = new Date(), gg = GIORNI[d.getDay()], oggi0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   var e = $("eroe"); e.innerHTML = "";
   var t = el("div", "giorno-txt"); t.textContent = gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];

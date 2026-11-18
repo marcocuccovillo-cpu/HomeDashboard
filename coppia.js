@@ -32,6 +32,10 @@ function distanzaM(a, b) { var dx = (a.lon - b.lon) * 111320 * Math.cos(a.lat * 
     "#card-noi .noi-umori{display:flex;gap:10px;margin-bottom:12px}",
     "#card-noi .umore{flex:1;border:0;border-radius:16px;padding:12px 10px;text-align:left;background:var(--soft);color:var(--ink);display:flex;gap:10px;align-items:center;min-width:0}",
     "#card-noi .umore .em{font-size:30px;line-height:1}#card-noi .umore b{display:block;font-size:14px}#card-noi .umore small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+    ".eroe .noi-azioni{display:flex;gap:8px;margin-top:10px;position:relative;z-index:1}",
+    ".eroe .noi-azioni button{flex:1;border:0;border-radius:16px;padding:9px 4px 8px;background:rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:700;position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}",
+    ".eroe .noi-azioni button .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:#fff;width:0;border-radius:0;display:block;margin:0;padding:0}",
+    ".eroe .noi-azioni button .ico{display:block;font-size:22px;line-height:1.1;margin-bottom:2px}",
     "#card-noi .noi-azioni{display:flex;gap:8px}#card-noi .noi-azioni button{flex:1;border:0;border-radius:14px;padding:12px 6px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}",
     "#card-noi .noi-azioni button .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:var(--accent);width:0;border-radius:0;display:block;margin:0;padding:0}",
     "#card-noi .noi-azioni button .ico{display:block;font-size:24px;line-height:1.1;margin-bottom:3px}",
@@ -106,8 +110,10 @@ function disegnaCoppia() {
   var ab = el("button"); ab.type = "button"; ab.innerHTML = "<span class='ico'>🤗</span>Abbraccio<span class='noi-carica'></span>"; tieniPremuto(ab, 1200, iniziaAbbraccio); az.appendChild(ab);
   var bn = el("button"); bn.type = "button"; bn.innerHTML = "<span class='ico'>🌙</span>Buonanotte"; bn.onclick = function () { mandaBuonanotte(bn); }; az.appendChild(bn);
   var bi = el("button"); bi.type = "button"; bi.innerHTML = "<span class='ico'>✉️</span>Bigliettino"; bi.onclick = apriBiglietto; az.appendChild(bi);
-  box.appendChild(az);
-  var sp = el("p", "spiega"); sp.textContent = "Per l'abbraccio tieni premuto: se lo fa anche " + nomeDi(1 - io) + " entro un minuto e mezzo, vibrate tutti e due."; box.appendChild(sp);
+  var eroe = $("eroe"), vecchi = eroe && eroe.querySelector(".noi-azioni");   // i pulsanti "per noi" stanno nel riquadro con le foto
+  if (vecchi) vecchi.remove();
+  if (eroe) eroe.appendChild(az); else box.appendChild(az);
+  var sp = el("p", "spiega"); sp.textContent = "Per l'abbraccio (in alto) tieni premuto: se lo fa anche " + nomeDi(1 - io) + " entro un minuto e mezzo, vibrate tutti e due."; box.appendChild(sp);
   biglietti().filter(function (x) { return x.per === io && !x.aperto; }).slice(0, 4).forEach(function (x) {
     var r = el("button", "bigl"); r.type = "button";
     var ok = apribile(x);

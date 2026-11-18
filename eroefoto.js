@@ -12,7 +12,7 @@ var EF = { lista: [], i: 0, timer: null, letta: 0, img: [], vista: -1 };
     "#eroe-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s ease;transform:scale(1.02)}",
     "#eroe-foto img.on{opacity:1;animation:ef-zoom 9s ease-out forwards}",
     "@keyframes ef-zoom{from{transform:scale(1.02)}to{transform:scale(1.09)}}",
-    ".eroe-box.con-foto .eroe{background:linear-gradient(to top,rgba(20,5,10,.82) 0%,rgba(20,5,10,.45) 42%,rgba(20,5,10,.06) 72%,rgba(20,5,10,.3) 100%);min-height:min(92vw,400px);display:flex;flex-direction:column;justify-content:flex-end;text-shadow:0 1px 10px rgba(0,0,0,.45)}",
+    ".eroe-box.con-foto .eroe{background:linear-gradient(to top,rgba(20,5,10,.82) 0%,rgba(20,5,10,.45) 42%,rgba(20,5,10,.06) 72%,rgba(20,5,10,.3) 100%);min-height:min(108vw,470px);display:flex;flex-direction:column;justify-content:flex-end;text-shadow:0 1px 10px rgba(0,0,0,.45)}",
     ".eroe-box.con-foto .eroe::after{display:none}",
     ".eroe-box.con-foto .eroe .cuore,.eroe-box.con-foto #btn-esco,.eroe-box.con-foto #btn-pensiero{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}",
     "#ef-punti{position:absolute;top:12px;right:14px;z-index:2;display:none;gap:4px}.eroe-box.con-foto #ef-punti{display:flex}",
