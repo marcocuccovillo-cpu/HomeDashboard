@@ -33,7 +33,23 @@ function aggiornaBus(subito) {
   Promise.all(b.fermate.map(function (f) {
     return chiediFermata(f.codice).then(function (j) { BUS.dati[f.codice] = j; BUS.errore = ""; },
       function (e) { BUS.errore = /fetch|network|Load failed/i.test(e.message) ? "lettore" : e.message; });
-  })).then(disegnaBus);
+  })).then(function () { disegnaBus(); busPerTelefono(); });
+}
+// I telefoni non possono chiedere i bus da soli: quando uno lo chiede ("bus.chiedi"), per 10 minuti il tablet
+// mette i passaggi nel registro cifrato ("bus.ora"), al massimo ogni 90 secondi.
+function busRichiesto() { var e = reg && reg["bus.chiedi"]; return !!(e && !e.d && e.v && Date.now() - e.v.t < 10 * 60000); }
+function busPerTelefono() {
+  if (!reg || !busRichiesto()) return;
+  var prima = reg["bus.ora"], ora = Date.now(), linee = busLinee();
+  if (prima && prima.v && ora - prima.v.t < 90000 && !(reg["bus.chiedi"].v.t > prima.v.t)) return;
+  var fermate = busCfg().fermate.map(function (f) {
+    var d = BUS.dati[f.codice];
+    return { codice: f.codice, nome: f.nome || BUS.nomi[f.codice] || "",
+      passaggi: d ? d.passaggi.filter(function (x) { return !linee.length || linee.indexOf(x.linea) >= 0; }).slice(0, 8).map(function (x) { return { linea: x.linea, ora: x.ora }; }) : [] };
+  });
+  if (!fermate.some(function (f) { return f.passaggi.length; }) && BUS.errore) return;
+  reg["bus.ora"] = { v: { t: ora, fermate: fermate }, t: ora };
+  salva("cucina_registro", reg); sincronizza();
 }
 function disegnaBus() {
   var b = busCfg(), box = $("bus-lista"); if (!box) return;
@@ -114,5 +130,5 @@ function avviaBus() {
   $("bus-cerca").onclick = busCercaVicine;
   $("bus-imposta").onclick = function () { apriImpostazioni(); };
   setTimeout(function () { aggiornaBus(true); }, 2500);   // il lettore può metterci un attimo a rispondere
-  setInterval(function () { aggiornaBus(false); disegnaBus(); }, 15000);
+  setInterval(function () { aggiornaBus(busRichiesto() && reg["bus.chiedi"].v.t > BUS.ultimo); disegnaBus(); }, 15000);   // una richiesta nuova dal telefono: subito
 }

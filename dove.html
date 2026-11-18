@@ -88,8 +88,8 @@
 </div>
 </div>
 
-<script src="comune.js?v=63"></script>
-<script src="telecomando.js?v=63"></script>
+<script src="comune.js?v=64"></script>
+<script src="telecomando.js?v=64"></script>
 <script>
 // ================= il quadrante =================
 var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
@@ -242,7 +242,7 @@ function prossimaPioggia() {   // "Stasera piove verso le 19" / "Smette verso le
   var neve = function (i) { var c = h.weather_code[i]; return (c >= 71 && c <= 77) || c === 85 || c === 86; };
   var quando = function (i) {
     var t = new Date(h.time[i]), oggi = t.getDate() === d.getDate(), o = t.getHours();
-    return [oggi ? (o < 12 ? "stamattina" : o < 18 ? "oggi pomeriggio" : o < 22 ? "stasera" : "stanotte") : (o < 6 ? "stanotte" : o < 12 ? "domani mattina" : o < 18 ? "domani pomeriggio" : "domani sera"), "verso le " + o];
+    return [oggi ? (o < 12 ? "stamattina" : o < 18 ? "oggi pomeriggio" : o < 22 ? "stasera" : "stanotte") : (o < 6 ? "stanotte" : o < 12 ? "domani mattina" : o < 18 ? "domani pomeriggio" : "domani sera"), o === 0 ? "verso mezzanotte" : o === 1 ? "verso l'una" : "verso le " + o];
   };
   var su = function (x) { return x.charAt(0).toUpperCase() + x.slice(1); };
   var t0 = tipo(M.codice), oraPiove = t0 === "pioggia" || t0 === "temporale" || t0 === "neve" || M.mm >= .1;

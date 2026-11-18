@@ -455,6 +455,7 @@
 
   <section class="scheda" id="s-oggi">
     <div class="eroe" id="eroe"></div>
+    <div id="occhiata"></div>
     <div id="oggi-turni"></div>
     <div class="card" id="card-app">
       <div class="titolo" style="margin-top:0"><h2>Appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
@@ -681,15 +682,16 @@
   </div>
 </div>
 
-<script src="comune.js?v=63"></script>
-<script src="forza4.js?v=63"></script>
-<script src="giochi.js?v=63"></script>
-<script src="rete.js?v=63"></script>
-<script src="tragitti.js?v=63"></script>
-<script src="suoni.js?v=63"></script>
-<script src="telecomando.js?v=63"></script>
-<script src="spesa.js?v=63"></script>
-<script src="coppia.js?v=63"></script>
+<script src="comune.js?v=64"></script>
+<script src="forza4.js?v=64"></script>
+<script src="giochi.js?v=64"></script>
+<script src="rete.js?v=64"></script>
+<script src="tragitti.js?v=64"></script>
+<script src="suoni.js?v=64"></script>
+<script src="telecomando.js?v=64"></script>
+<script src="spesa.js?v=64"></script>
+<script src="coppia.js?v=64"></script>
+<script src="occhiata.js?v=64"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1007,6 +1009,7 @@ function disegnaOggi() {
     e.appendChild(x);
   });
   if (window.disegnaCoppia) disegnaCoppia();
+  if (window.disegnaOcchiata) disegnaOcchiata();
   var box = $("oggi-turni"); box.innerHTML = "";
   [0, 1].forEach(function (p) {
     var v = turno(d, p), b = el("button", "persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
@@ -1458,7 +1461,7 @@ function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "r
 
 // ================= avvio =================
 function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer)) disegnaGiochi(); }
-avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote);
+avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote); avviaOcchiata();
 mostraScheda(scheda);
 cambiaVista(vista);
 ridisegna();
