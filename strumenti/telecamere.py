@@ -358,8 +358,32 @@ class Gestore(BaseHTTPRequestHandler):
 
 
 class Server(ThreadingHTTPServer):
+    daemon_threads = True
+    contesto = None
+
     def handle_error(self, request, client_address):   # telefoni che rifiutano il certificato, connessioni cadute: niente tracce
         pass
+
+    def finish_request(self, request, client_address):
+        # Sulla stessa porta: https normale, oppure http (indirizzo scritto senza "s") → rimando a https.
+        request.settimeout(20)
+        try:
+            primo = request.recv(1, socket.MSG_PEEK)
+        except OSError:
+            return
+        if primo == b"\x16":   # inizio di una connessione https
+            tls = self.contesto.wrap_socket(request, server_side=True)
+            tls.settimeout(None)
+            return super().finish_request(tls, client_address)
+        try:
+            dati = request.recv(4096).decode("latin-1")
+            host = re.search(r"(?im)^host:\s*([^\s]+)", dati)
+            host = host.group(1) if host else f"{ip_di_casa()}:{self.server_address[1]}"
+            if not re.fullmatch(r"[\w.\-\[\]:]+", host):
+                host = f"{ip_di_casa()}:{self.server_address[1]}"
+            request.sendall(f"HTTP/1.1 301 Moved Permanently\r\nLocation: https://{host}/\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode())
+        except OSError:
+            pass
 
 
 PAGINA = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -385,11 +409,10 @@ def main():
     Gestore.impronta = c["impronta"]
     porta = int(c.get("porta", PORTA))
     httpd = Server(("0.0.0.0", porta), Gestore)
-    httpd.daemon_threads = True
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ctx.load_cert_chain(CERT, CHIAVE)
-    httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True, do_handshake_on_connect=False)
+    httpd.contesto = ctx
     threading.Thread(target=pulizia, daemon=True).start()
     print(f"{ora()} server delle telecamere acceso: https://{ip_di_casa()}:{porta}", flush=True)
     try:
