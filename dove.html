@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
   /* Home2Love — "Dove siete?". Un telefono avanzato appeso al muro diventa un orologio con due lancette,
-     una per persona, che indicano Casa · In viaggio · Lavoro · A nanna. Si muove da solo con i turni
+     una per persona, che indicano Casa · In viaggio · Lavoro · Fuori (con il posto scritto dal telefono, «📍 Esco»). Si muove da solo con i turni
      e con "Sto tornando": la lancetta di chi torna scivola piano dal Lavoro verso Casa. */
   :root { --ink: #f4ead9; --muted: rgba(244,234,217,.55); --bg: #120d0a; --card: #1d1612; --line: rgba(201,165,106,.25); --accent: #c9a56a; --p0: #ff9a62; --p1: #52d1c6; --ottone: #c9a56a; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -73,11 +73,11 @@
   </div>
 </div>
 
-<script src="comune.js?v=59"></script>
-<script src="telecomando.js?v=59"></script>
+<script src="comune.js?v=60"></script>
+<script src="telecomando.js?v=60"></script>
 <script>
 // ================= il quadrante =================
-var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, nanna: { a: 270, nome: "A NANNA", icona: "☾" } };
+var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
 var VIAGGIO = 30;   // minuti di strada stimati prima e dopo un turno (se non c'è "Sto tornando")
 var NS = "http://www.w3.org/2000/svg";
 function svg(tag, attr, dentro) { var e = document.createElementNS(NS, tag); for (var k in attr) e.setAttribute(k, attr[k]); if (dentro) dentro.appendChild(e); return e; }
@@ -126,12 +126,13 @@ function dove(p, d) {
     var prog = Math.max(0, Math.min(1, (Date.now() - (r.t || Date.now())) / Math.max(1, r.arrivo - (r.t || Date.now()))));
     return { posto: "viaggio", angolo: 180 - 180 * prog, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" };
   }
+  var fu = fuoriDi(p);
+  if (fu) return { posto: "fuori", testo: "fuori · <b>" + fu.dove.replace(/[<>&]/g, "") + "</b>" };
   for (i = 0; i < f.length; i++) if (m >= f[i][0] && m < f[i][1]) return { posto: "lavoro", testo: "al lavoro fino alle <b>" + hm(f[i][1]) + "</b>" };
   for (i = 0; i < f.length; i++) if (m >= f[i][0] - VIAGGIO && m < f[i][0]) return { posto: "viaggio", angolo: 180 * (m - f[i][0] + VIAGGIO) / VIAGGIO, testo: "sta andando al lavoro · attacca alle <b>" + hm(f[i][0]) + "</b>" };
   for (i = 0; i < f.length; i++) if (m >= f[i][1] && m < f[i][1] + VIAGGIO) return { posto: "viaggio", angolo: 180 - 180 * (m - f[i][1]) / VIAGGIO, testo: "dovrebbe essere per strada verso casa" };
   var prossimo = f.filter(function (x) { return x[0] > m; })[0];
   var dopo = prossimo ? (prossimo[0] < 1440 ? "oggi attacca alle <b>" + hm(prossimo[0]) + "</b>" : prossimo[0] < 2880 ? "domani attacca alle <b>" + hm(prossimo[0]) + "</b>" : "") : "";
-  if (m >= 23 * 60 + 30 || m < 7 * 60) return { posto: "nanna", testo: "a nanna" + (dopo ? " · " + dopo : "") };
   return { posto: "casa", testo: "a casa" + (dopo ? " · " + dopo : "") };
 }
 

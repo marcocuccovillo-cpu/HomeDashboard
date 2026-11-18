@@ -24,6 +24,19 @@ function segnaRientro(p, v) {
   reg["rientro." + p] = v ? { v: v, t: ora } : { d: 1, t: ora };
   salva("cucina_registro", reg); sincronizza();
 }
+// "Esco": dove si trova chi è fuori casa (chiave "fuori.<persona>" = { dove, t }); vale finché non torna
+function fuoriDi(p) {
+  var e = reg && reg["fuori." + p], r = reg && reg["rientro." + p];
+  if (!e || e.d || !e.v || !e.v.t) return null;
+  if (Date.now() - e.v.t > 12 * 3600000) return null;   // dimenticato acceso: dopo 12 ore non vale più
+  if (r && r.t > e.v.t) return null;                     // ha premuto "Sto tornando" dopo
+  return e.v;
+}
+function segnaFuori(p, v) {
+  var ora = Date.now();
+  reg["fuori." + p] = v ? { v: v, t: ora } : { d: 1, t: ora };
+  salva("cucina_registro", reg); sincronizza();
+}
 function oraHM(t) { var d = new Date(t); return d.getHours() + ":" + due(d.getMinutes()); }
 function traQuanto(t) { var m = Math.round((t - Date.now()) / 60000); return m <= 0 ? "a momenti" : m < 60 ? "tra " + m + " min" : "tra " + Math.floor(m / 60) + " h " + due(m % 60); }
 
