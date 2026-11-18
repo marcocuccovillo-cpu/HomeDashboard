@@ -303,17 +303,29 @@
   #btn-pensiero { border: 0; background: rgba(255,255,255,.2); color: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
   #btn-pensiero.inviato { background: #fff; color: #b8172d; }
   .eroe-turni { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; position: relative; z-index: 1; }
-  .eroe-persona { border: 0; width: 100%; text-align: left; color: #fff; background: rgba(255,255,255,.14); border-radius: 16px; padding: 9px 12px 10px;
-    display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 10px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  .eroe-persona .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; }
+  .eroe-persona { border: 0; width: 100%; text-align: left; color: #fff; background: rgba(255,255,255,.14); border-radius: 18px; padding: 10px 12px 8px;
+    display: grid; grid-template-columns: 34px 1fr auto; align-items: center; column-gap: 10px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .eroe-persona .av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
   .eroe-persona.p0 .av { background: var(--p0); } .eroe-persona.p1 .av { background: var(--p1); }
-  .eroe-persona .tx { min-width: 0; } .eroe-persona b { display: block; font-size: 14px; }
-  .eroe-persona small { display: block; font-size: 12px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .eroe-persona .or { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .eroe-persona.eccezione .or { color: #ffe08a; }
-  .eroe-persona .barra { grid-column: 1 / -1; margin-top: 8px; height: 6px; background: rgba(255,255,255,.2); }
+  .eroe-persona .tx { min-width: 0; }
+  .eroe-persona b { display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 1.2; }
+  .eroe-persona b em { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; background: #ffe08a; color: #5a4a1e; border-radius: 6px; padding: 1px 5px; }
+  .eroe-persona small { display: flex; align-items: center; gap: 6px; font-size: 12.5px; opacity: .92; margin-top: 2px; min-width: 0; }
+  .eroe-persona small span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eroe-persona small i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.55); flex: none; }
+  .eroe-persona small.lavoro i { background: #6fe08a; box-shadow: 0 0 0 3px rgba(111,224,138,.25); animation: pulsa 1.6s infinite; }
+  .eroe-persona small.dopo i { background: #ffd166; }
+  .eroe-persona .or { font-size: 20px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .eroe-persona .or.libero { font-size: 15px; font-weight: 600; opacity: .8; }
+  .eroe-persona .linea { grid-column: 1 / -1; margin-top: 10px; }
+  .eroe-persona .barra { margin: 0; height: 8px; border-radius: 5px; background: rgba(255,255,255,.18); overflow: visible; }
+  .eroe-persona .barra i { border-radius: 5px; }
   .eroe-persona.p0 .barra i { background: var(--p0); } .eroe-persona.p1 .barra i { background: var(--p1); }
-  .eroe-persona .barra b { background: #fff; }
+  .eroe-persona .barra u { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px 0 0 5px; background: rgba(20,5,10,.35); z-index: 1; }
+  .eroe-persona .barra b { top: 50%; bottom: auto; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.3), 0 1px 4px rgba(0,0,0,.4); z-index: 2; }
+  .eroe-persona .assi { grid-column: 1 / -1; position: relative; height: 13px; margin-top: 3px; font-size: 10px; opacity: .6; font-variant-numeric: tabular-nums; }
+  .eroe-persona .assi span { position: absolute; transform: translateX(-50%); }
+  .eroe-persona .assi span:nth-child(1) { left: 25%; } .eroe-persona .assi span:nth-child(2) { left: 50%; } .eroe-persona .assi span:nth-child(3) { left: 75%; }
   .eroe #occhiata { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0 0; position: relative; z-index: 1; }
   .eroe #occhiata .oc { background: rgba(255,255,255,.14); color: #fff; box-shadow: none; padding: 9px 9px; border-radius: 16px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   .eroe #occhiata .oc.largo { grid-column: auto; flex-direction: column; align-items: flex-start; gap: 3px; }
@@ -711,20 +723,20 @@
   </div>
 </div>
 
-<script src="comune.js?v=74"></script>
-<script src="forza4.js?v=74"></script>
-<script src="giochi.js?v=74"></script>
-<script src="rete.js?v=74"></script>
-<script src="tragitti.js?v=74"></script>
-<script src="suoni.js?v=74"></script>
-<script src="telecomando.js?v=74"></script>
-<script src="spesa.js?v=74"></script>
-<script src="coppia.js?v=74"></script>
-<script src="occhiata.js?v=74"></script>
-<script src="chatplus.js?v=74"></script>
-<script src="giochi2.js?v=74"></script>
-<script src="scacchi.js?v=74"></script>
-<script src="eroefoto.js?v=74"></script>
+<script src="comune.js?v=75"></script>
+<script src="forza4.js?v=75"></script>
+<script src="giochi.js?v=75"></script>
+<script src="rete.js?v=75"></script>
+<script src="tragitti.js?v=75"></script>
+<script src="suoni.js?v=75"></script>
+<script src="telecomando.js?v=75"></script>
+<script src="spesa.js?v=75"></script>
+<script src="coppia.js?v=75"></script>
+<script src="occhiata.js?v=75"></script>
+<script src="chatplus.js?v=75"></script>
+<script src="giochi2.js?v=75"></script>
+<script src="scacchi.js?v=75"></script>
+<script src="eroefoto.js?v=75"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1027,16 +1039,22 @@ function disegnaOggi() {
   var appena = Date.now() - (inviaPensiero.ultimo || 0) < 2500;
   var pz = tessera("btn-pensiero", "💗", appena ? "Inviato ♥" : "Pensavo a te", null); pz.onclick = function () { inviaPensiero(pz); }; if (appena) pz.classList.add("inviato");
   // chi fa cosa oggi: due righe compatte (tocca per cambiare il turno di oggi)
-  var tu = el("div", "eroe-turni");
+  var tu = el("div", "eroe-turni"), mOra = d.getHours() * 60 + d.getMinutes();
   [0, 1].forEach(function (p) {
-    var v = turno(d, p), r = el("button", "eroe-persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); r.type = "button";
-    var st = statoAdesso(p), cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");
-    r.innerHTML = '<span class="av"></span><span class="tx"><b></b><small></small></span><span class="or"></span>';
+    var v = turno(d, p), r = el("button", "eroe-persona p" + p); r.type = "button";
+    var st = statoAdesso(p), cosa = (v ? st.cosa : st.cosa.replace(/^a riposo/, "libero")).replace(/ · poi dalle .*/, "");
+    r.innerHTML = '<span class="av"></span><span class="tx"><b></b><small><i></i><span></span></small></span><span class="or"></span>' +
+      '<span class="linea"></span><span class="assi"><span>6</span><span>12</span><span>18</span></span>';
     r.querySelector(".av").textContent = (cfg.nomi[p] || "?").charAt(0).toUpperCase();
     r.querySelector("b").textContent = (cfg.nomi[p] || "").split(" ")[0];
-    r.querySelector("small").textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
-    r.querySelector(".or").textContent = v ? breve(v).replace(/\n/g, " · ") : "Riposo";
-    r.appendChild(barraGiorno(oggi0, p, true));
+    if (haEccezione(d, p)) { var tg = el("em"); tg.textContent = "solo oggi"; r.querySelector("b").appendChild(tg); }
+    r.querySelector("small").className = st.stato;
+    r.querySelector("small span").textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
+    r.querySelector(".or").textContent = v ? breve(v).replace(/\n/g, " · ").replace(/–/g, " – ") : "Riposo";
+    if (!v) r.querySelector(".or").classList.add("libero");
+    var linea = r.querySelector(".linea"), bar = barraGiorno(oggi0, p, true);
+    var passato = el("u"); passato.style.width = (mOra / 14.4) + "%"; bar.insertBefore(passato, bar.firstChild);   // la parte di giornata già passata
+    linea.appendChild(bar);
     r.onclick = function () { modificaTurno({ modo: "data", d: oggi0, p: p }); };
     tu.appendChild(r);
   });
