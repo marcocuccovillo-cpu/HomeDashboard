@@ -682,16 +682,17 @@
   </div>
 </div>
 
-<script src="comune.js?v=65"></script>
-<script src="forza4.js?v=65"></script>
-<script src="giochi.js?v=65"></script>
-<script src="rete.js?v=65"></script>
-<script src="tragitti.js?v=65"></script>
-<script src="suoni.js?v=65"></script>
-<script src="telecomando.js?v=65"></script>
-<script src="spesa.js?v=65"></script>
-<script src="coppia.js?v=65"></script>
-<script src="occhiata.js?v=65"></script>
+<script src="comune.js?v=66"></script>
+<script src="forza4.js?v=66"></script>
+<script src="giochi.js?v=66"></script>
+<script src="rete.js?v=66"></script>
+<script src="tragitti.js?v=66"></script>
+<script src="suoni.js?v=66"></script>
+<script src="telecomando.js?v=66"></script>
+<script src="spesa.js?v=66"></script>
+<script src="coppia.js?v=66"></script>
+<script src="occhiata.js?v=66"></script>
+<script src="chatplus.js?v=66"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1333,7 +1334,7 @@ var CHAT_MAX = 150, io = leggi("telefono_io", null), chatAperta = false, chatVis
 var ICO_INVIA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>';
 function messaggi() {
   return Object.keys(reg || {}).filter(function (k) { return k.indexOf("msg.") === 0 && !reg[k].d && reg[k].v; })
-    .map(function (k) { var v = reg[k].v; return { k: k, da: v.da, testo: v.testo, t: v.t }; })
+    .map(function (k) { var v = reg[k].v; return { k: k, da: v.da, testo: v.testo, t: v.t, tipo: v.tipo, file: v.file, dur: v.dur, w: v.w, h: v.h, mime: v.mime }; })
     .sort(function (a, b) { return a.t - b.t; });
 }
 function nonLetti() {
@@ -1374,12 +1375,15 @@ function disegnaChat() {
   l.forEach(function (m) {
     var g = quandoChat(m.t);
     if (g !== ultimoGiorno) { var s = el("div", "giorno-chat"); s.textContent = g; box.appendChild(s); ultimoGiorno = g; }
-    var b = el("div", "msg" + (m.da === io ? " mio" : "") + (/^\s*[♥❤️💕💗😘]+\s*$/.test(m.testo) ? " cuore" : ""));
-    b.textContent = m.testo;
+    var b = el("div", "msg" + (m.da === io ? " mio" : "") + (!m.tipo && /^\s*[♥❤️💕💗😘]+\s*$/.test(m.testo) ? " cuore" : ""));
+    if (m.tipo && m.file && window.contenutoMedia) contenutoMedia(m, b); else b.textContent = m.testo;
     var o = el("small"), d = new Date(m.t);
     o.textContent = due(d.getHours()) + ":" + due(d.getMinutes()) + (m.da === io ? (ultimaSync > m.t ? " ✓" : " …") : "");
-    b.appendChild(o); box.appendChild(b);
+    b.appendChild(o);
+    if (window.mostraReazioni) { mostraReazioni(m, b); gestiBolla(m, b); }
+    box.appendChild(b);
   });
+  if (window.bolleInInvio) bolleInInvio(box);
   if (giu || disegnaChat.prima) box.scrollTop = box.scrollHeight;
   disegnaChat.prima = false;
   salva("chat_letto", Date.now());
@@ -1389,6 +1393,7 @@ function aggiornaInvia() {   // campo vuoto: il pulsante manda un cuore
   var vuoto = !$("chat-testo").value.trim(), b = $("chat-invia");
   if (b.vuoto === vuoto) return;
   b.vuoto = vuoto; b.className = vuoto ? "cuoricino" : ""; b.innerHTML = vuoto ? "♥" : ICO_INVIA;
+  if ($("cp-mic")) $("cp-mic").hidden = !vuoto;
 }
 function inviaChat(testo) {
   if (!testo || io === null) return;
@@ -1420,6 +1425,7 @@ function apriChat() {
 }
 function chiudiChat() {
   chatAperta = false; $("chat").classList.remove("on"); clearInterval(apriChat.t);
+  if ($("cp-barra")) $("cp-barra").remove(); if (window.cpAudio) cpAudio.pause();
   if (document.activeElement) document.activeElement.blur();
   segnaBadge();
 }
@@ -1438,6 +1444,7 @@ $("chat-form").onsubmit = function (e) {
 // ================= collegamento =================
 function mostraStatoSync() {
   disegnaChat();   // dopo ogni sincronizzazione: nuovi messaggi e spunte
+  if (window.pulisciReazioni && Math.random() < .05) pulisciReazioni();
   controllaPensieri();
   if (window.controllaCoppia) controllaCoppia();
   if (!document.querySelector(".velo.on")) { disegnaOggi(); disegnaTelecomando(); }   // chi sta tornando e stato del tablet
