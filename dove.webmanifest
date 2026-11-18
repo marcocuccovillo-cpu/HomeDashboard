@@ -1,0 +1,18 @@
+{
+  "name": "Home2Love Dove siete?",
+  "short_name": "Dove siete?",
+  "description": "Home2Love: un orologio da parete con due lancette che indicano dove siete.",
+  "lang": "it",
+  "start_url": "./dove.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0d0a08",
+  "theme_color": "#0d0a08",
+  "icons": [
+    { "src": "icone/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "id": "dove"
+}

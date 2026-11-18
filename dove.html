@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d0a08">
+<title>Home2Love · Dove siete?</title>
+<link rel="manifest" href="dove.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* Home2Love — "Dove siete?". Un telefono avanzato appeso al muro diventa un orologio con due lancette,
+     una per persona, che indicano Casa · In viaggio · Lavoro · A nanna. Si muove da solo con i turni
+     e con "Sto tornando": la lancetta di chi torna scivola piano dal Lavoro verso Casa. */
+  :root { --ink: #f4ead9; --muted: rgba(244,234,217,.55); --bg: #120d0a; --card: #1d1612; --line: rgba(201,165,106,.25); --accent: #c9a56a; --p0: #ff9a62; --p1: #52d1c6; --ottone: #c9a56a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: radial-gradient(120% 90% at 50% 40%, #2a1f17 0%, #120d0a 55%, #070504 100%); color: var(--ink);
+         font-family: Outfit, system-ui, sans-serif; user-select: none; -webkit-user-select: none; transition: filter 3s; }
+  body.notte { filter: brightness(.45) saturate(.8); }
+  #tutto { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
+           padding-top: max(4vmin, env(safe-area-inset-top)); padding-bottom: max(4vmin, env(safe-area-inset-bottom)); transition: transform 4s; }
+  @media (orientation: portrait) { #tutto { flex-direction: column; } }
+  #quadrante { width: min(88vmin, 78vh); height: min(88vmin, 78vh); flex: none; filter: drop-shadow(0 3vmin 5vmin rgba(0,0,0,.55)); }
+  @media (orientation: landscape) { #quadrante { width: min(86vh, 60vw); height: min(86vh, 60vw); } }
+  .lancetta { transition: transform 3.2s cubic-bezier(.3, 1.35, .45, 1); }
+  #lancette text { transform-box: view-box; }
+  .etichetta { font-family: "Cormorant Garamond", serif; font-weight: 600; letter-spacing: .32em; font-size: 8.6px; fill: #e9d6b0; }
+  #righe { display: flex; flex-direction: column; gap: 3.2vmin; min-width: 0; max-width: 90vmin; }
+  @media (orientation: portrait) { #righe { width: 88vmin; } }
+  .riga { display: flex; gap: 2.6vmin; align-items: center; }
+  .riga .bollo { width: 7vmin; height: 7vmin; max-width: 54px; max-height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center;
+                 font: 600 min(3.4vmin, 26px) Outfit, sans-serif; color: #1a120c; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.4); }
+  .riga .nome { font-family: "Cormorant Garamond", serif; font-size: min(5.4vmin, 40px); font-weight: 600; line-height: 1; }
+  .riga .dove { font-size: min(3.3vmin, 22px); font-weight: 300; color: var(--muted); margin-top: .6vmin; }
+  .riga .dove b { color: var(--ink); font-weight: 400; }
+  #ora { font-family: "Cormorant Garamond", serif; font-size: min(4vmin, 28px); color: var(--muted); letter-spacing: .08em; font-style: italic; }
+  #ora b { font-style: normal; color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="tutto">
+  <svg id="quadrante" viewBox="-100 -100 200 200" aria-label="Dove siete?">
+    <defs>
+      <radialGradient id="g-faccia" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#2b3550"/><stop offset=".6" stop-color="#161c2e"/><stop offset="1" stop-color="#0a0d18"/></radialGradient>
+      <linearGradient id="g-ottone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3dca4"/><stop offset=".35" stop-color="#c9a56a"/><stop offset=".7" stop-color="#7d5b2c"/><stop offset="1" stop-color="#d9bb80"/></linearGradient>
+      <linearGradient id="g-ottone2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf96"/><stop offset=".5" stop-color="#6e4f25"/><stop offset="1" stop-color="#c9a56a"/></linearGradient>
+      <radialGradient id="g-vetro" cx="35%" cy="25%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".5" stop-color="#fff" stop-opacity=".03"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <path id="arco-su" d="M -71 0 A 71 71 0 0 1 71 0"/>
+      <path id="arco-giu" d="M -71 0 A 71 71 0 0 0 71 0"/>
+      <filter id="ombra" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="1.2" dy="2.2" stdDeviation="1.6" flood-color="#000" flood-opacity=".55"/></filter>
+    </defs>
+    <circle r="99" fill="url(#g-ottone)"/>
+    <circle r="93" fill="url(#g-ottone2)"/>
+    <circle r="89.5" fill="#0b0e19"/>
+    <circle r="88" fill="url(#g-faccia)"/>
+    <g id="settori"></g>
+    <g id="tacche"></g>
+    <g id="scritte"></g>
+    <text y="-17" text-anchor="middle" style="font: italic 500 7px 'Cormorant Garamond', serif; fill: rgba(233,214,176,.45); letter-spacing: .18em">Home 2 Love</text>
+    <g id="lancette"></g>
+    <circle r="7.5" fill="url(#g-ottone)" filter="url(#ombra)"/>
+    <circle r="3" fill="#6e4f25"/>
+    <circle r="88" fill="url(#g-vetro)" pointer-events="none"/>
+  </svg>
+  <div id="righe">
+    <div id="ora"></div>
+  </div>
+</div>
+
+<script src="comune.js?v=59"></script>
+<script src="telecomando.js?v=59"></script>
+<script>
+// ================= il quadrante =================
+var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, nanna: { a: 270, nome: "A NANNA", icona: "☾" } };
+var VIAGGIO = 30;   // minuti di strada stimati prima e dopo un turno (se non c'è "Sto tornando")
+var NS = "http://www.w3.org/2000/svg";
+function svg(tag, attr, dentro) { var e = document.createElementNS(NS, tag); for (var k in attr) e.setAttribute(k, attr[k]); if (dentro) dentro.appendChild(e); return e; }
+function punto(a, r) { var x = (a - 90) * Math.PI / 180; return [Math.cos(x) * r, Math.sin(x) * r]; }
+function costruisci() {
+  var set = $("settori"), tac = $("tacche"), scr = $("scritte");
+  Object.keys(POSTI).forEach(function (k, i) {   // spicchi appena più chiari, uno sì e uno no
+    var a = POSTI[k].a, p1 = punto(a - 45, 86), p2 = punto(a + 45, 86);
+    svg("path", { d: "M0 0 L" + p1 + " A86 86 0 0 1 " + p2 + " Z", fill: i % 2 ? "rgba(255,255,255,.025)" : "rgba(201,165,106,.05)" }, set);
+    var l = punto(a + 45, 86), l2 = punto(a + 45, 18);
+    svg("line", { x1: l2[0], y1: l2[1], x2: l[0], y2: l[1], stroke: "rgba(201,165,106,.28)", "stroke-width": ".5" }, set);
+    // nome del posto lungo il bordo (in basso le scritte girano per restare dritte)
+    var g = svg("g", { transform: "rotate(" + (a > 90 && a < 270 ? a - 180 : a) + ")" }, scr);
+    var t = svg("text", { "class": "etichetta", "text-anchor": "middle", dy: a > 90 && a < 270 ? "7.5" : "0" }, g);
+    var tp = svg("textPath", { href: a > 90 && a < 270 ? "#arco-giu" : "#arco-su", startOffset: "50%" }, t); tp.textContent = POSTI[k].nome;
+  });
+  for (var i = 0; i < 72; i++) {   // tacche come un vecchio orologio
+    var lunga = i % 6 === 0, a = i * 5, p1 = punto(a, 86), p2 = punto(a, lunga ? 80.5 : 83.5);
+    svg("line", { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: lunga ? "rgba(233,214,176,.7)" : "rgba(233,214,176,.3)", "stroke-width": lunga ? "1" : ".5", "stroke-linecap": "round" }, tac);
+  }
+  [0, 1].forEach(function (p) {   // le lancette: affusolate, con il medaglione dell'iniziale in punta
+    var g = svg("g", { "class": "lancetta", id: "lan" + p }, $("lancette")), col = p ? "#52d1c6" : "#ff9a62", lungh = p ? 46 : 58;
+    var h = svg("g", { filter: "url(#ombra)" }, g);
+    svg("path", { d: "M -2.6 12 L -1.3 -" + (lungh - 9) + " L 0 -" + (lungh - 6) + " L 1.3 -" + (lungh - 9) + " L 2.6 12 Z", fill: col }, h);
+    svg("path", { d: "M 0 12 L 0 -" + (lungh - 7), stroke: "rgba(255,255,255,.35)", "stroke-width": ".5" }, h);
+    svg("circle", { cy: -lungh + 2, r: 8.4, fill: "url(#g-ottone)" }, h);
+    svg("circle", { cy: -lungh + 2, r: 6.9, fill: col }, h);
+    var t = svg("text", { id: "ini" + p, "class": "lancetta", y: -lungh + 5.6, "text-anchor": "middle", style: "font: 600 9.5px Outfit, sans-serif; fill: #1a120c; transform-origin: 0 " + (-lungh + 2) + "px" }, h);
+    t.textContent = "?";   // l'iniziale gira al contrario della lancetta: resta sempre dritta
+    g.style.transformOrigin = "0 0"; g.style.transformBox = "view-box";
+  });
+}
+
+// ================= dove si trova ognuno =================
+function minDi(d) { return d.getHours() * 60 + d.getMinutes(); }
+function hm(min) { min = ((Math.round(min) % 1440) + 1440) % 1440; return Math.floor(min / 60) + ":" + due(min % 60); }
+function nome(p) { return (cfg.nomi[p] || (p ? "Lei" : "Lui")).split(" ")[0]; }
+function fasceIntorno(d, p) {   // ieri, oggi e domani, in minuti rispetto alla mezzanotte di oggi
+  var l = [];
+  [-1, 0, 1].forEach(function (g) { fasceGiorno(piuGiorni(d, g), p).forEach(function (f) { l.push([f[0] + g * 1440, f[1] + g * 1440]); }); });
+  return l.sort(function (a, b) { return a[0] - b[0]; });
+}
+function dove(p, d) {
+  var m = minDi(d), r = rientroDi(p), f = fasceIntorno(d, p), i;
+  if (r && Date.now() < r.arrivo) {
+    var prog = Math.max(0, Math.min(1, (Date.now() - (r.t || Date.now())) / Math.max(1, r.arrivo - (r.t || Date.now()))));
+    return { posto: "viaggio", angolo: 180 - 180 * prog, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" };
+  }
+  for (i = 0; i < f.length; i++) if (m >= f[i][0] && m < f[i][1]) return { posto: "lavoro", testo: "al lavoro fino alle <b>" + hm(f[i][1]) + "</b>" };
+  for (i = 0; i < f.length; i++) if (m >= f[i][0] - VIAGGIO && m < f[i][0]) return { posto: "viaggio", angolo: 180 * (m - f[i][0] + VIAGGIO) / VIAGGIO, testo: "sta andando al lavoro · attacca alle <b>" + hm(f[i][0]) + "</b>" };
+  for (i = 0; i < f.length; i++) if (m >= f[i][1] && m < f[i][1] + VIAGGIO) return { posto: "viaggio", angolo: 180 - 180 * (m - f[i][1]) / VIAGGIO, testo: "dovrebbe essere per strada verso casa" };
+  var prossimo = f.filter(function (x) { return x[0] > m; })[0];
+  var dopo = prossimo ? (prossimo[0] < 1440 ? "oggi attacca alle <b>" + hm(prossimo[0]) + "</b>" : prossimo[0] < 2880 ? "domani attacca alle <b>" + hm(prossimo[0]) + "</b>" : "") : "";
+  if (m >= 23 * 60 + 30 || m < 7 * 60) return { posto: "nanna", testo: "a nanna" + (dopo ? " · " + dopo : "") };
+  return { posto: "casa", testo: "a casa" + (dopo ? " · " + dopo : "") };
+}
+
+// ================= disegno =================
+var angoli = [null, null];
+function giraVerso(p, a) {   // sceglie il giro più corto (mai un giro intero all'indietro)
+  var prima = angoli[p]; if (prima !== null) { while (a - prima > 180) a -= 360; while (prima - a > 180) a += 360; }
+  angoli[p] = a; $("lan" + p).style.transform = "rotate(" + a + "deg)"; $("ini" + p).style.transform = "rotate(" + (-a) + "deg)";
+}
+function disegna() {
+  var d = new Date(), s = [dove(0, d), dove(1, d)];
+  var a = s.map(function (x) { return x.angolo !== undefined ? x.angolo : POSTI[x.posto].a; });
+  if (Math.abs(a[0] - a[1]) < 10) { a[0] -= 7; a[1] += 7; }   // nello stesso posto: affiancate, si vedono tutte e due
+  [0, 1].forEach(function (p) {
+    giraVerso(p, a[p]);
+    $("ini" + p).textContent = nome(p).charAt(0).toUpperCase();
+    var riga = $("riga" + p);
+    if (!riga) {
+      riga = el("div", "riga"); riga.id = "riga" + p;
+      riga.innerHTML = '<div class="bollo"></div><div><div class="nome"></div><div class="dove"></div></div>';
+      riga.querySelector(".bollo").style.background = p ? "var(--p1)" : "var(--p0)";
+      $("righe").insertBefore(riga, $("ora"));
+    }
+    riga.querySelector(".bollo").textContent = nome(p).charAt(0).toUpperCase();
+    riga.querySelector(".nome").textContent = nome(p);
+    riga.querySelector(".dove").innerHTML = s[p].testo;
+  });
+  $("ora").innerHTML = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " · <b>" + d.getHours() + ":" + due(d.getMinutes()) + "</b>";
+  var h = d.getHours(); document.body.classList.toggle("notte", h >= 23 || h < 7);
+}
+function ridisegna() { disegna(); }
+
+// ================= schermo: sempre acceso, a tutto schermo, e un leggero spostamento contro i segni sullo schermo =================
+function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+document.addEventListener("visibilitychange", tieniAcceso);
+document.addEventListener("click", function () {
+  var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {});
+});
+setInterval(function () { $("tutto").style.transform = "translate(" + Math.round(Math.random() * 8 - 4) + "px," + Math.round(Math.random() * 8 - 4) + "px)"; }, 120000);
+
+costruisci(); disegna();
+setInterval(disegna, 20000);
+tieniAcceso();
+avviaSync();
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
