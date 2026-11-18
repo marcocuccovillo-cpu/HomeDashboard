@@ -683,19 +683,20 @@
   </div>
 </div>
 
-<script src="comune.js?v=69"></script>
-<script src="forza4.js?v=69"></script>
-<script src="giochi.js?v=69"></script>
-<script src="rete.js?v=69"></script>
-<script src="tragitti.js?v=69"></script>
-<script src="suoni.js?v=69"></script>
-<script src="telecomando.js?v=69"></script>
-<script src="spesa.js?v=69"></script>
-<script src="coppia.js?v=69"></script>
-<script src="occhiata.js?v=69"></script>
-<script src="chatplus.js?v=69"></script>
-<script src="giochi2.js?v=69"></script>
-<script src="scacchi.js?v=69"></script>
+<script src="comune.js?v=70"></script>
+<script src="forza4.js?v=70"></script>
+<script src="giochi.js?v=70"></script>
+<script src="rete.js?v=70"></script>
+<script src="tragitti.js?v=70"></script>
+<script src="suoni.js?v=70"></script>
+<script src="telecomando.js?v=70"></script>
+<script src="spesa.js?v=70"></script>
+<script src="coppia.js?v=70"></script>
+<script src="occhiata.js?v=70"></script>
+<script src="chatplus.js?v=70"></script>
+<script src="giochi2.js?v=70"></script>
+<script src="scacchi.js?v=70"></script>
+<script src="eroefoto.js?v=70"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1448,6 +1449,7 @@ $("chat-form").onsubmit = function (e) {
 function mostraStatoSync() {
   disegnaChat();   // dopo ogni sincronizzazione: nuovi messaggi e spunte
   if (window.pulisciReazioni && Math.random() < .05) pulisciReazioni();
+  if (window.efAggiorna) efAggiorna();
   controllaPensieri();
   if (window.controllaCoppia) controllaCoppia();
   if (!document.querySelector(".velo.on")) { disegnaOggi(); disegnaTelecomando(); }   // chi sta tornando e stato del tablet
@@ -1467,7 +1469,7 @@ $("imp-salva-codice").onclick = function () {
   });
 };
 $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Per rientrare servirà la password.")) esci(); };
-function dopoSblocco() { if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
+function dopoSblocco() { if (window.efAggiorna) efAggiorna(true); if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
 
 // ================= avvio =================
 function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer) && !(window.PA && PA.gioco)) disegnaGiochi(); }
