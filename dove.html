@@ -24,26 +24,29 @@
   body { background: radial-gradient(120% 90% at 50% 40%, #2a1f17 0%, #120d0a 55%, #070504 100%); color: var(--ink);
          font-family: Outfit, system-ui, sans-serif; user-select: none; -webkit-user-select: none; transition: filter 3s; }
   body.notte { filter: brightness(.6) saturate(.85); }
-  canvas#tela { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-  #testo { position: fixed; z-index: 1; left: max(5vmin, env(safe-area-inset-left)); top: max(5vmin, env(safe-area-inset-top)); text-shadow: 0 2px 18px rgba(0,0,0,.35); transition: transform 4s; color: #fff; }
+  #scena { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; overflow: hidden; transform-origin: 0 0; }
+  canvas#tela { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #testo { position: absolute; z-index: 1; left: max(5vmin, env(safe-area-inset-left)); top: max(5vmin, env(safe-area-inset-top)); text-shadow: 0 2px 18px rgba(0,0,0,.35); transition: transform 4s; color: #fff; }
   #temp { font-size: min(15vmin, 110px); font-weight: 200; line-height: .9; letter-spacing: -.02em; }
   #temp small { font-size: .38em; vertical-align: top; position: relative; top: .25em; margin-left: .05em; }
   #descr { font-size: min(4.2vmin, 28px); font-weight: 300; margin-top: 1.2vmin; opacity: .95; }
   #pioggia { font-size: min(3.4vmin, 22px); font-weight: 300; margin-top: .8vmin; opacity: .8; }
   #q-ora { font-size: min(3vmin, 19px); font-weight: 300; margin-top: 2.2vmin; opacity: .6; letter-spacing: .04em; }
-  #tutto { position: fixed; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
+  #tutto { position: absolute; z-index: 2; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
            padding-top: max(4vmin, env(safe-area-inset-top)); padding-bottom: max(4vmin, env(safe-area-inset-bottom)); transition: transform 4s; }
-  @media (orientation: portrait) { #tutto { flex-direction: column; justify-content: flex-end; padding-bottom: max(6vmin, env(safe-area-inset-bottom)); } }
-  @media (orientation: landscape) { #tutto { flex-direction: row-reverse; justify-content: space-between; padding-left: max(5vmin, env(safe-area-inset-left)); padding-right: 6vmin; }
-                                     #righe { align-self: flex-end; margin-bottom: 4vmin; } }
-  #quadrante { width: min(84vmin, 58vh); height: min(84vmin, 58vh); flex: none; filter: drop-shadow(0 3vmin 5vmin rgba(0,0,0,.55)); }
-  @media (orientation: landscape) { #quadrante { width: min(88vh, 52vw); height: min(88vh, 52vw); } }
+  body.vert #tutto { flex-direction: column; justify-content: flex-end; padding-bottom: max(6vmin, env(safe-area-inset-bottom)); }
+  body.oriz #tutto { flex-direction: row-reverse; justify-content: space-between; align-items: flex-end; padding: 5vmin 5vmin 5vmin max(5vmin, env(safe-area-inset-left)); }
+  /* l'orologio più piccolo, in un angolo, così il cielo si vede */
+  #quadrante { width: 62vmin; height: 62vmin; flex: none; filter: drop-shadow(0 2vmin 4vmin rgba(0,0,0,.5)); }
+  body.oriz #quadrante { width: 58vmin; height: 58vmin; }
   .lancetta { transition: transform 3.2s cubic-bezier(.3, 1.35, .45, 1); }
   #lancette text { transform-box: view-box; }
   .etichetta { font-family: "Cormorant Garamond", serif; font-weight: 600; letter-spacing: .32em; font-size: 8.6px; fill: #e9d6b0; }
   #righe { display: flex; flex-direction: column; gap: 2.6vmin; text-shadow: 0 2px 14px rgba(0,0,0,.6); min-width: 0; max-width: 90vmin; }
-  @media (orientation: portrait) { #righe { width: 88vmin; } }
-  @media (orientation: landscape) { .riga .nome { font-size: min(4.6vmin, 34px); } .riga .dove { font-size: min(3vmin, 20px); } }
+  body.vert #righe { width: 88vmin; }
+  body.oriz .riga .nome { font-size: min(4.6vmin, 34px); } body.oriz .riga .dove { font-size: min(3vmin, 20px); }
+  #b-ruota { position: absolute; z-index: 3; right: 2.6vmin; top: 2.6vmin; width: 9vmin; height: 9vmin; max-width: 52px; max-height: 52px; border: 0; border-radius: 50%;
+             background: rgba(0,0,0,.18); color: rgba(255,255,255,.55); font-size: min(4.4vmin, 24px); cursor: pointer; }
   .riga { display: flex; gap: 2.6vmin; align-items: center; }
   .riga .bollo { width: 7vmin; height: 7vmin; max-width: 54px; max-height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center;
                  font: 600 min(3.4vmin, 26px) Outfit, sans-serif; color: #1a120c; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.4); }
@@ -53,12 +56,14 @@
 </style>
 </head>
 <body>
+<div id="scena">
 <canvas id="tela"></canvas>
+<button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
 <div id="testo"><div id="temp">–</div><div id="descr"></div><div id="pioggia"></div><div id="q-ora"></div></div>
 <div id="tutto">
   <svg id="quadrante" viewBox="-100 -100 200 200" aria-label="Dove siete?">
     <defs>
-      <radialGradient id="g-faccia" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#2b3550"/><stop offset=".6" stop-color="#161c2e"/><stop offset="1" stop-color="#0a0d18"/></radialGradient>
+      <radialGradient id="g-faccia" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#2b3550" stop-opacity=".78"/><stop offset=".6" stop-color="#161c2e" stop-opacity=".8"/><stop offset="1" stop-color="#0a0d18" stop-opacity=".86"/></radialGradient>
       <linearGradient id="g-ottone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3dca4"/><stop offset=".35" stop-color="#c9a56a"/><stop offset=".7" stop-color="#7d5b2c"/><stop offset="1" stop-color="#d9bb80"/></linearGradient>
       <linearGradient id="g-ottone2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf96"/><stop offset=".5" stop-color="#6e4f25"/><stop offset="1" stop-color="#c9a56a"/></linearGradient>
       <radialGradient id="g-vetro" cx="35%" cy="25%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".5" stop-color="#fff" stop-opacity=".03"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
@@ -68,7 +73,7 @@
     </defs>
     <circle r="99" fill="url(#g-ottone)"/>
     <circle r="93" fill="url(#g-ottone2)"/>
-    <circle r="89.5" fill="#0b0e19"/>
+    <circle r="89.5" fill="#0b0e19" fill-opacity=".55"/>
     <circle r="88" fill="url(#g-faccia)"/>
     <g id="settori"></g>
     <g id="tacche"></g>
@@ -81,9 +86,10 @@
   </svg>
   <div id="righe"></div>
 </div>
+</div>
 
-<script src="comune.js?v=61"></script>
-<script src="telecomando.js?v=61"></script>
+<script src="comune.js?v=62"></script>
+<script src="telecomando.js?v=62"></script>
 <script>
 // ================= il quadrante =================
 var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
@@ -279,7 +285,7 @@ var tela = document.getElementById("tela"), g = tela.getContext("2d"), W = 0, H 
 var sfondo = document.createElement("canvas"), sprite = [], NUV = [], GOCCE = [], STELLE = [], lampo = 0, prossimoLampo = 0;
 function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }   // casuale ma sempre uguale
 function ridimensiona() {
-  DPR = Math.min(1.5, devicePixelRatio || 1); W = innerWidth; H = innerHeight; ORIZ = H * (W > H ? .7 : .74);
+  DPR = Math.min(1.5, devicePixelRatio || 1); var sc = document.getElementById("scena"); W = sc.clientWidth; H = sc.clientHeight; ORIZ = H * (W > H ? .7 : .74);
   tela.width = W * DPR; tela.height = H * DPR; sfondo.width = W * DPR; sfondo.height = H * DPR;
   STELLE = []; for (var i = 0; i < 160; i++) STELLE.push([rnd(i) * W, rnd(i + 500) * ORIZ * .92, rnd(i + 900) * 1.2 + .25, rnd(i + 1300) * 6]);
   preparaSfondo(); preparaNuvole(); preparaParticelle();
@@ -437,12 +443,34 @@ function frame(ora) {
 }
 
 addEventListener("resize", function () { clearTimeout(ridimensiona.t); ridimensiona.t = setTimeout(ridimensiona, 200); });
+addEventListener("scena", function () { clearTimeout(ridimensiona.t); ridimensiona.t = setTimeout(ridimensiona, 50); });
 ridimensiona(); aggiornaOra(); leggiMeteo();
 setInterval(aggiornaOra, 15000);
 setInterval(function () { leggiMeteo(); }, 15 * 60000);
 setInterval(aggiornaTesto, 5 * 60000);
 requestAnimationFrame(frame);
 })();
+
+// ================= girare lo schermo anche con la rotazione automatica spenta =================
+// ⟳ automatico (come il telefono) · ▭ orizzontale · ▭ orizzontale al contrario · ▯ verticale
+var verso = leggi("casa_verso", "auto");
+function applicaVerso() {
+  var sc = $("scena"), w = innerWidth, h = innerHeight, giro = 0;
+  if ((verso === "dx" || verso === "sx") && h > w) giro = verso === "dx" ? 90 : -90;
+  if (verso === "vert" && w > h) giro = 90;
+  if (giro) { sc.style.width = h + "px"; sc.style.height = w + "px"; sc.style.transform = giro > 0 ? "translateX(" + w + "px) rotate(90deg)" : "translateY(" + h + "px) rotate(-90deg)"; }
+  else { sc.style.width = w + "px"; sc.style.height = h + "px"; sc.style.transform = ""; }
+  var ow = giro ? h : w, oh = giro ? w : h;
+  document.body.classList.toggle("oriz", ow > oh); document.body.classList.toggle("vert", ow <= oh);
+  $("b-ruota").textContent = { auto: "⟳", dx: "▭", sx: "▭", vert: "▯" }[verso];
+  window.dispatchEvent(new Event("scena"));
+}
+$("b-ruota").onclick = function (e) {
+  e.stopPropagation(); var l = ["auto", "dx", "sx", "vert"]; verso = l[(l.indexOf(verso) + 1) % l.length]; salva("casa_verso", verso); applicaVerso();
+  this.style.opacity = 1; clearTimeout(this.t); var b = this; b.t = setTimeout(function () { b.style.opacity = ""; }, 3000);
+};
+addEventListener("resize", applicaVerso);
+applicaVerso();
 
 costruisci(); disegna();
 setInterval(disegna, 20000);
