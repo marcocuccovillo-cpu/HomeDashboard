@@ -15,6 +15,7 @@ var COLORI = ["giallo", "rosa", "verde", "azzurro", "arancio", "lilla"];
 function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
 var CONDIVISI = { cucina_cfg: 1, cucina_note: 1, cucina_spesa: 1, cucina_viaggi: 1 };   // dati che si sincronizzano
 function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} if (CONDIVISI[k]) cambiato(); }
+try { ["cam_comodino", "cam_tablet", "cam_server", "cam_nome", "cam_turn"].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}   // telecamere tolte: via anche le password salvate
 function nuovoId() { return Date.now() * 1000 + Math.floor(Math.random() * 1000); }
 function $(id) { return document.getElementById(id); }
 function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
