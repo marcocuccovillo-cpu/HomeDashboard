@@ -45,6 +45,7 @@
   #righe { display: flex; flex-direction: column; gap: 2.6vmin; text-shadow: 0 2px 14px rgba(0,0,0,.6); min-width: 0; max-width: 90vmin; }
   body.vert #righe { width: 88vmin; }
   body.oriz .riga .nome { font-size: min(4.6vmin, 34px); } body.oriz .riga .dove { font-size: min(3vmin, 20px); }
+  .dentro #b-ruota { display: none; }
   #b-ruota { position: absolute; z-index: 3; right: 2.6vmin; top: 2.6vmin; width: 9vmin; height: 9vmin; max-width: 52px; max-height: 52px; border: 0; border-radius: 50%;
              background: rgba(0,0,0,.18); color: rgba(255,255,255,.55); font-size: min(4.4vmin, 24px); cursor: pointer; }
   .riga { display: flex; gap: 2.6vmin; align-items: center; }
@@ -88,8 +89,8 @@
 </div>
 </div>
 
-<script src="comune.js?v=67"></script>
-<script src="telecomando.js?v=67"></script>
+<script src="comune.js?v=68"></script>
+<script src="telecomando.js?v=68"></script>
 <script>
 // ================= il quadrante =================
 var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
@@ -180,9 +181,13 @@ function disegna() {
 function ridisegna() { disegna(); }
 
 // ================= schermo: sempre acceso, a tutto schermo, e un leggero spostamento contro i segni sullo schermo =================
-function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+var DENTRO = window.parent !== window;
+if (DENTRO) document.documentElement.classList.add("dentro");
+function tieniAcceso() { if (DENTRO) return; if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
 document.addEventListener("visibilitychange", tieniAcceso);
+if (DENTRO) { salvaCfg = function () {}; reg = leggi("cucina_registro", null) || {}; }   // nel tablet non scrivo niente: ci pensa lui
 document.addEventListener("click", function () {
+  if (DENTRO) return;
   var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {});
 });
 setInterval(function () {   // contro i segni sullo schermo
@@ -365,7 +370,8 @@ function ventoX() { if (!M) return 0; var vx = -Math.sin(M.verso * Math.PI / 180
 var ultimo = 0, ultimoSfondo = 0;
 function frame(ora) {
   requestAnimationFrame(frame);
-  if (ora - ultimo < 33) return;   // circa 30 al secondo: basta e avanza, e il telefono vecchio non scalda
+  if (ora - ultimo < 33) return;
+  if (window.parent !== window && !window.parent.paginaDove) return;   // nel tablet: solo quando sei sulla pagina 5   // circa 30 al secondo: basta e avanza, e il telefono vecchio non scalda
   var dt = Math.min(100, ora - ultimo) / 1000; ultimo = ora;
   if (ora - ultimoSfondo > 300000) { ultimoSfondo = ora; preparaSfondo(); preparaNuvole(); }
   var d = adesso(), s = posSole(d), L = luce(s.alt), col = cielo(s.alt), t = M ? tipo(M.codice) : "", cop = M ? M.nuvole : .3;
@@ -475,8 +481,12 @@ applicaVerso();
 costruisci(); disegna();
 setInterval(disegna, 20000);
 tieniAcceso();
-avviaSync();
-if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+if (DENTRO) {   // dentro il tablet (pagina 5): i dati li tiene aggiornati il tablet, qui si leggono e basta
+  setInterval(function () { Object.assign(cfg, leggi("cucina_cfg", {})); reg = leggi("cucina_registro", reg) || {}; disegna(); }, 15000);
+} else {
+  avviaSync();
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+}
 </script>
 </body>
 </html>
