@@ -302,6 +302,26 @@
   .fu-scelte button.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
   #btn-pensiero { border: 0; background: rgba(255,255,255,.2); color: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
   #btn-pensiero.inviato { background: #fff; color: #b8172d; }
+  .eroe-turni { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; position: relative; z-index: 1; }
+  .eroe-persona { border: 0; width: 100%; text-align: left; color: #fff; background: rgba(255,255,255,.14); border-radius: 16px; padding: 9px 12px 10px;
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; column-gap: 10px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .eroe-persona .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; }
+  .eroe-persona.p0 .av { background: var(--p0); } .eroe-persona.p1 .av { background: var(--p1); }
+  .eroe-persona .tx { min-width: 0; } .eroe-persona b { display: block; font-size: 14px; }
+  .eroe-persona small { display: block; font-size: 12px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eroe-persona .or { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .eroe-persona.eccezione .or { color: #ffe08a; }
+  .eroe-persona .barra { grid-column: 1 / -1; margin-top: 8px; height: 6px; background: rgba(255,255,255,.2); }
+  .eroe-persona.p0 .barra i { background: var(--p0); } .eroe-persona.p1 .barra i { background: var(--p1); }
+  .eroe-persona .barra b { background: #fff; }
+  .eroe #occhiata { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0 0; position: relative; z-index: 1; }
+  .eroe #occhiata .oc { background: rgba(255,255,255,.14); color: #fff; box-shadow: none; padding: 9px 9px; border-radius: 16px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .eroe #occhiata .oc.largo { grid-column: auto; flex-direction: column; align-items: flex-start; gap: 3px; }
+  .eroe #occhiata .oc .t, .eroe #occhiata .oc small { color: rgba(255,255,255,.75); }
+  .eroe #occhiata .oc .t { font-size: 10.5px; } .eroe #occhiata .oc small { font-size: 11.5px; }
+  .eroe #occhiata .oc .grande { font-size: 21px; } .eroe #occhiata .oc .grande .em { font-size: 20px; }
+  .eroe #occhiata .oc .linee span { background: rgba(255,255,255,.18); padding: 2px 6px; font-size: 12px; } .eroe #occhiata .oc .linee b { font-size: 12.5px; }
+  .eroe #occhiata .oc.app .icona { display: none; } .eroe #occhiata .oc.app b { font-size: 13.5px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .eroe-sopra { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; position: relative; z-index: 1; }
   .eroe-sopra:empty { display: none; }
   .eroe-box.con-foto .eroe-sopra { position: absolute; top: 12px; left: 12px; right: 40px; margin: 0; }
@@ -470,24 +490,9 @@
 
   <section class="scheda" id="s-oggi">
     <div class="eroe" id="eroe"></div>
-    <div id="occhiata"></div>
-    <div id="oggi-turni"></div>
     <div class="card" id="card-app">
-      <div class="titolo" style="margin-top:0"><h2>Appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+      <div class="titolo" style="margin-top:0"><h2>Prossimi appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
       <div id="app-lista"></div>
-    </div>
-    <div class="card" id="card-tc">
-      <div class="titolo" style="margin-top:0"><h2>Tablet di casa</h2><span class="spiega" style="margin:0">telecomando</span></div>
-      <div class="tc-riga"><b>Radio</b><select id="tc-stazione"></select><button type="button" class="tc-btn pieno" id="tc-radio">▶</button>
-        <button type="button" class="tc-btn" data-vol="-0.15" aria-label="Volume giù">−</button><button type="button" class="tc-btn" data-vol="0.15" aria-label="Volume su">+</button></div>
-      <div class="tc-riga"><b>Timer</b><button type="button" class="tc-btn" data-min="5">5′</button><button type="button" class="tc-btn" data-min="10">10′</button><button type="button" class="tc-btn" data-min="15">15′</button><button type="button" class="tc-btn" data-min="30">30′</button><button type="button" class="tc-btn" data-min="60">1 h</button></div>
-      <div class="tc-riga"><b>Gatto</b><button type="button" class="tc-btn" id="tc-gatto">Fallo miagolare con un bacio ♥</button></div>
-      <p id="tc-stato"></p>
-    </div>
-    <div class="card">
-      <div class="titolo" style="margin-top:0"><h2>Forza 4</h2><span class="spiega" style="margin:0">tocca una colonna</span></div>
-      <div class="f4-info" id="f4-info"></div>
-      <div class="f4-griglia" id="f4-griglia"></div>
     </div>
   </section>
 
@@ -514,11 +519,20 @@
 
   <section class="scheda" id="s-giochi">
     <div class="titolo"><h2>Giochi</h2></div>
-    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="scacchi">Scacchi</button><button type="button" data-v="navale">Navale</button><button type="button" data-v="parole">Parole</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
+    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="forza4">Forza 4</button><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="scacchi">Scacchi</button><button type="button" data-v="navale">Navale</button><button type="button" data-v="parole">Parole</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
     <div id="giochi-box"></div>
   </section>
 
   <section class="scheda" id="s-rete">
+    <div class="titolo"><h2>Casa</h2></div>
+    <div class="card" id="card-tc">
+      <div class="titolo" style="margin-top:0"><h2>Tablet di casa</h2><span class="spiega" style="margin:0">telecomando</span></div>
+      <div class="tc-riga"><b>Radio</b><select id="tc-stazione"></select><button type="button" class="tc-btn pieno" id="tc-radio">▶</button>
+        <button type="button" class="tc-btn" data-vol="-0.15" aria-label="Volume giù">−</button><button type="button" class="tc-btn" data-vol="0.15" aria-label="Volume su">+</button></div>
+      <div class="tc-riga"><b>Timer</b><button type="button" class="tc-btn" data-min="5">5′</button><button type="button" class="tc-btn" data-min="10">10′</button><button type="button" class="tc-btn" data-min="15">15′</button><button type="button" class="tc-btn" data-min="30">30′</button><button type="button" class="tc-btn" data-min="60">1 h</button></div>
+      <div class="tc-riga"><b>Gatto</b><button type="button" class="tc-btn" id="tc-gatto">Fallo miagolare con un bacio ♥</button></div>
+      <p id="tc-stato"></p>
+    </div>
     <div class="titolo"><h2>Rete di casa</h2></div>
     <div class="card">
       <h3>Connessione <span class="stato-pill" id="rt-stato">…</span></h3>
@@ -697,20 +711,20 @@
   </div>
 </div>
 
-<script src="comune.js?v=73"></script>
-<script src="forza4.js?v=73"></script>
-<script src="giochi.js?v=73"></script>
-<script src="rete.js?v=73"></script>
-<script src="tragitti.js?v=73"></script>
-<script src="suoni.js?v=73"></script>
-<script src="telecomando.js?v=73"></script>
-<script src="spesa.js?v=73"></script>
-<script src="coppia.js?v=73"></script>
-<script src="occhiata.js?v=73"></script>
-<script src="chatplus.js?v=73"></script>
-<script src="giochi2.js?v=73"></script>
-<script src="scacchi.js?v=73"></script>
-<script src="eroefoto.js?v=73"></script>
+<script src="comune.js?v=74"></script>
+<script src="forza4.js?v=74"></script>
+<script src="giochi.js?v=74"></script>
+<script src="rete.js?v=74"></script>
+<script src="tragitti.js?v=74"></script>
+<script src="suoni.js?v=74"></script>
+<script src="telecomando.js?v=74"></script>
+<script src="spesa.js?v=74"></script>
+<script src="coppia.js?v=74"></script>
+<script src="occhiata.js?v=74"></script>
+<script src="chatplus.js?v=74"></script>
+<script src="giochi2.js?v=74"></script>
+<script src="scacchi.js?v=74"></script>
+<script src="eroefoto.js?v=74"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1012,6 +1026,22 @@ function disegnaOggi() {
   var es = tessera("btn-esco", "📍", fuori ? "Sei fuori" : "Esco", fuori ? function () { if (confirm("Sei di nuovo a casa?")) { segnaFuori(io, null); disegnaOggi(); } } : apriFuori); if (fuori) es.classList.add("fatto");
   var appena = Date.now() - (inviaPensiero.ultimo || 0) < 2500;
   var pz = tessera("btn-pensiero", "💗", appena ? "Inviato ♥" : "Pensavo a te", null); pz.onclick = function () { inviaPensiero(pz); }; if (appena) pz.classList.add("inviato");
+  // chi fa cosa oggi: due righe compatte (tocca per cambiare il turno di oggi)
+  var tu = el("div", "eroe-turni");
+  [0, 1].forEach(function (p) {
+    var v = turno(d, p), r = el("button", "eroe-persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); r.type = "button";
+    var st = statoAdesso(p), cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");
+    r.innerHTML = '<span class="av"></span><span class="tx"><b></b><small></small></span><span class="or"></span>';
+    r.querySelector(".av").textContent = (cfg.nomi[p] || "?").charAt(0).toUpperCase();
+    r.querySelector("b").textContent = (cfg.nomi[p] || "").split(" ")[0];
+    r.querySelector("small").textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
+    r.querySelector(".or").textContent = v ? breve(v).replace(/\n/g, " · ") : "Riposo";
+    r.appendChild(barraGiorno(oggi0, p, true));
+    r.onclick = function () { modificaTurno({ modo: "data", d: oggi0, p: p }); };
+    tu.appendChild(r);
+  });
+  e.appendChild(tu);
+  var oc = el("div"); oc.id = "occhiata"; e.appendChild(oc);   // meteo · bus · appuntamento (occhiata.js)
   e.appendChild(gr);
   if (io !== null) {   // quante volte vi siete pensati oggi
     var lui = pensieriOggi(1 - io), me = pensieriOggi(io);
@@ -1033,20 +1063,6 @@ function disegnaOggi() {
   });
   if (window.disegnaCoppia) disegnaCoppia();
   if (window.disegnaOcchiata) disegnaOcchiata();
-  var box = $("oggi-turni"); box.innerHTML = "";
-  [0, 1].forEach(function (p) {
-    var v = turno(d, p), b = el("button", "persona p" + p + (haEccezione(d, p) ? " eccezione" : "")); b.type = "button";
-    var testa = el("div", "testa"), av = el("span", "avatar"); av.textContent = (cfg.nomi[p] || "?").charAt(0).toUpperCase();
-    var testi = el("div"), nome = el("span", "nome"); nome.textContent = cfg.nomi[p];
-    var ore = el("span", "ore" + (v ? "" : " riposo")); ore.textContent = v ? breve(v).replace(/\n/g, " · ") : "Riposo";
-    testi.appendChild(nome); testi.appendChild(ore); testa.appendChild(av); testa.appendChild(testi); b.appendChild(testa);
-    var st = statoAdesso(p), cosa = v ? st.cosa : st.cosa.replace(/^a riposo · /, "");
-    var pil = el("span", "pillola " + st.stato); pil.textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1); b.appendChild(pil);
-    b.appendChild(barraGiorno(oggi0, p, true));
-    var assi = el("div", "ore-assi"); ["0", "6", "12", "18", "24"].forEach(function (x) { var s = el("span"); s.textContent = x; assi.appendChild(s); }); b.appendChild(assi);
-    b.onclick = function () { modificaTurno({ modo: "data", d: oggi0, p: p }); };
-    box.appendChild(b);
-  });
 }
 
 // ================= promemoria =================
@@ -1490,7 +1506,7 @@ $("imp-esci").onclick = function () { if (confirm("Uscire da questo telefono? Pe
 function dopoSblocco() { if (window.efAggiorna) efAggiorna(true); if (scheda === "foto") disegnaFoto(); if (scheda === "rete") leggiDispositivi(); }
 
 // ================= avvio =================
-function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer) && !(window.PA && PA.gioco)) disegnaGiochi(); }
+function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); if ($("f4-griglia")) f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer) && !(window.PA && PA.gioco)) disegnaGiochi(); }
 avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote); avviaOcchiata();
 mostraScheda(scheda);
 cambiaVista(vista);

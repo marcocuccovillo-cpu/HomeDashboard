@@ -3,7 +3,7 @@
 // ognuno muove dal proprio telefono quando tocca a lui. 2048 e Snake: si gioca da soli, i record vanno in classifica.
 
 var GIOCO = leggi("telefono_gioco", "tris");
-if (["tris", "dama", "scacchi", "navale", "parole", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
+if (["forza4", "tris", "dama", "scacchi", "navale", "parole", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
 
 function chiSono() { return window.io === null || window.io === undefined ? null : io; }
 // Sul tablet (pagina 3, sala giochi) chi è davanti allo schermo muove per chi è di turno, come in Forza 4.
@@ -316,7 +316,12 @@ function disegnaGiochi() {
   if (GIOCO !== "snake") snFerma();
   if (GIOCO !== "parole" && window.PA && PA.gioco) { clearInterval(PA.gioco.timer); PA.gioco = null; }   // cambiare gioco a metà: la partita a Parole non conta
   if (chiSono() === null) { scegliChi(box, disegnaGiochi); return; }
-  if (GIOCO === "tris") disegnaTris(box);
+  if (GIOCO === "forza4") {
+    var fi = el("div", "f4-info"); fi.id = "f4-info"; var fg = el("div", "f4-griglia"); fg.id = "f4-griglia";
+    box.appendChild(fi); box.appendChild(fg); f4Disegna(fg, fi);
+    var n = el("p", "spiega"); n.textContent = "Tocca una colonna per far cadere la tua pedina. È la stessa partita del tablet."; box.appendChild(n);
+  }
+  else if (GIOCO === "tris") disegnaTris(box);
   else if (GIOCO === "dama") disegnaDama(box);
   else if (GIOCO === "scacchi" && window.disegnaScacchi) disegnaScacchi(box);
   else if (GIOCO === "navale" && window.disegnaNavale) disegnaNavale(box);

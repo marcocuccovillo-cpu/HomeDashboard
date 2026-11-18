@@ -146,8 +146,8 @@ function disegnaOcchiata() {
   // appuntamento
   var e = ocProssimoApp(), a = el("button", "oc largo app"); a.type = "button";
   a.innerHTML = '<span class="icona">📅</span><div><span class="t"></span><b></b></div>';
-  a.querySelector(".t").textContent = e ? ocQuando(e) : "Appuntamenti";
-  a.querySelector("b").textContent = e ? e.testo : "Nessun appuntamento in arrivo";
+  a.querySelector(".t").textContent = e ? ocQuando(e) : "Agenda";
+  a.querySelector("b").textContent = e ? e.testo : "Niente in programma";
   a.onclick = function () { var c = $("card-app"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); };
   box.appendChild(a);
 }
