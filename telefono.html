@@ -369,7 +369,7 @@
   /* --- giochi --- */
   .seg.giochi-scelta { margin: 0 0 14px; background: var(--soft); border: 0; padding: 4px; border-radius: 14px; gap: 4px; }
   .seg.giochi-scelta { flex-wrap: wrap; }
-  .seg.giochi-scelta button { flex: 1 0 30%; padding: 9px 2px; font-size: 14px; border-radius: 10px; color: var(--muted); }
+  .seg.giochi-scelta button { flex: 1 0 22%; padding: 9px 2px; font-size: 14px; border-radius: 10px; color: var(--muted); }
   .seg.giochi-scelta button:focus-visible { outline: none; }
   .seg.giochi-scelta button.sel { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: var(--ombra); }
   .tris-griglia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: min(100%, 330px); margin: 6px auto 4px; }
@@ -500,7 +500,7 @@
 
   <section class="scheda" id="s-giochi">
     <div class="titolo"><h2>Giochi</h2></div>
-    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="navale">Navale</button><button type="button" data-v="parole">Parole</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
+    <div class="seg giochi-scelta" id="giochi-scelta"><button type="button" data-v="tris">Tris</button><button type="button" data-v="dama">Dama</button><button type="button" data-v="scacchi">Scacchi</button><button type="button" data-v="navale">Navale</button><button type="button" data-v="parole">Parole</button><button type="button" data-v="2048">2048</button><button type="button" data-v="snake">Snake</button></div>
     <div id="giochi-box"></div>
   </section>
 
@@ -683,18 +683,19 @@
   </div>
 </div>
 
-<script src="comune.js?v=68"></script>
-<script src="forza4.js?v=68"></script>
-<script src="giochi.js?v=68"></script>
-<script src="rete.js?v=68"></script>
-<script src="tragitti.js?v=68"></script>
-<script src="suoni.js?v=68"></script>
-<script src="telecomando.js?v=68"></script>
-<script src="spesa.js?v=68"></script>
-<script src="coppia.js?v=68"></script>
-<script src="occhiata.js?v=68"></script>
-<script src="chatplus.js?v=68"></script>
-<script src="giochi2.js?v=68"></script>
+<script src="comune.js?v=69"></script>
+<script src="forza4.js?v=69"></script>
+<script src="giochi.js?v=69"></script>
+<script src="rete.js?v=69"></script>
+<script src="tragitti.js?v=69"></script>
+<script src="suoni.js?v=69"></script>
+<script src="telecomando.js?v=69"></script>
+<script src="spesa.js?v=69"></script>
+<script src="coppia.js?v=69"></script>
+<script src="occhiata.js?v=69"></script>
+<script src="chatplus.js?v=69"></script>
+<script src="giochi2.js?v=69"></script>
+<script src="scacchi.js?v=69"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
