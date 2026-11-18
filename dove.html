@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#0d0a08">
-<title>Home2Love · Dove siete?</title>
+<meta name="theme-color" content="#0b1020">
+<title>Home2Love · Casa</title>
 <link rel="manifest" href="dove.webmanifest">
 <link rel="icon" href="icone/icona.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icone/icona-180.png">
@@ -13,7 +13,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
-  /* Home2Love — "Dove siete?". Un telefono avanzato appeso al muro diventa un orologio con due lancette,
+  /* Home2Love — "Dove siete?" con il cielo di Bologna dietro. Sullo sfondo il cielo disegnato dal vivo con il meteo vero
+     (sole e luna dove sono, nuvole, pioggia, neve, nebbia, lampi; i tetti, l'Asinelli e San Luca); davanti un orologio con due lancette,
      una per persona, che indicano Casa · In viaggio · Lavoro · Fuori (con il posto scritto dal telefono, «📍 Esco»). Si muove da solo con i turni
      e con "Sto tornando": la lancetta di chi torna scivola piano dal Lavoro verso Casa. */
   :root { --ink: #f4ead9; --muted: rgba(244,234,217,.55); --bg: #120d0a; --card: #1d1612; --line: rgba(201,165,106,.25); --accent: #c9a56a; --p0: #ff9a62; --p1: #52d1c6; --ottone: #c9a56a; }
@@ -22,28 +23,38 @@
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body { background: radial-gradient(120% 90% at 50% 40%, #2a1f17 0%, #120d0a 55%, #070504 100%); color: var(--ink);
          font-family: Outfit, system-ui, sans-serif; user-select: none; -webkit-user-select: none; transition: filter 3s; }
-  body.notte { filter: brightness(.45) saturate(.8); }
-  #tutto { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
+  body.notte { filter: brightness(.6) saturate(.85); }
+  canvas#tela { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #testo { position: fixed; z-index: 1; left: max(5vmin, env(safe-area-inset-left)); top: max(5vmin, env(safe-area-inset-top)); text-shadow: 0 2px 18px rgba(0,0,0,.35); transition: transform 4s; color: #fff; }
+  #temp { font-size: min(15vmin, 110px); font-weight: 200; line-height: .9; letter-spacing: -.02em; }
+  #temp small { font-size: .38em; vertical-align: top; position: relative; top: .25em; margin-left: .05em; }
+  #descr { font-size: min(4.2vmin, 28px); font-weight: 300; margin-top: 1.2vmin; opacity: .95; }
+  #pioggia { font-size: min(3.4vmin, 22px); font-weight: 300; margin-top: .8vmin; opacity: .8; }
+  #q-ora { font-size: min(3vmin, 19px); font-weight: 300; margin-top: 2.2vmin; opacity: .6; letter-spacing: .04em; }
+  #tutto { position: fixed; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
            padding-top: max(4vmin, env(safe-area-inset-top)); padding-bottom: max(4vmin, env(safe-area-inset-bottom)); transition: transform 4s; }
-  @media (orientation: portrait) { #tutto { flex-direction: column; } }
-  #quadrante { width: min(88vmin, 78vh); height: min(88vmin, 78vh); flex: none; filter: drop-shadow(0 3vmin 5vmin rgba(0,0,0,.55)); }
-  @media (orientation: landscape) { #quadrante { width: min(86vh, 60vw); height: min(86vh, 60vw); } }
+  @media (orientation: portrait) { #tutto { flex-direction: column; justify-content: flex-end; padding-bottom: max(6vmin, env(safe-area-inset-bottom)); } }
+  @media (orientation: landscape) { #tutto { flex-direction: row-reverse; justify-content: space-between; padding-left: max(5vmin, env(safe-area-inset-left)); padding-right: 6vmin; }
+                                     #righe { align-self: flex-end; margin-bottom: 4vmin; } }
+  #quadrante { width: min(84vmin, 58vh); height: min(84vmin, 58vh); flex: none; filter: drop-shadow(0 3vmin 5vmin rgba(0,0,0,.55)); }
+  @media (orientation: landscape) { #quadrante { width: min(88vh, 52vw); height: min(88vh, 52vw); } }
   .lancetta { transition: transform 3.2s cubic-bezier(.3, 1.35, .45, 1); }
   #lancette text { transform-box: view-box; }
   .etichetta { font-family: "Cormorant Garamond", serif; font-weight: 600; letter-spacing: .32em; font-size: 8.6px; fill: #e9d6b0; }
-  #righe { display: flex; flex-direction: column; gap: 3.2vmin; min-width: 0; max-width: 90vmin; }
+  #righe { display: flex; flex-direction: column; gap: 2.6vmin; text-shadow: 0 2px 14px rgba(0,0,0,.6); min-width: 0; max-width: 90vmin; }
   @media (orientation: portrait) { #righe { width: 88vmin; } }
+  @media (orientation: landscape) { .riga .nome { font-size: min(4.6vmin, 34px); } .riga .dove { font-size: min(3vmin, 20px); } }
   .riga { display: flex; gap: 2.6vmin; align-items: center; }
   .riga .bollo { width: 7vmin; height: 7vmin; max-width: 54px; max-height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center;
                  font: 600 min(3.4vmin, 26px) Outfit, sans-serif; color: #1a120c; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.4); }
   .riga .nome { font-family: "Cormorant Garamond", serif; font-size: min(5.4vmin, 40px); font-weight: 600; line-height: 1; }
   .riga .dove { font-size: min(3.3vmin, 22px); font-weight: 300; color: var(--muted); margin-top: .6vmin; }
   .riga .dove b { color: var(--ink); font-weight: 400; }
-  #ora { font-family: "Cormorant Garamond", serif; font-size: min(4vmin, 28px); color: var(--muted); letter-spacing: .08em; font-style: italic; }
-  #ora b { font-style: normal; color: var(--ink); font-weight: 500; }
 </style>
 </head>
 <body>
+<canvas id="tela"></canvas>
+<div id="testo"><div id="temp">–</div><div id="descr"></div><div id="pioggia"></div><div id="q-ora"></div></div>
 <div id="tutto">
   <svg id="quadrante" viewBox="-100 -100 200 200" aria-label="Dove siete?">
     <defs>
@@ -68,13 +79,11 @@
     <circle r="3" fill="#6e4f25"/>
     <circle r="88" fill="url(#g-vetro)" pointer-events="none"/>
   </svg>
-  <div id="righe">
-    <div id="ora"></div>
-  </div>
+  <div id="righe"></div>
 </div>
 
-<script src="comune.js?v=60"></script>
-<script src="telecomando.js?v=60"></script>
+<script src="comune.js?v=61"></script>
+<script src="telecomando.js?v=61"></script>
 <script>
 // ================= il quadrante =================
 var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
@@ -154,13 +163,12 @@ function disegna() {
       riga = el("div", "riga"); riga.id = "riga" + p;
       riga.innerHTML = '<div class="bollo"></div><div><div class="nome"></div><div class="dove"></div></div>';
       riga.querySelector(".bollo").style.background = p ? "var(--p1)" : "var(--p0)";
-      $("righe").insertBefore(riga, $("ora"));
+      $("righe").appendChild(riga);
     }
     riga.querySelector(".bollo").textContent = nome(p).charAt(0).toUpperCase();
     riga.querySelector(".nome").textContent = nome(p);
     riga.querySelector(".dove").innerHTML = s[p].testo;
   });
-  $("ora").innerHTML = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()] + " · <b>" + d.getHours() + ":" + due(d.getMinutes()) + "</b>";
   var h = d.getHours(); document.body.classList.toggle("notte", h >= 23 || h < 7);
 }
 function ridisegna() { disegna(); }
@@ -171,7 +179,270 @@ document.addEventListener("visibilitychange", tieniAcceso);
 document.addEventListener("click", function () {
   var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {});
 });
-setInterval(function () { $("tutto").style.transform = "translate(" + Math.round(Math.random() * 8 - 4) + "px," + Math.round(Math.random() * 8 - 4) + "px)"; }, 120000);
+setInterval(function () {   // contro i segni sullo schermo
+  var t = "translate(" + Math.round(Math.random() * 8 - 4) + "px," + Math.round(Math.random() * 8 - 4) + "px)"; $("tutto").style.transform = t; $("testo").style.transform = t;
+}, 120000);
+
+// ================= il cielo di Bologna, dal vivo, con il meteo vero (Open-Meteo) =================
+(function () {
+var prova = new URLSearchParams(location.search);   // ?prova=pioggia|neve|temporale|nebbia|sereno|nuvoloso&ora=21:30 per vederlo subito
+function adesso() {
+  var d = new Date(), o = prova.get("ora");
+  if (o && /^\d{1,2}:\d{2}$/.test(o)) { var p = o.split(":"); d.setHours(+p[0], +p[1]); }
+  return d;
+}
+
+// ================= sole e luna: dove sono davvero =================
+function posSole(d) {   // altezza e azimut in gradi (formula NOAA)
+  var rad = Math.PI / 180, n = (d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5, ora = d.getUTCHours() + d.getUTCMinutes() / 60;
+  var g = 2 * Math.PI / 365 * (n - 1 + (ora - 12) / 24);
+  var eq = 229.18 * (.000075 + .001868 * Math.cos(g) - .032077 * Math.sin(g) - .014615 * Math.cos(2 * g) - .040849 * Math.sin(2 * g));
+  var dec = .006918 - .399912 * Math.cos(g) + .070257 * Math.sin(g) - .006758 * Math.cos(2 * g) + .000907 * Math.sin(2 * g) - .002697 * Math.cos(3 * g) + .00148 * Math.sin(3 * g);
+  var tst = ora * 60 + eq + 4 * LON, ha = (tst / 4 - 180) * rad, lat = LAT * rad;
+  var cz = Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha), z = Math.acos(Math.max(-1, Math.min(1, cz)));
+  var az = Math.acos(Math.max(-1, Math.min(1, (Math.sin(lat) * Math.cos(z) - Math.sin(dec)) / (Math.cos(lat) * Math.sin(z))))) / rad;
+  az = ha > 0 ? (az + 180) % 360 : (540 - az) % 360;
+  return { alt: 90 - z / rad, az: az };
+}
+function etaLuna(d) { var s = 29.530588853, x = ((d - Date.UTC(2000, 0, 6, 18, 14)) / 864e5) % s; return (x + s) % s / s; }   // 0 nuova · .5 piena
+function posLuna(d) { return posSole(new Date(d.getTime() - etaLuna(d) * 864e5 * 1.0347)); }   // la luna "ritarda" sul sole di circa un giorno al mese
+
+// ================= meteo =================
+var M = null;   // { t, codice, nuvole 0..1, mm, vento km/h, verso (gradi), giorno, j }
+function tipo(c) {
+  return c >= 95 ? "temporale" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "neve" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "pioggia" : c === 45 || c === 48 ? "nebbia" : c === 3 ? "coperto" : c >= 1 ? "nuvoloso" : "sereno";
+}
+function descrizione(c) {
+  return { 0: "Sereno", 1: "Quasi sereno", 2: "Poco nuvoloso", 3: "Coperto", 45: "Nebbia", 48: "Nebbia gelata", 51: "Pioggerella", 53: "Pioggerella", 55: "Pioggerella fitta", 56: "Pioggerella gelata", 57: "Pioggerella gelata",
+    61: "Pioggia debole", 63: "Pioggia", 65: "Pioggia forte", 66: "Pioggia gelata", 67: "Pioggia gelata", 71: "Neve debole", 73: "Neve", 75: "Neve forte", 77: "Nevischio",
+    80: "Rovesci", 81: "Rovesci", 82: "Rovesci forti", 85: "Rovesci di neve", 86: "Rovesci di neve", 95: "Temporale", 96: "Temporale con grandine", 99: "Temporale con grandine" }[c] || "";
+}
+function leggiMeteo() {
+  var finti = { pioggia: [63, .95, 2.5, 18], neve: [73, .95, 1.2, 8], temporale: [95, 1, 6, 30], nebbia: [45, .6, 0, 4], sereno: [0, 0, 0, 6], nuvoloso: [2, .5, 0, 12] }, f = finti[prova.get("prova")];
+  if (f) { M = { t: 9, codice: f[0], nuvole: f[1], mm: f[2], vento: f[3], verso: 250, j: null }; aggiornaTesto(); preparaSfondo(); preparaNuvole(); preparaParticelle(); return; }
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+    "&current=temperature_2m,weather_code,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m&hourly=precipitation_probability,precipitation,weather_code&timezone=Europe%2FRome&forecast_days=2")
+    .then(function (r) { return r.json(); }).then(function (j) {
+      var c = j.current;
+      M = { t: c.temperature_2m, codice: c.weather_code, nuvole: (c.cloud_cover || 0) / 100, mm: c.precipitation || 0, vento: c.wind_speed_10m || 0, verso: c.wind_direction_10m || 0, j: j };
+      aggiornaTesto(); preparaSfondo(); preparaNuvole(); preparaParticelle();
+    }, function () {});
+}
+function prossimaPioggia() {   // "Stasera piove verso le 19" / "Smette verso le 16"
+  var j = M && M.j; if (!j || !j.hourly) return "";
+  var h = j.hourly, d = adesso(), ora = d.getFullYear() + "-" + due(d.getMonth() + 1) + "-" + due(d.getDate()) + "T" + due(d.getHours()) + ":00", i0 = h.time.indexOf(ora);
+  if (i0 < 0) return "";
+  var bagnato = function (i) { return h.precipitation[i] >= .2 || h.precipitation_probability[i] >= 55; };
+  var neve = function (i) { var c = h.weather_code[i]; return (c >= 71 && c <= 77) || c === 85 || c === 86; };
+  var quando = function (i) {
+    var t = new Date(h.time[i]), oggi = t.getDate() === d.getDate(), o = t.getHours();
+    return [oggi ? (o < 12 ? "stamattina" : o < 18 ? "oggi pomeriggio" : o < 22 ? "stasera" : "stanotte") : (o < 6 ? "stanotte" : o < 12 ? "domani mattina" : o < 18 ? "domani pomeriggio" : "domani sera"), "verso le " + o];
+  };
+  var su = function (x) { return x.charAt(0).toUpperCase() + x.slice(1); };
+  var t0 = tipo(M.codice), oraPiove = t0 === "pioggia" || t0 === "temporale" || t0 === "neve" || M.mm >= .1;
+  for (var i = i0 + 1; i < Math.min(h.time.length, i0 + 25); i++) {
+    if (oraPiove && !bagnato(i)) { var q = quando(i); return (t0 === "neve" ? "Smette di nevicare " : "Smette ") + q[0] + " " + q[1]; }   // "Smette stasera verso le 19"
+    if (!oraPiove && bagnato(i)) { var x = quando(i); return su(x[0]) + (neve(i) ? " nevica " : " piove ") + x[1]; }       // "Stasera piove verso le 19"
+  }
+  return oraPiove ? (t0 === "neve" ? "Nevica per tutto il giorno" : "Piove per tutto il giorno") : "Niente pioggia nelle prossime 24 ore";
+}
+function aggiornaTesto() {
+  if (!M) return;
+  document.getElementById("temp").innerHTML = Math.round(M.t) + "<small>°</small>";
+  document.getElementById("descr").textContent = descrizione(M.codice);
+  document.getElementById("pioggia").textContent = prossimaPioggia();
+}
+function aggiornaOra() { var d = adesso(); document.getElementById("q-ora").textContent = d.getHours() + ":" + due(d.getMinutes()) + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
+
+// ================= colori del cielo secondo l'altezza del sole =================
+function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
+function mix(a, b, t) { t = Math.max(0, Math.min(1, t)); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
+function css(c, a) { return "rgba(" + Math.round(c[0]) + "," + Math.round(c[1]) + "," + Math.round(c[2]) + "," + (a === undefined ? 1 : a) + ")"; }
+var TAPPE = [   // altezza del sole → [alto, basso (orizzonte)]
+  [-18, "#04060f", "#0a1128"], [-9, "#0a1030", "#1d2350"], [-4, "#1a1d4a", "#7a4a6e"], [0, "#2c3570", "#e0805a"], [5, "#3f62a6", "#f2b27a"], [14, "#3b78c4", "#a9cdee"], [40, "#2f6fc0", "#9fcaf0"]
+];
+function cielo(alt) {
+  for (var i = 1; i < TAPPE.length; i++) if (alt < TAPPE[i][0] || i === TAPPE.length - 1) {
+    var a = TAPPE[i - 1], b = TAPPE[i], t = (alt - a[0]) / (b[0] - a[0]);
+    return [mix(hex(a[1]), hex(b[1]), t), mix(hex(a[2]), hex(b[2]), t)];
+  }
+}
+function grigiore(t, cop) { return t === "pioggia" || t === "temporale" || t === "neve" ? .75 : t === "nebbia" ? .6 : t === "coperto" ? .55 : cop * .35; }
+function coloriCielo(s) {   // [alto, orizzonte] tenendo conto delle nuvole
+  var col = cielo(s.alt), L = luce(s.alt), gr = grigiore(M ? tipo(M.codice) : "", M ? M.nuvole : .3);
+  return [mix(col[0], mix([120, 128, 140], [16, 20, 30], 1 - L), gr), mix(col[1], mix([165, 172, 182], [26, 30, 40], 1 - L), gr)];
+}
+function luce(alt) { return Math.max(.08, Math.min(1, (alt + 10) / 22)); }   // quanto è illuminata la scena (0 notte · 1 giorno)
+
+// ================= scena =================
+var tela = document.getElementById("tela"), g = tela.getContext("2d"), W = 0, H = 0, DPR = 1, ORIZ = 0;
+var sfondo = document.createElement("canvas"), sprite = [], NUV = [], GOCCE = [], STELLE = [], lampo = 0, prossimoLampo = 0;
+function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }   // casuale ma sempre uguale
+function ridimensiona() {
+  DPR = Math.min(1.5, devicePixelRatio || 1); W = innerWidth; H = innerHeight; ORIZ = H * (W > H ? .7 : .74);
+  tela.width = W * DPR; tela.height = H * DPR; sfondo.width = W * DPR; sfondo.height = H * DPR;
+  STELLE = []; for (var i = 0; i < 160; i++) STELLE.push([rnd(i) * W, rnd(i + 500) * ORIZ * .92, rnd(i + 900) * 1.2 + .25, rnd(i + 1300) * 6]);
+  preparaSfondo(); preparaNuvole(); preparaParticelle();
+}
+function profiloColli(x, sem) { return Math.sin(x * .0042 + sem) * 18 + Math.sin(x * .011 + sem * 2) * 9 + Math.sin(x * .027 + sem * 3) * 4; }
+function preparaSfondo() {   // colli, San Luca, tetti e torri: si ridisegnano solo quando cambia la luce
+  var d = adesso(), s = posSole(d), L = luce(s.alt), col = coloriCielo(s), c = sfondo.getContext("2d");
+  c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, W, H);
+  var scuro = function (k) { return css(mix([6, 8, 16], col[1], k * L)); };
+  // colli lontani (più chiari, nella foschia) con San Luca
+  c.fillStyle = scuro(.55); c.beginPath(); c.moveTo(0, H);
+  for (var x = 0; x <= W; x += 6) c.lineTo(x, ORIZ - 26 - profiloColli(x, 1.3) * (H / 700));
+  c.lineTo(W, H); c.fill();
+  var sx = W * .7, sy = ORIZ - 26 - profiloColli(sx, 1.3) * (H / 700) - 4, k = Math.max(.7, H / 800);
+  c.beginPath(); c.arc(sx, sy - 9 * k, 7 * k, Math.PI, 0); c.fill();             // la cupola
+  c.fillRect(sx - 9 * k, sy - 9 * k, 18 * k, 9 * k); c.fillRect(sx - 1 * k, sy - 22 * k, 2 * k, 7 * k);
+  c.fillRect(sx + 9 * k, sy - 13 * k, 3 * k, 13 * k);                              // il campanile
+  c.strokeStyle = scuro(.55); c.lineWidth = 1.2 * k; c.beginPath();                // il portico che scende
+  for (var p = 0; p <= 1; p += .02) { var px = sx - 12 * k - p * W * .16; c.lineTo(px, ORIZ - 26 - profiloColli(px, 1.3) * (H / 700) + p * 14); }
+  c.stroke();
+  // colli vicini
+  c.fillStyle = scuro(.33); c.beginPath(); c.moveTo(0, H);
+  for (x = 0; x <= W; x += 6) c.lineTo(x, ORIZ - 4 - profiloColli(x, 4.1) * .55 * (H / 700));
+  c.lineTo(W, H); c.fill();
+  // tetti di Bologna, con le due torri
+  var base = H * (W > H ? .86 : .88), tetti = [], i = 0;
+  c.fillStyle = scuro(.12); c.beginPath(); c.moveTo(0, H);
+  for (x = -10; x < W + 40; i++) {
+    var k2 = Math.min(W, H) / 420, lw = (26 + rnd(i) * 54) * k2, lh = (10 + rnd(i + 40) * 30) * k2, punta = rnd(i + 80) > .35;
+    c.lineTo(x, base - lh);
+    if (punta) c.lineTo(x + lw / 2, base - lh - lw * .22); else if (rnd(i + 120) > .5) { c.lineTo(x + lw * .3, base - lh); c.lineTo(x + lw * .3, base - lh - 9); c.lineTo(x + lw * .36, base - lh - 9); c.lineTo(x + lw * .36, base - lh); }
+    c.lineTo(x + lw, base - lh); tetti.push([x, lw, base - lh]); x += lw;
+  }
+  c.lineTo(W + 40, H); c.fill();
+  var tx = W * (W > H ? .38 : .8), tw = Math.max(9, Math.min(W, H) * .03), th = Math.min(tw * 12, H * .34);   // 97 metri per 8: dodici volte più alta che larga   // Asinelli e Garisenda (che pende)
+  c.fillRect(tx, base - th, tw, th); c.fillRect(tx - tw * .18, base - th - tw * .5, tw * 1.36, tw * .5); c.fillRect(tx + tw * .3, base - th - tw * 1.1, tw * .4, tw * .6);
+  c.save(); c.translate(tx + tw * 2.1, base); c.rotate(-.06); c.fillRect(0, -th * .46, tw * 1.15, th * .46); c.restore();
+  // finestre accese quando fa buio
+  if (L < .55) {
+    c.fillStyle = "rgba(255,196,120," + (.75 * (1 - L / .55)).toFixed(2) + ")";
+    tetti.forEach(function (t, n) { for (var w = 0; w < 3; w++) if (rnd(n * 7 + w) > .62) c.fillRect(t[0] + 6 + rnd(n * 3 + w) * (t[1] - 14), t[2] + 8 + rnd(n * 5 + w) * (H - t[2] - 40) * .4, 4, 6); });
+    if (rnd(d.getHours()) > .2) c.fillRect(tx + tw * .4, base - th * .55, 3, 4);
+  }
+}
+function preparaNuvole() {   // nuvole fatte di sbuffi morbidi, colorate dalla luce del momento
+  if (!W) return;
+  var s = posSole(adesso()), L = luce(s.alt), col = cielo(s.alt), cop = M ? M.nuvole : .3, t = M ? tipo(M.codice) : "";
+  var grigio = t === "pioggia" || t === "temporale" || t === "neve" ? .55 : t === "coperto" ? .3 : 0;
+  var chiaro = mix(mix([255, 255, 255], col[1], .25), [120, 128, 140], grigio), base = mix(chiaro, [12, 16, 28], 1 - L);
+  var tramonto = s.alt > -6 && s.alt < 8 ? mix([255, 160, 120], [255, 255, 255], (s.alt + 6) / 14) : null;
+  sprite = [];
+  for (var k = 0; k < 4; k++) {
+    var cv = document.createElement("canvas"), w = 420, h = 200; cv.width = w; cv.height = h; var c = cv.getContext("2d");
+    for (var b = 0; b < 26; b++) {
+      var q = rnd(k * 40 + b), bx = w * (.12 + q * .76), alto = 1 - Math.abs(q - .5) * 1.6, r = h * (.09 + rnd(k * 40 + b + 33) * .13) * (.7 + alto * .6);
+      var by = h * .66 - alto * h * .22 * rnd(k * 40 + b + 17) - r * .2;
+      var gr = c.createRadialGradient(bx, by - r * .3, 0, bx, by, r), sopra = tramonto && L > .2 ? mix(base, tramonto, .5) : base;
+      gr.addColorStop(0, css(sopra, .9)); gr.addColorStop(.6, css(base, .55)); gr.addColorStop(1, css(base, 0));
+      c.fillStyle = gr; c.beginPath(); c.arc(bx, by, r, 0, 7); c.fill();
+    }
+    c.globalCompositeOperation = "destination-out";   // base piatta, come le nuvole vere
+    var tg = c.createLinearGradient(0, h * .64, 0, h * .8); tg.addColorStop(0, "rgba(0,0,0,0)"); tg.addColorStop(1, "rgba(0,0,0,1)");
+    c.fillStyle = tg; c.fillRect(0, h * .64, w, h * .36); c.globalCompositeOperation = "source-over";
+    sprite.push(cv);
+  }
+  var n = Math.round(cop < .08 ? 0 : 1 + cop * 18), prima = NUV;
+  NUV = [];
+  for (var i = 0; i < n; i++) NUV.push(prima[i] || { x: rnd(i * 9 + 1) * W * 1.4 - W * .2, y: ORIZ * (.04 + rnd(i * 9 + 2) * (cop > .8 ? .6 : .48)), s: (.6 + rnd(i * 9 + 3) * 1.1) * Math.max(1, W / 700), k: i % 4, a: .55 + rnd(i * 9 + 4) * .4 });
+}
+function preparaParticelle() {
+  GOCCE = []; if (!M || !W) return;
+  var t = tipo(M.codice), n = t === "neve" ? Math.round(90 + M.mm * 70) : t === "pioggia" || t === "temporale" ? Math.round(80 + M.mm * 110) : 0;
+  for (var i = 0; i < Math.min(n, 480); i++) GOCCE.push({ x: Math.random() * W, y: Math.random() * H, v: .6 + Math.random() * .8, r: Math.random() });
+}
+function ventoX() { if (!M) return 0; var vx = -Math.sin(M.verso * Math.PI / 180) * M.vento; return Math.max(-30, Math.min(30, vx)); }   // da dove soffia → verso dove va
+
+var ultimo = 0, ultimoSfondo = 0;
+function frame(ora) {
+  requestAnimationFrame(frame);
+  if (ora - ultimo < 33) return;   // circa 30 al secondo: basta e avanza, e il telefono vecchio non scalda
+  var dt = Math.min(100, ora - ultimo) / 1000; ultimo = ora;
+  if (ora - ultimoSfondo > 300000) { ultimoSfondo = ora; preparaSfondo(); preparaNuvole(); }
+  var d = adesso(), s = posSole(d), L = luce(s.alt), col = cielo(s.alt), t = M ? tipo(M.codice) : "", cop = M ? M.nuvole : .3;
+  var grigio = grigiore(t, cop), cc = coloriCielo(s), sopra = cc[0], sotto = cc[1];
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  var gr = g.createLinearGradient(0, 0, 0, ORIZ); gr.addColorStop(0, css(sopra)); gr.addColorStop(1, css(sotto));
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  // stelle
+  var vis = Math.max(0, Math.min(1, (-s.alt - 6) / 8)) * (1 - Math.min(1, cop * 1.3));
+  if (vis > .02) STELLE.forEach(function (st) { g.fillStyle = "rgba(255,255,255," + (vis * (.35 + .65 * Math.abs(Math.sin(ora / 2400 + st[3])))).toFixed(3) + ")"; g.beginPath(); g.arc(st[0], st[1], st[2], 0, 7); g.fill(); });
+  // sole o luna, dove sono (guardando verso sud: est a sinistra, ovest a destra)
+  var cx = function (az) { return W * (az - 90) / 180; }, cy = function (alt) { return ORIZ - alt / 62 * ORIZ * .92; };
+  var velo = Math.max(0, 1 - grigio * 1.3);   // con il cielo coperto sole e luna non si vedono
+  if (s.alt > -3) {
+    var sx = cx(s.az), sy = cy(s.alt), rr = Math.max(14, Math.min(W, H) * .035);
+    var al = g.createRadialGradient(sx, sy, 0, sx, sy, rr * 9); al.addColorStop(0, css(s.alt < 8 ? [255, 190, 120] : [255, 244, 214], .55 * velo)); al.addColorStop(1, "rgba(255,220,170,0)");
+    g.fillStyle = al; g.fillRect(0, 0, W, H);
+    g.fillStyle = css(s.alt < 6 ? [255, 196, 140] : [255, 250, 232], .95 * velo); g.beginPath(); g.arc(sx, sy, rr, 0, 7); g.fill();
+  }
+  var lu = posLuna(d), fase = etaLuna(d);
+  if (lu.alt > -2 && s.alt < 6) {
+    var mx = cx(lu.az), my = cy(lu.alt), mr = Math.max(10, Math.min(W, H) * .026), vl = velo * (s.alt < -4 ? 1 : .5);
+    var ml = g.createRadialGradient(mx, my, 0, mx, my, mr * 7); ml.addColorStop(0, "rgba(220,228,255," + (.22 * vl).toFixed(3) + ")"); ml.addColorStop(1, "rgba(220,228,255,0)");
+    g.fillStyle = ml; g.fillRect(mx - mr * 7, my - mr * 7, mr * 14, mr * 14);
+    g.save(); g.beginPath(); g.arc(mx, my, mr, 0, 7); g.clip();
+    g.fillStyle = css(mix(sopra, [0, 0, 0], .3), vl); g.fillRect(mx - mr, my - mr, mr * 2, mr * 2);   // la parte in ombra
+    g.fillStyle = "rgba(240,242,250," + (.95 * vl).toFixed(3) + ")"; g.beginPath();               // la parte illuminata
+    var cr = Math.cos(fase * 2 * Math.PI), dx = fase < .5 ? 1 : -1;
+    g.arc(mx, my, mr, -Math.PI / 2, Math.PI / 2, dx < 0); g.ellipse(mx, my, Math.abs(cr) * mr, mr, 0, Math.PI / 2, -Math.PI / 2, (cr > 0) === (dx > 0)); g.fill();
+    g.restore();
+  }
+  // nuvole che passano col vento
+  var vx = ventoX();
+  NUV.forEach(function (n) {
+    n.x += (4 + Math.abs(vx) * .9) * (vx < 0 ? -1 : 1) * dt * (.6 + n.s * .3);
+    var w = 420 * n.s, h = 200 * n.s;
+    if (n.x > W + 40) n.x = -w; if (n.x < -w - 40) n.x = W;
+    g.globalAlpha = n.a * Math.min(1, .35 + cop); if (sprite[n.k]) g.drawImage(sprite[n.k], n.x, n.y, w, h);
+  });
+  g.globalAlpha = 1;
+  // lampi
+  if (t === "temporale") {
+    if (ora > prossimoLampo) { lampo = 1; prossimoLampo = ora + 5000 + Math.random() * 14000; }
+    if (lampo > .01) { g.fillStyle = "rgba(225,230,255," + (lampo * .55).toFixed(3) + ")"; g.fillRect(0, 0, W, H); lampo *= .82; }
+  }
+  // colli, tetti e torri
+  g.drawImage(sfondo, 0, 0, W, H);
+  // nebbia: veli che scivolano bassi
+  if (t === "nebbia" || (t === "coperto" && s.alt < 5 && cop > .9)) {
+    for (var f = 0; f < 4; f++) {
+      var fy = ORIZ - 40 + f * (H - ORIZ) * .3, fx = Math.sin(ora / (9000 + f * 2600) + f) * W * .15;
+      var nb = g.createLinearGradient(0, fy - 90, 0, fy + 90); var nc = mix([200, 206, 214], [40, 46, 60], 1 - L);
+      nb.addColorStop(0, css(nc, 0)); nb.addColorStop(.5, css(nc, t === "nebbia" ? .42 : .18)); nb.addColorStop(1, css(nc, 0));
+      g.fillStyle = nb; g.fillRect(fx - W * .2, fy - 90, W * 1.4, 180);
+    }
+  }
+  // pioggia e neve
+  if (GOCCE.length) {
+    var neve = t === "neve";
+    g.strokeStyle = css(mix([200, 214, 236], [120, 135, 160], 1 - L), .42); g.lineWidth = 1.1; g.fillStyle = css(mix([255, 255, 255], [170, 180, 200], 1 - L), .85);
+    if (!neve) g.beginPath();
+    GOCCE.forEach(function (p) {
+      if (neve) {
+        p.y += (28 + p.v * 30) * dt; p.x += (vx * 1.2 + Math.sin(ora / 900 + p.r * 9) * 14) * dt;
+        g.beginPath(); g.arc(p.x, p.y, 1 + p.r * 2.2, 0, 7); g.fill();
+      } else {
+        var vy = 620 + p.v * 380, sp = vx * 9; p.y += vy * dt; p.x += sp * dt;
+        g.moveTo(p.x, p.y); g.lineTo(p.x - sp * .028, p.y - (12 + p.v * 12));
+      }
+      if (p.y > H + 20) { p.y = -20 - Math.random() * 60; p.x = Math.random() * (W + 200) - 100; }
+      if (p.x > W + 120) p.x -= W + 200; if (p.x < -120) p.x += W + 200;
+    });
+    if (!neve) g.stroke();
+  }
+}
+
+addEventListener("resize", function () { clearTimeout(ridimensiona.t); ridimensiona.t = setTimeout(ridimensiona, 200); });
+ridimensiona(); aggiornaOra(); leggiMeteo();
+setInterval(aggiornaOra, 15000);
+setInterval(function () { leggiMeteo(); }, 15 * 60000);
+setInterval(aggiornaTesto, 5 * 60000);
+requestAnimationFrame(frame);
+})();
 
 costruisci(); disegna();
 setInterval(disegna, 20000);
