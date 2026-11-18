@@ -95,6 +95,7 @@ function pubblicaStatoTablet() {   // radio e timer, per il telefono; solo quand
 }
 function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando · arriva alle 18:42"
   if (!sulTablet()) return;
+  suonaRientriNuovi();
   var box = $("rientri"); if (!box) { box = el("div"); box.id = "rientri"; document.body.appendChild(box); }
   var firma = [0, 1].map(function (p) { var r = rientroDi(p); return r ? r.t + ":" + Math.round((r.arrivo - Date.now()) / 60000) : ""; }).join("|");
   if (firma === disegnaRientri.firma) return;
@@ -110,6 +111,17 @@ function disegnaRientri() {   // banda in alto sul tablet: "Marco sta tornando �
       disegnaRientri.avvisato = r.t; G.salto = 10; fumetto("Arriva " + cfg.nomi[p] + "! ♥", 8000);
     }
   });
+}
+function suonaRientriNuovi() {   // il tablet suona una volta per ogni nuovo "Sto tornando" (non per quelli vecchi, né dopo un ricaricamento)
+  var sentiti = leggi("rientri_sentiti", {}), nuovo = false;
+  [0, 1].forEach(function (p) {
+    var r = rientroDi(p); if (!r || !r.t || sentiti[p] === r.t) return;
+    if (Date.now() - r.t < 15 * 60000 && Date.now() < r.arrivo) nuovo = true;
+    sentiti[p] = r.t;
+  });
+  if (!nuovo && JSON.stringify(sentiti) === JSON.stringify(leggi("rientri_sentiti", {}))) return;
+  salva("rientri_sentiti", sentiti);
+  if (nuovo && window.suonaRientro) suonaRientro();
 }
 function controllaPensieriTablet() {   // cuore grande sul tablet: "Marco pensa a Roberta"
   var n = pensieriNuovi("pensieri_visti_tablet"); if (!n.length) return;

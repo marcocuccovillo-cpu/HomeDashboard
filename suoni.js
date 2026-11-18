@@ -41,3 +41,12 @@ function suonaPensiero() {   // carillon che sale e un battito di cuore
   [[1046.5, 0], [1318.5, .13], [1568, .26], [2093, .42]].forEach(function (n) { campanella(ac, out, n[0], t + n[1], 1.4, .45); });
   battito(ac, out, t + 1.0); battito(ac, out, t + 1.7);
 }
+
+// ---------------------------------------------------------------- "Sto tornando": un din-don da campanello, diverso dal timer
+function suonaRientro() {
+  var ac = audioCtx(); if (!ac) return; var t = ac.currentTime + .02, out = uscita(ac, .55);
+  [0, 1.6].forEach(function (d) {   // din-don, due volte
+    campanella(ac, out, 659.25, t + d, 1.8, .5);         // mi
+    campanella(ac, out, 523.25, t + d + .55, 2.2, .5);   // do
+  });
+}
