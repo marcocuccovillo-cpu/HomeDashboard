@@ -33,7 +33,7 @@ function distanzaM(a, b) { var dx = (a.lon - b.lon) * 111320 * Math.cos(a.lat * 
     "#card-noi .umore{flex:1;border:0;border-radius:16px;padding:12px 10px;text-align:left;background:var(--soft);color:var(--ink);display:flex;gap:10px;align-items:center;min-width:0}",
     "#card-noi .umore .em{font-size:30px;line-height:1}#card-noi .umore b{display:block;font-size:14px}#card-noi .umore small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
     ".eroe .noi-eroe{position:relative;z-index:1;margin-top:10px}",
-    ".eroe .noi-pill{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}",
+    ".eroe .noi-pill{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;position:relative;z-index:1}",
     ".eroe .noi-pill button,.eroe .noi-pill span{border:0;border-radius:14px;padding:6px 11px;background:rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     ".eroe .noi-pill button:disabled{opacity:1}.eroe .noi-pill span{background:none;padding-left:2px;font-weight:500;opacity:.85}",
     ".eroe .noi-pill .bigl-pill{background:rgba(255,236,170,.92);color:#5a4a1e}",
@@ -42,6 +42,7 @@ function distanzaM(a, b) { var dx = (a.lon - b.lon) * 111320 * Math.cos(a.lat * 
     ".eroe .noi-azioni button .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:#fff;width:0;border-radius:0;display:block;margin:0;padding:0}",
     ".eroe .noi-azioni button .ico{display:block;font-size:22px;line-height:1.1;margin-bottom:2px}",
     "#card-noi .noi-azioni{display:flex;gap:8px}#card-noi .noi-azioni button{flex:1;border:0;border-radius:14px;padding:12px 6px;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:700;position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}",
+    "#eroe-griglia .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:#fff;width:0;display:block;padding:0}",
     "#card-noi .noi-azioni button .noi-carica{position:absolute;left:0;bottom:0;height:4px;background:var(--accent);width:0;border-radius:0;display:block;margin:0;padding:0}",
     "#card-noi .noi-azioni button .ico{display:block;font-size:24px;line-height:1.1;margin-bottom:3px}",
     "#card-noi .bigl{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;background:#fff6d8;color:#5a4a1e;border:0;width:100%;text-align:left;font-size:14px}",
@@ -98,40 +99,38 @@ function disegnaCoppia() {
   if (premendo) return;
   var vecchia = $("card-noi"); if (vecchia) vecchia.remove();   // la scheda separata di prima
   var eroe = $("eroe"); if (!eroe) return;
-  var c = eroe.querySelector(".noi-eroe"); if (c) c.remove();
+  [].forEach.call(eroe.querySelectorAll(".noi-x"), function (x) { x.remove(); });
   if (io === null) return;
-  c = el("div", "noi-eroe");
-  // umore: due pastiglie
-  var um = el("div", "noi-pill");
+  var sopra = $("eroe-sopra"), gr = $("eroe-griglia");
+  // umore: due etichette sopra la foto
   [io, 1 - io].forEach(function (p) {
-    var u = umoreDi(p), b = el("button"); b.type = "button";
-    b.textContent = (p === io ? "Tu" : nomeDi(p)) + " " + (u ? u.e + " " + u.nome : p === io ? "＋ come ti senti?" : "· ?");
+    var u = umoreDi(p), b = el("button", "noi-x"); b.type = "button";
+    b.textContent = (p === io ? "Tu" : nomeDi(p)) + " " + (u ? u.e : p === io ? "＋" : "·");
+    b.title = u ? u.nome : "";
     if (u) b.style.boxShadow = "inset 3px 0 0 " + u.colore;
-    if (p === io) b.onclick = apriUmore; else b.disabled = true;
-    um.appendChild(b);
+    if (p === io) b.onclick = apriUmore;
+    (sopra || eroe).appendChild(b);
   });
-  c.appendChild(um);
-  // bigliettini per me (da aprire, o letti da poco) e lo stato del mio
-  var bl = el("div", "noi-pill");
+  // seconda riga della griglia: abbraccio, buonanotte, bigliettino
+  if (gr) {
+    var ab = el("button", "noi-x"); ab.type = "button"; ab.title = "Tieni premuto"; ab.innerHTML = "<span class='ico'>🤗</span><span>Abbraccio</span><span class='noi-carica'></span>"; tieniPremuto(ab, 1200, iniziaAbbraccio); gr.appendChild(ab);
+    var bn = el("button", "noi-x"); bn.type = "button"; bn.innerHTML = "<span class='ico'>🌙</span><span>Buonanotte</span>"; bn.onclick = function () { mandaBuonanotte(bn); }; gr.appendChild(bn);
+    var bi = el("button", "noi-x"); bi.type = "button"; bi.innerHTML = "<span class='ico'>✉️</span><span>Bigliettino</span>"; bi.onclick = apriBiglietto; gr.appendChild(bi);
+  }
+  // bigliettini: sotto la griglia
+  var bl = el("div", "noi-pill noi-x");
   biglietti().filter(function (x) { return x.per === io && !x.aperto; }).slice(0, 3).forEach(function (x) {
     var ok = apribile(x), b = el("button", "bigl-pill"); b.type = "button";
-    b.textContent = (ok.ora ? "✉️ " : "🔒 ") + "Bigliettino da " + nomeDi(x.da) + " · " + (ok.ora ? (x.casa ? "a casa" : "aprilo") : "si apre " + ok.quando);
+    b.textContent = (ok.ora ? "✉️ " : "🔒 ") + "Bigliettino da " + nomeDi(x.da) + " · " + (ok.ora ? (x.casa ? "si apre a casa" : "aprilo") : "si apre " + ok.quando);
     b.onclick = function () { apriBigliettoRicevuto(x); }; bl.appendChild(b);
   });
   biglietti().filter(function (x) { return x.per === io && x.aperto && Date.now() - x.aperto < 864e5; }).slice(0, 1).forEach(function (x) {
     var b = el("button"); b.type = "button"; b.textContent = "📖 Rileggi il bigliettino di " + nomeDi(x.da); b.onclick = function () { leggiBiglietto(x); }; bl.appendChild(b);
   });
   biglietti().filter(function (x) { return x.da === io && Date.now() - x.t < 3 * 864e5; }).slice(0, 1).forEach(function (x) {
-    var s = el("span"); s.textContent = "✉️ Il tuo: " + (x.aperto ? "letto alle " + oraHM(x.aperto) + " ♥" : "non ancora aperto"); bl.appendChild(s);
+    var s = el("span"); s.textContent = "✉️ Il tuo bigliettino: " + (x.aperto ? "letto alle " + oraHM(x.aperto) + " ♥" : "non ancora aperto"); bl.appendChild(s);
   });
-  if (bl.children.length) c.appendChild(bl);
-  // i tre pulsanti
-  var az = el("div", "noi-azioni");
-  var ab = el("button"); ab.type = "button"; ab.title = "Tieni premuto"; ab.innerHTML = "<span class='ico'>🤗</span>Abbraccio<span class='noi-carica'></span>"; tieniPremuto(ab, 1200, iniziaAbbraccio); az.appendChild(ab);
-  var bn = el("button"); bn.type = "button"; bn.innerHTML = "<span class='ico'>🌙</span>Buonanotte"; bn.onclick = function () { mandaBuonanotte(bn); }; az.appendChild(bn);
-  var bi = el("button"); bi.type = "button"; bi.innerHTML = "<span class='ico'>✉️</span>Bigliettino"; bi.onclick = apriBiglietto; az.appendChild(bi);
-  c.appendChild(az);
-  eroe.appendChild(c);
+  if (bl.children.length) { if (gr && gr.nextSibling) eroe.insertBefore(bl, gr.nextSibling); else eroe.appendChild(bl); }
 }
 function tieniPremuto(b, ms, fatto) {   // tenere premuto: una barra si riempie, poi parte
   var t = null, inizio = 0, barra = b.querySelector(".noi-carica");

@@ -302,6 +302,20 @@
   .fu-scelte button.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
   #btn-pensiero { border: 0; background: rgba(255,255,255,.2); color: #fff; border-radius: 20px; padding: 7px 14px; font-size: 14px; font-weight: 700; }
   #btn-pensiero.inviato { background: #fff; color: #b8172d; }
+  .eroe-sopra { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; position: relative; z-index: 1; }
+  .eroe-sopra:empty { display: none; }
+  .eroe-box.con-foto .eroe-sopra { position: absolute; top: 12px; left: 12px; right: 40px; margin: 0; }
+  .eroe .eroe-sopra .cuore, .eroe-sopra button, .eroe-sopra > span { margin: 0; border: 0; border-radius: 14px; padding: 5px 10px; font-size: 12.5px; font-weight: 600; color: #fff;
+    background: rgba(20,5,10,.38); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  #eroe-griglia { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
+  #eroe-griglia button { border: 0; border-radius: 16px; padding: 10px 4px 9px; background: rgba(255,255,255,.18); color: #fff; font-size: 12.5px; font-weight: 700;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; overflow: hidden; box-shadow: none; min-width: 0;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); touch-action: manipulation; }
+  #eroe-griglia button > span:last-of-type:not(.noi-carica) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  #eroe-griglia .ico { font-size: 22px; line-height: 1; }
+  #eroe-griglia #btn-torno { background: #fff; color: #b8172d; }
+  #eroe-griglia button.fatto, #eroe-griglia button.inviato { background: rgba(255,255,255,.34); color: #fff; }
+  #eroe-griglia #btn-torno.fatto { background: rgba(255,255,255,.85); color: #b8172d; }
   .pensati { display: block; margin-top: 10px; font-size: 13.5px; opacity: .9; position: relative; z-index: 1; }
   #pensiero { position: fixed; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
               background: radial-gradient(circle at 50% 40%, #ff5f7a, #b8172d 75%); color: #fff; text-align: center; padding: 24px; overflow: hidden; }
@@ -683,20 +697,20 @@
   </div>
 </div>
 
-<script src="comune.js?v=72"></script>
-<script src="forza4.js?v=72"></script>
-<script src="giochi.js?v=72"></script>
-<script src="rete.js?v=72"></script>
-<script src="tragitti.js?v=72"></script>
-<script src="suoni.js?v=72"></script>
-<script src="telecomando.js?v=72"></script>
-<script src="spesa.js?v=72"></script>
-<script src="coppia.js?v=72"></script>
-<script src="occhiata.js?v=72"></script>
-<script src="chatplus.js?v=72"></script>
-<script src="giochi2.js?v=72"></script>
-<script src="scacchi.js?v=72"></script>
-<script src="eroefoto.js?v=72"></script>
+<script src="comune.js?v=73"></script>
+<script src="forza4.js?v=73"></script>
+<script src="giochi.js?v=73"></script>
+<script src="rete.js?v=73"></script>
+<script src="tragitti.js?v=73"></script>
+<script src="suoni.js?v=73"></script>
+<script src="telecomando.js?v=73"></script>
+<script src="spesa.js?v=73"></script>
+<script src="coppia.js?v=73"></script>
+<script src="occhiata.js?v=73"></script>
+<script src="chatplus.js?v=73"></script>
+<script src="giochi2.js?v=73"></script>
+<script src="scacchi.js?v=73"></script>
+<script src="eroefoto.js?v=73"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -978,24 +992,27 @@ function disegnaOggi() {
   if (window.premendo) return;   // stai tenendo premuto l'abbraccio: ridisegno dopo
   var d = new Date(), gg = GIORNI[d.getDay()], oggi0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   var e = $("eroe"); e.innerHTML = "";
+  var sopra = el("div", "eroe-sopra"); sopra.id = "eroe-sopra"; e.appendChild(sopra);   // sopra la foto: "liberi insieme" e l'umore
   var t = el("div", "giorno-txt"); t.textContent = gg.charAt(0).toUpperCase() + gg.slice(1) + " " + d.getDate() + " " + MESI[d.getMonth()];
   var sm = el("div", "sett"); sm.textContent = "Settimana " + quale(d);
   e.appendChild(t); e.appendChild(sm);
-  var ins = insieme(oggi0), c = el("div", "cuore"), prox = prossimoGiornoInsieme(piuGiorni(oggi0, 1));
-  if (ins === "giorno") c.textContent = "♥ Oggi siete liberi insieme";
-  else if (ins === "sera") c.textContent = "♡ Stasera siete liberi insieme";
+  var ins = insieme(oggi0), c = el("span", "cuore"), prox = prossimoGiornoInsieme(piuGiorni(oggi0, 1));
+  if (ins === "giorno") c.textContent = "♥ Oggi liberi insieme";
+  else if (ins === "sera") c.textContent = "♡ Stasera liberi insieme";
   else if (prox) {
     var diff = Math.round((prox - oggi0) / 864e5);
-    c.textContent = "♥ Prossimo giorno insieme: " + (diff === 1 ? "domani" : GIORNI[prox.getDay()] + " " + prox.getDate() + (diff > 6 ? " " + MESI[prox.getMonth()].slice(0, 3) : ""));
-  } else c.hidden = true;
-  var az = el("div", "azioni-eroe"); az.appendChild(c);
-  var bt = el("button"); bt.id = "btn-torno"; bt.type = "button"; bt.textContent = "🏠 Sto tornando"; bt.onclick = apriRientro;
-  if (io !== null && rientroDi(io) && Date.now() < rientroDi(io).arrivo) bt.hidden = true;
-  var es = el("button"); es.id = "btn-esco"; es.type = "button"; es.textContent = "📍 Esco"; es.onclick = apriFuori;
-  if (io !== null && (fuoriDi(io) || (rientroDi(io) && Date.now() < rientroDi(io).arrivo))) es.hidden = true;
-  var pz = el("button"); pz.id = "btn-pensiero"; pz.type = "button";
-  var appena = Date.now() - (inviaPensiero.ultimo || 0) < 2500; pz.textContent = appena ? "Inviato ♥" : "💗 Pensavo a te"; if (appena) pz.className = "inviato"; pz.onclick = function () { inviaPensiero(pz); };
-  az.appendChild(bt); az.appendChild(es); az.appendChild(pz); e.appendChild(az);
+    c.textContent = "♥ Insieme " + (diff === 1 ? "domani" : GIORNI[prox.getDay()] + " " + prox.getDate() + (diff > 6 ? " " + MESI[prox.getMonth()].slice(0, 3) : ""));
+  }
+  if (c.textContent) sopra.appendChild(c);
+  // i pulsanti, tutti uguali in una griglia: prima riga i nostri spostamenti e il pensiero, seconda riga (da coppia.js) abbraccio, buonanotte, bigliettino
+  var gr = el("div", "eroe-griglia"); gr.id = "eroe-griglia";
+  function tessera(id, ico, testo, fn) { var b = el("button"); b.id = id; b.type = "button"; b.innerHTML = "<span class='ico'>" + ico + "</span><span></span>"; b.lastChild.textContent = testo; b.onclick = fn; gr.appendChild(b); return b; }
+  var torna = io !== null && rientroDi(io) && Date.now() < rientroDi(io).arrivo, fuori = io !== null && fuoriDi(io);
+  var bt = tessera("btn-torno", "🏠", torna ? "Arrivi " + oraHM(rientroDi(io).arrivo) : "Sto tornando", apriRientro); if (torna) bt.classList.add("fatto");
+  var es = tessera("btn-esco", "📍", fuori ? "Sei fuori" : "Esco", fuori ? function () { if (confirm("Sei di nuovo a casa?")) { segnaFuori(io, null); disegnaOggi(); } } : apriFuori); if (fuori) es.classList.add("fatto");
+  var appena = Date.now() - (inviaPensiero.ultimo || 0) < 2500;
+  var pz = tessera("btn-pensiero", "💗", appena ? "Inviato ♥" : "Pensavo a te", null); pz.onclick = function () { inviaPensiero(pz); }; if (appena) pz.classList.add("inviato");
+  e.appendChild(gr);
   if (io !== null) {   // quante volte vi siete pensati oggi
     var lui = pensieriOggi(1 - io), me = pensieriOggi(io);
     if (lui || me) { var pt = el("span", "pensati"); pt.textContent = (lui ? cfg.nomi[1 - io] + " ti ha pensato " + (lui === 1 ? "1 volta" : lui + " volte") + " oggi ♥" : "") + (lui && me ? " · " : "") + (me ? "tu " + (me === 1 ? "1 volta" : me + " volte") : ""); e.appendChild(pt); }
@@ -1244,7 +1261,7 @@ function inviaPensiero(b) {
   inviaPensiero.ultimo = Date.now();
   if (navigator.vibrate) navigator.vibrate(40);
   if (window.suonaPensieroInviato) suonaPensieroInviato();
-  if (b) { b.classList.add("inviato"); b.textContent = "Inviato ♥"; }
+  if (b) { b.classList.add("inviato"); if (b.lastChild && b.querySelector(".ico")) b.lastChild.textContent = "Inviato ♥"; else b.textContent = "Inviato ♥"; }
   setTimeout(disegnaOggi, 2600);
 }
 function controllaPensieri() {   // un cuore dall'altro: schermata grande e vibrazione
