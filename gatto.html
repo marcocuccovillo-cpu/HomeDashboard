@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#2a1d18">
+<title>Home2Love · La stanza del gatto</title>
+<link rel="manifest" href="gatto.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gatto">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* Home2Love — La stanza del gatto: un telefono avanzato appoggiato in casa diventa la casetta a pixel del gatto.
+     Cuccia, ciotole, pallina, orologio vero e una finestra con il cielo e il tempo veri di Bologna.
+     Il gatto vive lì e segue la casa: aspetta alla porta chi ha premuto "Sto tornando", fa i cuori quando
+     vi pensate, dorme di notte o quando siete fuori, mette il cappellino ai compleanni e alle feste.
+     Toccalo per le coccole; tocca le ciotole per riempirle. */
+  :root { --ink: #fff5ec; --muted: rgba(255,245,236,.65); --bg: #1c1412; --card: #2a1f1c; --line: rgba(255,255,255,.14); --accent: #ff7a59; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Outfit, -apple-system, system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+  #scena { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; overflow: hidden; -webkit-transform-origin: 0 0; transform-origin: 0 0; background: #c9a98a; }
+  #tela { position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
+  #fumetto { position: absolute; z-index: 3; background: #fff; color: #2a1d18; border-radius: 3vmin; padding: 1.6vmin 2.6vmin; font: 600 3.4vmin/1.25 Outfit, sans-serif; white-space: nowrap;
+             box-shadow: 0 1vmin 3vmin rgba(0,0,0,.25); -webkit-transform: translate(-50%, -100%); transform: translate(-50%, -100%); pointer-events: none; transition: opacity .3s; }
+  #fumetto::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -1.4vmin; border: 1.4vmin solid transparent; border-top-color: #fff; }
+  #fumetto.via { opacity: 0; }
+  #info { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 1.6vmin 3vmin max(1.6vmin, env(safe-area-inset-bottom)); display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline;
+          background: linear-gradient(transparent, rgba(20,12,10,.65)); font-size: 2.8vmin; color: var(--ink); text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+  #ora { font-size: 4.6vmin; font-weight: 300; margin-right: 2.4vmin; } #noi { color: var(--muted); -webkit-flex: 1; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  #noi b { color: var(--ink); font-weight: 600; }
+  #b-ruota { position: absolute; z-index: 4; right: 1.6vmin; top: 1.6vmin; width: 8vmin; height: 8vmin; max-width: 46px; max-height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.2); color: rgba(255,255,255,.6); font-size: 20px; cursor: pointer; }
+  .cuore { position: absolute; z-index: 3; color: #ff5468; font-size: 4.4vmin; pointer-events: none; -webkit-animation: sale 1.6s ease-out forwards; animation: sale 1.6s ease-out forwards; }
+  @-webkit-keyframes sale { from { opacity: 1; -webkit-transform: translate(-50%, 0) scale(.8); } to { opacity: 0; -webkit-transform: translate(-50%, -14vmin) scale(1.3); } }
+  @keyframes sale { from { opacity: 1; transform: translate(-50%, 0) scale(.8); } to { opacity: 0; transform: translate(-50%, -14vmin) scale(1.3); } }
+  body.notte #scena { -webkit-filter: brightness(.55); filter: brightness(.55); }
+</style>
+</head>
+<body>
+<div id="scena">
+  <canvas id="tela" width="192" height="120"></canvas>
+  <div id="fumetto" class="via"></div>
+  <div id="info"><span id="ora"></span><span id="noi"></span></div>
+  <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
+</div>
+
+<script src="comune.js?v=83"></script>
+<script src="telecomando.js?v=83"></script>
+<script src="compleanni.js?v=83"></script>
+<script>
+// ================= la stanza (in "pixel" di una tela 192×120, ingrandita) =================
+var LW = 192, LH = 120, PAV = 92;   // larghezza, altezza, dove sta il pavimento (piedi del gatto)
+var tela = $("tela"), g = tela.getContext("2d");
+var COL = { O: "#e8913f", D: "#b8622a", W: "#fff1e0", K: "#2b1d14", P: "#f4a6ae" };
+var POSTI = { cuccia: 30, cibo: 59, acqua: 73, finestra: 92, centro: 110, porta: 160 };
+var ST = { x: 110, verso: 1, meta: 110, fare: "seduto", fino: 0, posa: "seduto", f: 0, palla: { x: 130, v: 0 }, cappello: false, fusa: 0 };
+var CIOT = leggi("gatto_stanza", { cibo: 80, acqua: 80, t: Date.now() });
+var METEO = { tipo: "sereno", giorno: true }, GOCCE = [];
+for (var q = 0; q < 26; q++) GOCCE.push({ x: Math.random(), y: Math.random(), v: .5 + Math.random() * .5 });
+
+function px(c, x, y, w, h) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w || 1, h || 1); }
+function pc(c, x, y, w, h) { px(COL[c], x, y, w, h); }
+function gatto(x, y, posa, f, sx) {   // lo stesso disegno del gatto del tablet; x,y = angolo in alto a sinistra dello sprite 24×18
+  g.save(); g.translate(Math.round(x) + (sx < 0 ? 24 : 0), Math.round(y)); if (sx < 0) g.scale(-1, 1);
+  var p = function (c, a, b, w, h) { pc(c, a, b, w, h); };
+  if (posa === "dorme") {
+    p("O", 5, 11, 13, 5); p("O", 6, 10, 11, 1); p("D", 8, 11, 1, 2); p("D", 11, 11, 1, 2);
+    p("O", 13, 8, 6, 5); p("O", 13, 7, 1, 1); p("O", 18, 7, 1, 1); p("P", 13, 8); p("P", 18, 8);
+    p("K", 14, 10, 2, 1); p("K", 17, 10, 1, 1); p("W", 15, 11, 3, 2);
+    var r = f % 40 < 20 ? 0 : 1; p("O", 5, 16 - r, 9, 1); p("W", 4, 15 - r, 2, 1);
+  } else if (posa === "seduto") {
+    p("O", 8, 8, 7, 7); p("W", 11, 10, 3, 5); p("D", 9, 9, 1, 2); p("D", 9, 12, 1, 2);
+    p("O", 9, 2, 7, 6); p("O", 9, 1, 1, 1); p("O", 15, 1, 1, 1); p("P", 10, 2); p("P", 14, 2);
+    var occhi = ST.fusa > 0 || f % 60 < 3 ? "O" : "K"; p(occhi, 11, 4); p(occhi, 14, 4); p("W", 12, 5, 3, 2); p("P", 13, 5);
+    p("W", 11, 15, 1, 1); p("W", 13, 15, 1, 1);
+    var c = Math.round(Math.sin(f / 6) * 1.5); p("O", 3, 14, 6, 2); p("O", 2, 12 + c, 2, 3); p("D", 2, 11 + c, 1, 1);
+  } else {   // cammina / mangia (testa giù)
+    var hy = posa === "mangia" ? 4 + (f % 6 < 3 ? 0 : 1) : 0;
+    p("O", 4, 8, 12, 5); p("D", 6, 8, 1, 2); p("D", 9, 8, 1, 2); p("D", 12, 8, 1, 2); p("W", 13, 10, 3, 3);
+    p("O", 14, 3 + hy, 7, 6); p("O", 15, 2 + hy, 1, 1); p("O", 19, 2 + hy, 1, 1); p("P", 15, 3 + hy); p("P", 19, 3 + hy);
+    p("K", 16, 5 + hy); p("K", 19, 5 + hy); p("W", 18, 6 + hy, 3, 2); p("P", 20, 6 + hy);
+    var a = posa === "cammina" && f % 8 < 4;
+    [[5, a], [7, !a], [12, !a], [14, a]].forEach(function (z) { p("O", z[0], 13, 1, z[1] ? 3 : 2); p("W", z[0], z[1] ? 15 : 14); });
+    var t = Math.round(Math.sin(f / 4)); p("O", 3, 8); p("O", 2, 7); p("O", 2, 6); p("O", 1 + t, 5); p("D", 1 + t, 4);
+  }
+  if (ST.cappello) {   // cappellino della festa
+    var hx = posa === "seduto" ? 11 : posa === "dorme" ? 15 : 16, hy2 = posa === "seduto" ? -4 : posa === "dorme" ? 3 : -1;
+    px("#ff5468", hx, hy2 + 2, 3, 2); px("#ffd166", hx + 1, hy2, 1, 2); px("#ffd166", hx, hy2 + 3, 3, 1);
+  }
+  g.restore();
+}
+function cielo() {   // il colore della finestra: secondo l'ora e il tempo
+  var h = new Date().getHours() + new Date().getMinutes() / 60, c;
+  if (h < 6.5 || h >= 19.5) c = ["#0d1430", "#1b2550"]; else if (h < 8) c = ["#6d7fc0", "#f2b27a"]; else if (h >= 17) c = ["#4d5c9e", "#f0a070"]; else c = ["#5d9be0", "#a9d2f0"];
+  if (METEO.tipo !== "sereno" && METEO.tipo !== "nuvoloso") c = h < 6.5 || h >= 19.5 ? ["#151a26", "#232a38"] : ["#8794a6", "#b4bdc9"];
+  return c;
+}
+function disegna() {
+  var f = ST.f, d = new Date(), notte = d.getHours() >= 23 || d.getHours() < 7;
+  // muro e pavimento
+  px("#d8b896", 0, 0, LW, 78); px("#cfae8b", 0, 70, LW, 8);
+  for (var i = 0; i < LW; i += 12) px("#d2b190", i, 0, 1, 70);   // carta da parati a righe
+  px("#8a5a3c", 0, 78, LW, 42);
+  for (var r = 0; r < 4; r++) { px("#7a4e33", 0, 82 + r * 10, LW, 1); for (var k = (r % 2) * 20; k < LW; k += 40) px("#7a4e33", k, 82 + r * 10, 1, 10); }
+  px("#6b4329", 0, 78, LW, 2);
+  // finestra con il cielo vero
+  var cc = cielo(), wx = 76, wy = 12, ww = 44, wh = 40;
+  px("#f4ead8", wx - 3, wy - 3, ww + 6, wh + 6);
+  var gr = g.createLinearGradient(0, wy, 0, wy + wh); gr.addColorStop(0, cc[0]); gr.addColorStop(1, cc[1]); g.fillStyle = gr; g.fillRect(wx, wy, ww, wh);
+  var h = d.getHours();
+  if (h >= 7 && h < 18 && (METEO.tipo === "sereno" || METEO.tipo === "nuvoloso")) { px("#ffe7a3", wx + 30, wy + 6, 6, 6); px("#fff6d0", wx + 31, wy + 7, 4, 4); }
+  if (h < 6.5 || h >= 19.5) { px("#f4f1e0", wx + 8, wy + 6, 4, 4); px(cc[0], wx + 9, wy + 6, 3, 3); for (var s = 0; s < 6; s++) if ((f / 20 + s) % 3 < 2) px("#fff", wx + 5 + s * 7 % 38, wy + 3 + s * 5 % 18, 1, 1); }
+  if (METEO.tipo === "nuvoloso" || METEO.tipo === "coperto" || METEO.tipo === "pioggia" || METEO.tipo === "temporale" || METEO.tipo === "neve") {
+    var nx = (f / 8) % (ww + 20) - 10; px("rgba(255,255,255,.7)", wx + nx, wy + 8, 14, 4); px("rgba(255,255,255,.7)", wx + nx + 3, wy + 5, 8, 3);
+    px("rgba(255,255,255,.55)", wx + (nx + 22) % (ww + 10), wy + 16, 12, 3);
+  }
+  px("#2e2a33", wx, wy + wh - 9, ww, 9);   // i tetti di Bologna
+  for (var t = 0; t < ww; t += 7) px("#2e2a33", wx + t, wy + wh - 12 - (t * 3 % 5), 6, 4);
+  px("#2e2a33", wx + 12, wy + wh - 26, 3, 17); px("#2e2a33", wx + 11, wy + wh - 27, 5, 1);   // l'Asinelli
+  if (!notte || f % 30 < 25) { px("#ffcf6e", wx + 4, wy + wh - 6, 1, 1); px("#ffcf6e", wx + 25, wy + wh - 5, 1, 1); px("#ffcf6e", wx + 36, wy + wh - 7, 1, 1); }
+  if (METEO.tipo === "pioggia" || METEO.tipo === "temporale" || METEO.tipo === "neve") {
+    GOCCE.forEach(function (q) {
+      q.y += (METEO.tipo === "neve" ? .004 : .02) * q.v; if (q.y > 1) { q.y = 0; q.x = Math.random(); }
+      var gx = wx + q.x * ww + (METEO.tipo === "neve" ? Math.sin(f / 10 + q.x * 9) * 1.5 : 0), gy = wy + q.y * wh;
+      px(METEO.tipo === "neve" ? "#ffffff" : "rgba(200,220,255,.8)", gx, gy, 1, METEO.tipo === "neve" ? 1 : 3);
+    });
+    if (METEO.tipo === "temporale" && f % 400 < 4) px("rgba(255,255,255,.8)", wx, wy, ww, wh);
+  }
+  px("#f4ead8", wx + ww / 2 - 1, wy, 2, wh); px("#f4ead8", wx, wy + wh / 2 - 1, ww, 2);   // telaio
+  px("#e9dcc5", wx - 5, wy + wh + 2, ww + 10, 3);   // davanzale
+  // orologio vero
+  var ox = 34, oy = 26; g.fillStyle = "#f7efe2"; g.beginPath(); g.arc(ox, oy, 9, 0, 7); g.fill(); g.strokeStyle = "#5a3d2b"; g.lineWidth = 1.5; g.stroke();
+  var mi = d.getMinutes(), ho = d.getHours() % 12 + mi / 60;
+  g.lineWidth = 1.4; g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.sin(ho / 12 * 6.283) * 5, oy - Math.cos(ho / 12 * 6.283) * 5); g.stroke();
+  g.lineWidth = .9; g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.sin(mi / 60 * 6.283) * 7.5, oy - Math.cos(mi / 60 * 6.283) * 7.5); g.stroke();
+  // quadretto con il cuore
+  px("#5a3d2b", 140, 20, 16, 14); px("#f6e3e6", 141, 21, 14, 12); px("#ff5468", 145, 24, 2, 2); px("#ff5468", 149, 24, 2, 2); px("#ff5468", 145, 26, 6, 2); px("#ff5468", 146, 28, 4, 1); px("#ff5468", 147, 29, 2, 1);
+  // porta
+  px("#6b4329", 162, 30, 24, 50); px("#7d5236", 164, 32, 20, 46); px("#6b4329", 166, 35, 16, 18); px("#6b4329", 166, 57, 16, 18); px("#e8c46a", 181, 56, 2, 2);
+  px("#a8364a", 158, 80, 32, 3);   // tappetino
+  // cuccia
+  px("#a8364a", 14, 80, 36, 10); px("#c4485c", 16, 78, 32, 6); px("#f0d6c0", 19, 80, 26, 4);
+  // ciotole (si svuotano piano piano)
+  ciotola(POSTI.cibo - 5, "#d9822b", CIOT.cibo); ciotola(POSTI.acqua - 5, "#6cb6e8", CIOT.acqua);
+  // pallina di lana
+  var bx = ST.palla.x; g.fillStyle = "#4fb3a9"; g.beginPath(); g.arc(bx, 88, 3, 0, 7); g.fill(); px("#3a8c84", bx - 1, 87, 2, 1); px("#3a8c84", bx, 89, 2, 1);
+  // il gatto
+  var gy = ST.posa === "dorme" && Math.abs(ST.x - POSTI.cuccia) < 3 ? 66 : PAV - 18;
+  gatto(ST.x - 12, gy, ST.posa, f, ST.verso);
+}
+function ciotola(x, colore, livello) {
+  px("#8b8f99", x, 86, 12, 1); px("#b7bcc7", x + 1, 87, 10, 3); px("#8b8f99", x + 2, 90, 8, 1);
+  var w = Math.round(8 * Math.max(0, Math.min(100, livello)) / 100); if (w) px(colore, x + 2 + (8 - w) / 2, 86, w, 1);
+}
+
+// ================= cosa fa il gatto =================
+function rientroDiQualcuno() { for (var p = 0; p < 2; p++) { var r = rientroDi(p); if (r && Date.now() < r.arrivo) return { p: p, r: r }; } return null; }
+function tuttiFuori() { return [0, 1].every(function (p) { var st = statoAdesso(p); return st.stato === "lavoro" || !!fuoriDi(p); }); }
+function nome(p) { return (cfg.nomi[p] || (p ? "Lei" : "Lui")).split(" ")[0]; }
+function scegli() {
+  var d = new Date(), h = d.getHours(), torna = rientroDiQualcuno();
+  if (torna) { vai("porta", "seduto", 60000); var m = Math.max(0, Math.round((torna.r.arrivo - Date.now()) / 60000)); dici(m > 1 ? "Arriva " + nome(torna.p) + "! Tra " + m + " min 🚪" : "Arriva " + nome(torna.p) + "! 🚪", 6000); return; }
+  if (h >= 23 || h < 7) { vai("cuccia", "dorme", 120000); return; }
+  if (tuttiFuori()) { if (Math.random() < .7) vai("cuccia", "dorme", 90000); else vai("finestra", "seduto", 40000); return; }
+  var r = Math.random();
+  if (CIOT.cibo > 5 && r < .2) vai("cibo", "mangia", 9000);
+  else if (CIOT.acqua > 5 && r < .32) vai("acqua", "mangia", 6000);
+  else if (r < .5) { vai("finestra", "seduto", 20000); if (Math.random() < .5) dici(METEO.tipo === "pioggia" ? "Piove… 🌧️" : METEO.tipo === "neve" ? "Nevica! ❄️" : "Che bel cielo", 4000); }
+  else if (r < .7) { ST.fare = "gioca"; ST.fino = Date.now() + 15000; ST.palla.v = (Math.random() < .5 ? -1 : 1) * 1.6; }
+  else if (r < .85) vai("cuccia", "dorme", 30000);
+  else vai("centro", "seduto", 15000);
+}
+function vai(dove, poi, ms) { ST.meta = POSTI[dove]; ST.dove = dove; ST.poi = poi; ST.ms = ms; ST.fare = "va"; }
+function passo() {
+  ST.f++;
+  if (ST.fusa > 0) ST.fusa--;
+  if (ST.fare === "va") {
+    var dx = ST.meta - ST.x;
+    if (Math.abs(dx) < .8) { ST.x = ST.meta; ST.fare = ST.poi; ST.posa = ST.poi; ST.fino = Date.now() + ST.ms; if (ST.dove === "acqua") ST.verso = -1; else if (ST.dove === "cibo") ST.verso = 1; }
+    else { ST.verso = dx > 0 ? 1 : -1; ST.x += ST.verso * .45; ST.posa = "cammina"; }
+  } else if (ST.fare === "gioca") {   // rincorre la pallina
+    var p = ST.palla; p.x += p.v; p.v *= .985;
+    if (p.x < 52 || p.x > 152) { p.v = -p.v; p.x = Math.max(52, Math.min(152, p.x)); }
+    if (Math.abs(p.v) < .25 && Math.random() < .03) p.v = (Math.random() < .5 ? -1 : 1) * (1 + Math.random());
+    var dd = p.x - ST.x - ST.verso * 6;
+    if (Math.abs(dd) > 2) { ST.verso = dd > 0 ? 1 : -1; ST.x += ST.verso * .7; ST.posa = "cammina"; } else ST.posa = "seduto";
+    if (Date.now() > ST.fino) scegli();
+  } else {
+    if (ST.fare === "mangia") { if (ST.dove === "cibo") CIOT.cibo = Math.max(0, CIOT.cibo - .02); else CIOT.acqua = Math.max(0, CIOT.acqua - .03); }
+    if (Date.now() > ST.fino) scegli();
+  }
+}
+
+// ================= fumetti e cuori (in HTML sopra la tela) =================
+var SCALA = 1, OFX = 0, OFY = 0, VERT = false, SW = 0;
+function segui(subito) {   // l'inquadratura scivola per tenere il gatto al centro (solo in verticale)
+  var meta = Math.max(SW - LW * SCALA, Math.min(0, SW / 2 - ST.x * SCALA));
+  return subito ? meta : OFX + (meta - OFX) * .08;
+}
+function dici(t, ms) {
+  var f = $("fumetto"); f.textContent = t; f.classList.remove("via");
+  posFumetto(); clearTimeout(dici.t); dici.t = setTimeout(function () { f.classList.add("via"); }, ms || 3500);
+}
+function posFumetto() { var f = $("fumetto"); f.style.left = (OFX + ST.x * SCALA) + "px"; f.style.top = (OFY + (PAV - 22) * SCALA) + "px"; }
+function cuori(n) {
+  for (var i = 0; i < (n || 5); i++) (function (i) { setTimeout(function () {
+    var c = document.createElement("span"); c.className = "cuore"; c.textContent = "♥";
+    c.style.left = (OFX + (ST.x + (Math.random() * 16 - 8)) * SCALA) + "px"; c.style.top = (OFY + (PAV - 16) * SCALA) + "px";
+    $("scena").appendChild(c); setTimeout(function () { c.remove(); }, 1700);
+  }, i * 160); })(i);
+}
+
+// ================= tocchi: coccole e ciotole =================
+tela.addEventListener("click", function (e) {
+  var r = tela.getBoundingClientRect(), k = r.width / LW, x = (e.clientX - r.left) / k, y = (e.clientY - r.top) / (r.height / LH);
+  if (y > 82 && y < 94) {
+    if (Math.abs(x - POSTI.cibo) < 8) { CIOT.cibo = 100; salva("gatto_stanza", CIOT); dici("Gnam! Grazie 🐟", 2500); return; }
+    if (Math.abs(x - POSTI.acqua) < 8) { CIOT.acqua = 100; salva("gatto_stanza", CIOT); dici("Acqua fresca 💧", 2500); return; }
+  }
+  if (Math.abs(x - ST.x) < 14 && y > PAV - 24 && y < PAV + 2) {
+    if (navigator.vibrate) navigator.vibrate([10, 30, 10, 30, 10]);
+    ST.fusa = 120; cuori(5); dici(ST.posa === "dorme" ? "Mmh… prrr" : "Prrr… ♥", 2500);
+    if (ST.fare !== "va") { ST.fino = Math.max(ST.fino, Date.now() + 5000); }
+  }
+});
+
+// ================= la casa: pensieri, rientri, feste, meteo =================
+function controllaCasa() {
+  var n = pensieriNuovi("pensieri_visti_gatto");
+  if (n.length) { var x = n[n.length - 1]; cuori(8); dici("♥ " + nome(x.da) + " pensa a " + nome(1 - x.da), 6000); }
+  var d = new Date(), feste = window.festeDel ? festeDel(d) : [], comp = window.compleanniDel ? compleanniDel(d) : [];
+  ST.cappello = !!(feste.some(function (x) { return x.festivo || x.regalo; }) || comp.length);
+  if (rientroDiQualcuno() && ST.dove !== "porta") scegli();
+  disegnaInfo();
+}
+function disegnaInfo() {
+  var d = new Date(); $("ora").textContent = d.getHours() + ":" + due(d.getMinutes());
+  var t = [0, 1].map(function (p) {
+    var r = rientroDi(p); if (r && Date.now() < r.arrivo) return "<b>" + nome(p) + "</b> arriva alle " + oraHM(r.arrivo);
+    var f = fuoriDi(p); if (f) return "<b>" + nome(p) + "</b> è fuori";
+    var st = statoAdesso(p); return "<b>" + nome(p) + "</b> " + (st.stato === "lavoro" ? "al lavoro" : "a casa");
+  });
+  $("noi").innerHTML = t.join(" · ");
+  document.body.classList.toggle("notte", d.getHours() >= 23 || d.getHours() < 7);
+}
+function leggiMeteo() {
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current=weather_code,is_day&timezone=Europe%2FRome")
+    .then(function (r) { return r.json(); }).then(function (j) {
+      var c = j.current.weather_code;
+      METEO.tipo = c >= 95 ? "temporale" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "neve" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "pioggia" : c === 45 || c === 48 ? "coperto" : c === 3 ? "coperto" : c >= 1 ? "nuvoloso" : "sereno";
+    }, function () {});
+}
+
+// ================= girare lo schermo e adattare la stanza =================
+var verso = leggi("gatto_verso", "auto");
+function applicaVerso() {
+  var sc = $("scena"), w = innerWidth, h = innerHeight, giro = 0;
+  if ((verso === "dx" || verso === "sx") && h > w) giro = verso === "dx" ? 90 : -90;
+  if (verso === "vert" && w > h) giro = 90;
+  var tr = giro ? (giro > 0 ? "translateX(" + w + "px) rotate(90deg)" : "translateY(" + h + "px) rotate(-90deg)") : "";
+  var sw = giro ? h : w, sh = giro ? w : h;
+  sc.style.width = sw + "px"; sc.style.height = sh + "px"; sc.style.webkitTransform = tr; sc.style.transform = tr;
+  SCALA = Math.min(sw / LW, sh / LH);   // la stanza si vede sempre tutta; lo spazio in più è muro e pavimento
+  VERT = sh > sw * 1.1; SW = sw;
+  if (VERT) SCALA = Math.min(sw / 96, sh * .62 / LH);   // in verticale: più grande, e l'inquadratura segue il gatto
+  var cw = LW * SCALA, ch = LH * SCALA;
+  OFX = (sw - cw) / 2; OFY = sh > sw ? Math.max(0, sh * .74 - PAV * SCALA) : (sh - ch) / 2;   // in verticale il pavimento sta in basso
+  var pav = OFY + 78 * SCALA;   // muro sopra, pavimento sotto: continuano oltre i bordi della stanza
+  sc.style.background = "linear-gradient(to bottom, #d8b896 0, #d8b896 " + (pav - 8 * SCALA) + "px, #cfae8b " + (pav - 8 * SCALA) + "px, #cfae8b " + pav + "px, #6b4329 " + pav + "px, #8a5a3c " + (pav + 2 * SCALA) + "px)";
+  if (VERT) OFX = segui(true);
+  tela.style.width = cw + "px"; tela.style.height = ch + "px"; tela.style.left = OFX + "px"; tela.style.top = OFY + "px";
+  $("b-ruota").textContent = { auto: "⟳", dx: "▭", sx: "▭", vert: "▯" }[verso];
+}
+$("b-ruota").onclick = function (e) { e.stopPropagation(); var l = ["auto", "dx", "sx", "vert"]; verso = l[(l.indexOf(verso) + 1) % l.length]; salva("gatto_verso", verso); applicaVerso(); };
+window.addEventListener("resize", applicaVerso);
+
+// ================= via =================
+var ultimo = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  if (t - ultimo < 50) return; ultimo = t;   // 20 al secondo: basta per i pixel
+  passo(); disegna();
+  if (VERT) { OFX = segui(false); tela.style.left = OFX.toFixed(1) + "px"; }
+  if (!$("fumetto").classList.contains("via")) posFumetto();
+}
+function ridisegna() { controllaCasa(); }
+function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+document.addEventListener("visibilitychange", tieniAcceso);
+document.addEventListener("dblclick", function () { var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {}); });
+(function () {   // le ciotole si sono svuotate un po' mentre la pagina era chiusa
+  var ore = (Date.now() - (CIOT.t || Date.now())) / 3600000;
+  CIOT.cibo = Math.max(0, CIOT.cibo - ore * 4); CIOT.acqua = Math.max(0, CIOT.acqua - ore * 5); CIOT.t = Date.now();
+})();
+applicaVerso(); disegnaInfo(); leggiMeteo(); scegli(); tieniAcceso(); requestAnimationFrame(frame);
+setInterval(controllaCasa, 5000);
+setInterval(function () { CIOT.t = Date.now(); salva("gatto_stanza", CIOT); }, 60000);
+setInterval(leggiMeteo, 30 * 60000);
+avviaSync();
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
