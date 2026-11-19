@@ -48,12 +48,22 @@
   .dentro #b-ruota { display: none; }
   #b-ruota { position: absolute; z-index: 3; right: 2.6vmin; top: 2.6vmin; width: 9vmin; height: 9vmin; max-width: 52px; max-height: 52px; border: 0; border-radius: 50%;
              background: rgba(0,0,0,.18); color: rgba(255,255,255,.55); font-size: min(4.4vmin, 24px); cursor: pointer; }
-  .riga { display: flex; gap: 2.6vmin; align-items: center; }
+  .riga { display: flex; gap: 2.6vmin; align-items: flex-start; }
+  .riga .bollo { margin-top: .4vmin; }
   .riga .bollo { width: 7vmin; height: 7vmin; max-width: 54px; max-height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center;
                  font: 600 min(3.4vmin, 26px) Outfit, sans-serif; color: #1a120c; box-shadow: 0 0 0 2px rgba(255,255,255,.12), 0 6px 18px rgba(0,0,0,.4); }
   .riga .nome { font-family: "Cormorant Garamond", serif; font-size: min(5.4vmin, 40px); font-weight: 600; line-height: 1; }
   .riga .dove { font-size: min(3.3vmin, 22px); font-weight: 300; color: var(--muted); margin-top: .6vmin; }
   .riga .dove b { color: var(--ink); font-weight: 400; }
+  .riga .tx { min-width: 0; flex: 1; }
+  .viaggio { margin-top: 1.2vmin; max-width: 52vmin; }
+  .vg-riga { display: flex; align-items: center; gap: 1.4vmin; font-size: min(3vmin, 19px); }
+  .vg-ico { font-size: min(4vmin, 26px); }
+  .vg-barra { flex: 1; height: 1vmin; min-height: 5px; border-radius: 1vmin; background: rgba(255,255,255,.18); overflow: hidden; }
+  .vg-barra i { display: block; height: 100%; border-radius: 1vmin; }
+  .vg-tempo { white-space: nowrap; font-weight: 400; }
+  .vg-mappa { display: block; width: 100%; max-width: 46vmin; height: auto; margin-top: 1vmin; background: rgba(0,0,0,.22); border-radius: 1.6vmin; }
+  .vg-km { font-size: min(2.5vmin, 15px); color: var(--muted); margin-top: .6vmin; }
 </style>
 </head>
 <body>
@@ -89,8 +99,8 @@
 </div>
 </div>
 
-<script src="comune.js?v=76"></script>
-<script src="telecomando.js?v=76"></script>
+<script src="comune.js?v=77"></script>
+<script src="telecomando.js?v=77"></script>
 <script>
 // ================= il quadrante =================
 var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
@@ -168,15 +178,43 @@ function disegna() {
     var riga = $("riga" + p);
     if (!riga) {
       riga = el("div", "riga"); riga.id = "riga" + p;
-      riga.innerHTML = '<div class="bollo"></div><div><div class="nome"></div><div class="dove"></div></div>';
+      riga.innerHTML = '<div class="bollo"></div><div class="tx"><div class="nome"></div><div class="dove"></div></div>';
       riga.querySelector(".bollo").style.background = p ? "var(--p1)" : "var(--p0)";
       $("righe").appendChild(riga);
     }
     riga.querySelector(".bollo").textContent = nome(p).charAt(0).toUpperCase();
     riga.querySelector(".nome").textContent = nome(p);
     riga.querySelector(".dove").innerHTML = s[p].testo;
+    disegnaViaggio(riga, p);
   });
   var h = d.getHours(); document.body.classList.toggle("notte", h >= 23 || h < 7);
+}
+// chi sta tornando: mezzo, conto alla rovescia, barra e il percorso disegnato con il pallino che avanza
+function disegnaViaggio(riga, p) {
+  var v = riga.querySelector(".viaggio"), r = rientroDi(p);
+  if (!r || Date.now() >= r.arrivo) { if (v) v.remove(); return; }
+  if (!v) { v = el("div", "viaggio"); riga.querySelector(".tx").appendChild(v); }
+  var inizio = r.t || Date.now(), prog = Math.max(0, Math.min(1, (Date.now() - inizio) / Math.max(1, r.arrivo - inizio)));
+  var resta = Math.max(0, Math.round((r.arrivo - Date.now()) / 60000)), ico = r.mezzo === "bici" ? "🚲" : r.mezzo === "piedi" ? "🚶" : "🚗";
+  var col = p ? "var(--p1)" : "var(--p0)", html = '<div class="vg-riga"><span class="vg-ico">' + ico + '</span><span class="vg-barra"><i style="width:' + (prog * 100).toFixed(1) + '%;background:' + col + '"></i></span>' +
+    '<span class="vg-tempo">' + (resta <= 1 ? "a momenti" : "tra " + resta + " min") + '</span></div>';
+  if (r.punti && r.punti.length > 1) {   // percorso: lo adatto a un riquadro 200×70, con il nord in alto
+    var lat = r.punti.map(function (x) { return x[0]; }), lon = r.punti.map(function (x) { return x[1]; });
+    var k = Math.cos(lat[0] * Math.PI / 180), x0 = Math.min.apply(null, lon), x1 = Math.max.apply(null, lon), y0 = Math.min.apply(null, lat), y1 = Math.max.apply(null, lat);
+    var w = Math.max(1e-6, (x1 - x0) * k), h = Math.max(1e-6, y1 - y0), sc = Math.min(184 / w, 54 / h), ox = (200 - w * sc) / 2, oy = (70 - h * sc) / 2;
+    var pt = r.punti.map(function (x) { return [ox + (x[1] - x0) * k * sc, oy + (y1 - x[0]) * sc]; });
+    var dd = "M" + pt.map(function (q) { return q[0].toFixed(1) + " " + q[1].toFixed(1); }).join(" L");
+    var lung = 0, tratti = []; for (var i = 1; i < pt.length; i++) { var l = Math.hypot(pt[i][0] - pt[i - 1][0], pt[i][1] - pt[i - 1][1]); tratti.push(l); lung += l; }
+    var obiettivo = lung * prog, pos = pt[0];
+    for (var j = 0, acc = 0; j < tratti.length; j++) { if (acc + tratti[j] >= obiettivo) { var f = tratti[j] ? (obiettivo - acc) / tratti[j] : 0; pos = [pt[j][0] + (pt[j + 1][0] - pt[j][0]) * f, pt[j][1] + (pt[j + 1][1] - pt[j][1]) * f]; break; } acc += tratti[j]; pos = pt[j + 1]; }
+    var fine = pt[pt.length - 1];
+    html += '<svg class="vg-mappa" viewBox="0 0 200 70"><path d="' + dd + '" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="' + dd + '" fill="none" stroke="' + (p ? "#52d1c6" : "#ff9a62") + '" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + lung.toFixed(1) + '" stroke-dashoffset="' + (lung - obiettivo).toFixed(1) + '"/>' +
+      '<text x="' + fine[0].toFixed(1) + '" y="' + (fine[1] + 5).toFixed(1) + '" text-anchor="middle" font-size="13">🏠</text>' +
+      '<circle cx="' + pos[0].toFixed(1) + '" cy="' + pos[1].toFixed(1) + '" r="5" fill="#fff" stroke="' + (p ? "#52d1c6" : "#ff9a62") + '" stroke-width="2.5"/></svg>';
+    if (r.km) html += '<div class="vg-km">' + String(r.km).replace(".", ",") + ' km · partito alle ' + oraHM(inizio) + '</div>';
+  }
+  v.innerHTML = html;
 }
 function ridisegna() { disegna(); }
 
@@ -479,7 +517,7 @@ addEventListener("resize", applicaVerso);
 applicaVerso();
 
 costruisci(); disegna();
-setInterval(disegna, 20000);
+setInterval(disegna, 15000);
 tieniAcceso();
 if (DENTRO) {   // dentro il tablet (pagina 5): i dati li tiene aggiornati il tablet, qui si leggono e basta
   setInterval(function () { Object.assign(cfg, leggi("cucina_cfg", {})); reg = leggi("cucina_registro", reg) || {}; disegna(); }, 15000);

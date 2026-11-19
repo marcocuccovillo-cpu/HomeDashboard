@@ -27,6 +27,38 @@ function salvaCompleanno(k, v) {
 }
 function quandoCompleanno(n) { return n === 0 ? "oggi! 🎉" : n === 1 ? "domani" : "tra " + n + " giorni"; }
 
+// ================================================================ FESTE DELL'ANNO
+// festivo = giorno rosso sul calendario; regalo = promemoria qualche giorno prima.
+function pasqua(y) {   // domenica di Pasqua (algoritmo di Meeus)
+  var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  var h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  var mese = Math.floor((h + l - 7 * m + 114) / 31), giorno = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mese - 1, giorno);
+}
+function nesimaDomenica(y, mese, n) { var d = new Date(y, mese, 1); d.setDate(1 + (7 - d.getDay()) % 7 + (n - 1) * 7); return d; }
+var FESTE_CACHE = {};
+function festeAnno(y) {
+  if (FESTE_CACHE[y]) return FESTE_CACHE[y];
+  var p = pasqua(y), pq = new Date(p); pq.setDate(p.getDate() + 1);
+  var l = [
+    [new Date(y, 0, 1), "Capodanno", "🥂", true], [new Date(y, 0, 6), "Epifania", "🧦", true], [new Date(y, 1, 14), "San Valentino", "💘", false, true],
+    [new Date(y, 2, 8), "Festa della donna", "🌼", false, true], [new Date(y, 2, 19), "Festa del papà", "👨", false, true],
+    [p, "Pasqua", "🐣", true], [pq, "Pasquetta", "🧺", true], [new Date(y, 3, 25), "Festa della Liberazione", "🇮🇹", true],
+    [new Date(y, 4, 1), "Festa dei lavoratori", "🛠️", true], [nesimaDomenica(y, 4, 2), "Festa della mamma", "💐", false, true],
+    [new Date(y, 5, 2), "Festa della Repubblica", "🇮🇹", true], [new Date(y, 7, 15), "Ferragosto", "🏖️", true],
+    [new Date(y, 9, 4), "San Petronio", "⛪", true], [new Date(y, 9, 31), "Halloween", "🎃", false], [new Date(y, 10, 1), "Ognissanti", "🕯️", true],
+    [new Date(y, 11, 8), "Immacolata", "✨", true], [new Date(y, 11, 24), "Vigilia di Natale", "🎄", false], [new Date(y, 11, 25), "Natale", "🎄", true, true],
+    [new Date(y, 11, 26), "Santo Stefano", "🎁", true], [new Date(y, 11, 31), "San Silvestro", "🎆", false]
+  ].map(function (x) { return { d: x[0], nome: x[1], ico: x[2], festivo: x[3], regalo: !!x[4] }; });
+  return (FESTE_CACHE[y] = l);
+}
+function festeDel(d) { return festeAnno(d.getFullYear()).filter(function (f) { return f.d.getDate() === d.getDate() && f.d.getMonth() === d.getMonth(); }); }
+function festeInArrivo(d, giorni) {   // le feste "da regalo" nei prossimi giorni (esclusa oggi): [{ f, tra }]
+  var o = new Date(d.getFullYear(), d.getMonth(), d.getDate()), r = [];
+  for (var i = 1; i <= giorni; i++) { var x = piuGiorni(o, i); festeDel(x).forEach(function (f) { if (f.regalo) r.push({ f: f, tra: i }); }); }
+  return r;
+}
+
 // ================================================================ TELEFONO: Turni → 🎂 Compleanni
 function disegnaCompleanni() {
   var box = $("compleanni"); if (!box) return;
@@ -36,7 +68,7 @@ function disegnaCompleanni() {
   piu.onclick = function () { apriCompleanno(null); };
   testa.appendChild(sp); testa.appendChild(piu); box.appendChild(testa);
   var l = compleanniInOrdine();
-  if (!l.length) { var v = el("div", "card cp-vuoto"); v.textContent = "🎂 Nessun compleanno salvato. Aggiungi quelli di famiglia e amici."; box.appendChild(v); return; }
+  if (!l.length) { var v = el("div", "card cp-vuoto"); v.textContent = "🎂 Nessun compleanno salvato. Aggiungi quelli di famiglia e amici."; box.appendChild(v); disegnaProssimeFeste(box); return; }
   var c = el("div", "card cp-lista");
   l.forEach(function (x) {
     var n = giorniAlCompleanno(x), a = anniCompie(x), r = el("button", "cp-riga" + (n === 0 ? " oggi" : n <= 7 ? " presto" : "")); r.type = "button";
@@ -45,6 +77,22 @@ function disegnaCompleanni() {
     r.querySelector("small").textContent = x.g + " " + MESI_C[x.m - 1] + (a !== null ? " · " + (n === 0 ? "compie " : "compirà ") + a + " anni" : "");
     r.querySelector(".cp-quando").textContent = quandoCompleanno(n);
     r.onclick = function () { apriCompleanno(x); };
+    c.appendChild(r);
+  });
+  box.appendChild(c);
+  disegnaProssimeFeste(box);
+}
+function disegnaProssimeFeste(box) {
+  var o = new Date(), l = [];
+  for (var i = 0; i <= 120 && l.length < 6; i++) { var x = piuGiorni(new Date(o.getFullYear(), o.getMonth(), o.getDate()), i); festeDel(x).forEach(function (f) { l.push({ f: f, tra: i }); }); }
+  var t = el("div", "titolo"); t.innerHTML = "<h2>Prossime feste</h2>"; box.appendChild(t);
+  var c = el("div", "card cp-lista");
+  l.forEach(function (x) {
+    var r = el("div", "cp-riga" + (x.tra === 0 ? " oggi" : x.tra <= 7 ? " presto" : ""));
+    r.innerHTML = '<span class="cp-ico"></span><span class="cp-tx"><b></b><small></small></span><span class="cp-quando"></span>';
+    r.querySelector(".cp-ico").textContent = x.f.ico; r.querySelector("b").textContent = x.f.nome;
+    r.querySelector("small").textContent = GIORNI[x.f.d.getDay()] + " " + x.f.d.getDate() + " " + MESI_C[x.f.d.getMonth()] + (x.f.festivo ? " · festivo" : "") + (x.f.regalo ? " · 🎁 promemoria" : "");
+    r.querySelector(".cp-quando").textContent = x.tra === 0 ? "oggi!" : x.tra === 1 ? "domani" : "tra " + x.tra + " giorni";
     c.appendChild(r);
   });
   box.appendChild(c);
@@ -129,7 +177,11 @@ function controllaCompleanniTablet() {
   var ora = new Date(), oggi = compleanniDel(ora), domani = compleanniDel(piuGiorni(ora, 1)), k = iso(ora);
   // nastro in alto: oggi, oppure il promemoria del giorno prima
   var n = $("nastro-compleanno");
-  var testo = oggi.length ? "🎂 Oggi è il compleanno di " + oggi.map(function (c) { return c.nome; }).join(" e ") : domani.length ? "🎁 Domani è il compleanno di " + domani.map(function (c) { return c.nome; }).join(" e ") + ": il regalo?" : "";
+  var feste = festeDel(ora), arrivo = festeInArrivo(ora, 3);
+  var testo = oggi.length ? "🎂 Oggi è il compleanno di " + oggi.map(function (c) { return c.nome; }).join(" e ")
+    : feste.length ? feste[0].ico + " Oggi è " + feste[0].nome + (feste[0].nome === "Natale" ? ": buon Natale!" : "")
+    : domani.length ? "🎁 Domani è il compleanno di " + domani.map(function (c) { return c.nome; }).join(" e ") + ": il regalo?"
+    : arrivo.length ? "🎁 " + arrivo[0].f.nome + " " + (arrivo[0].tra === 1 ? "domani" : "tra " + arrivo[0].tra + " giorni") + ": pensate al regalo" : "";
   if (testo) {
     if (!n) { n = el("div"); n.id = "nastro-compleanno"; document.body.appendChild(n); n.onclick = function () { var x = compleanniDel(new Date()); if (x.length) festaCompleanno(x); }; }
     n.textContent = testo; n.hidden = false;

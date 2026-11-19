@@ -312,7 +312,7 @@
   .cp-quando { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .cp-riga.presto .cp-quando { color: var(--accent); font-weight: 600; }
   .cp-riga.oggi { background: var(--accent-soft); margin: 0 -14px; padding: 12px 14px; border-radius: 14px; } .cp-riga.oggi .cp-quando { color: var(--accent); font-weight: 700; }
-  .ms-torta { font-size: 9px; margin-left: 1px; }
+  .ms-torta { font-size: 9px; margin-left: 1px; } .ms-festivo { color: var(--accent); }
   .oggi-turni { display: flex; flex-direction: column; }
   .oggi-persona { border: 0; width: 100%; text-align: left; color: var(--ink); background: none; padding: 12px 0 10px;
     display: grid; grid-template-columns: 40px 1fr; align-items: start; column-gap: 12px; }
@@ -730,21 +730,21 @@
   </div>
 </div>
 
-<script src="comune.js?v=76"></script>
-<script src="forza4.js?v=76"></script>
-<script src="giochi.js?v=76"></script>
-<script src="rete.js?v=76"></script>
-<script src="tragitti.js?v=76"></script>
-<script src="suoni.js?v=76"></script>
-<script src="telecomando.js?v=76"></script>
-<script src="spesa.js?v=76"></script>
-<script src="coppia.js?v=76"></script>
-<script src="occhiata.js?v=76"></script>
-<script src="chatplus.js?v=76"></script>
-<script src="giochi2.js?v=76"></script>
-<script src="scacchi.js?v=76"></script>
-<script src="eroefoto.js?v=76"></script>
-<script src="compleanni.js?v=76"></script>
+<script src="comune.js?v=77"></script>
+<script src="forza4.js?v=77"></script>
+<script src="giochi.js?v=77"></script>
+<script src="rete.js?v=77"></script>
+<script src="tragitti.js?v=77"></script>
+<script src="suoni.js?v=77"></script>
+<script src="telecomando.js?v=77"></script>
+<script src="spesa.js?v=77"></script>
+<script src="coppia.js?v=77"></script>
+<script src="occhiata.js?v=77"></script>
+<script src="chatplus.js?v=77"></script>
+<script src="giochi2.js?v=77"></script>
+<script src="scacchi.js?v=77"></script>
+<script src="eroefoto.js?v=77"></script>
+<script src="compleanni.js?v=77"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -808,6 +808,7 @@ function disegnaMese() {
     var n = el("div", "ms-num"); n.textContent = d.getDate();
     if (ins) { var h = el("span", "ms-cuore"); h.textContent = ins === "giorno" ? "♥" : "♡"; n.appendChild(h); }
     if (window.compleanniDel && compleanniDel(d).length) { var tc = el("span", "ms-torta"); tc.textContent = "🎂"; n.appendChild(tc); }
+    if (window.festeDel) { var fz = festeDel(d); if (fz.length) { var tf = el("span", "ms-torta"); tf.textContent = fz[0].ico; tf.title = fz[0].nome; n.appendChild(tf); if (fz[0].festivo) n.classList.add("ms-festivo"); } }
     c.appendChild(n);
     [0, 1].forEach(function (p) { var v = turno(d, p), r = el("div", "ms-t p" + p + (v ? "" : " riposo")); r.textContent = v ? turnoMini(v) : "·"; c.appendChild(r); });
     if (ev.length) { var pt = el("div", "ms-ev"); pt.textContent = ev.length > 1 ? "● " + ev.length : "●"; c.appendChild(pt); }
@@ -1040,6 +1041,10 @@ function disegnaOggi() {
   }
   if (c.textContent) sopra.appendChild(c);
   if (window.compleanniDel) compleanniDel(d).forEach(function (x) { var cc = el("span", "cuore"); cc.textContent = "🎂 Compleanno di " + x.nome; sopra.appendChild(cc); });
+  if (window.festeDel) {
+    festeDel(d).forEach(function (f) { var cc = el("span", "cuore"); cc.textContent = f.ico + " " + f.nome; sopra.appendChild(cc); });
+    festeInArrivo(d, 3).slice(0, 1).forEach(function (x) { var cc = el("span", "cuore"); cc.textContent = "🎁 " + x.f.nome + " " + (x.tra === 1 ? "domani" : "tra " + x.tra + " giorni"); sopra.appendChild(cc); });
+  }
   // i pulsanti, tutti uguali in una griglia: prima riga i nostri spostamenti e il pensiero, seconda riga (da coppia.js) abbraccio, buonanotte, bigliettino
   var gr = el("div", "eroe-griglia"); gr.id = "eroe-griglia";
   function tessera(id, ico, testo, fn) { var b = el("button"); b.id = id; b.type = "button"; b.innerHTML = "<span class='ico'>" + ico + "</span><span></span>"; b.lastChild.textContent = testo; b.onclick = fn; gr.appendChild(b); return b; }
@@ -1254,14 +1259,14 @@ function calcolaRientro() {
   function tempo(da, etichetta) {
     if (rt.mezzo === "piedi") {
       var dx = (da.lon - t.casa.lon) * 79, dy = (da.lat - t.casa.lat) * 111, km = Math.sqrt(dx * dx + dy * dy) * 1.3;
-      return Promise.resolve({ min: Math.max(2, Math.round(km / VEL_PIEDI * 60)), da: etichetta });
+      return Promise.resolve({ min: Math.max(2, Math.round(km / VEL_PIEDI * 60)), da: etichetta, punti: [[da.lat, da.lon], [t.casa.lat, t.casa.lon]], metri: km * 1000 });
     }
-    return percorso(da, t.casa, rt.mezzo).then(function (r) { return { min: Math.max(1, Math.round(r.sec / 60)), da: etichetta + (r.traffico && r.ritardo >= 60 ? " · traffico +" + Math.round(r.ritardo / 60) + " min" : "") }; });
+    return percorso(da, t.casa, rt.mezzo).then(function (r) { return { min: Math.max(1, Math.round(r.sec / 60)), punti: r.punti, metri: r.metri, da: etichetta + (r.traffico && r.ritardo >= 60 ? " · traffico +" + Math.round(r.ritardo / 60) + " min" : "") }; });
   }
   var lavoro = t.lavoro[io];
   daQui().then(function (pos) { return tempo(pos, "da dove sei"); })
     .catch(function () { if (!lavoro) throw new Error("niente"); return tempo(lavoro, "dal lavoro"); })
-    .then(function (r) { rt.min = r.min; rt.da = r.da; }, function () { rt.min = 20; rt.da = "stima a mano: correggila con i pulsanti"; })
+    .then(function (r) { rt.min = r.min; rt.da = r.da; rt.punti = r.punti || null; rt.metri = r.metri || null; }, function () { rt.min = 20; rt.da = "stima a mano: correggila con i pulsanti"; rt.punti = null; })
     .then(mostraRientro);
 }
 $("rt-mezzo").onclick = function (e) { var v = e.target.getAttribute("data-v"); if (v) { rt.mezzo = v; seg("rt-mezzo", v); calcolaRientro(); } };
@@ -1271,7 +1276,9 @@ $("rt-mezzo").onclick = function (e) { var v = e.target.getAttribute("data-v"); 
 $("ed-rientro").querySelector("form").onsubmit = function (e) {
   e.preventDefault(); if (rt.min == null) return;
   var arrivo = Date.now() + rt.min * 60000, ico = rt.mezzo === "bici" ? "🚲" : rt.mezzo === "piedi" ? "🚶" : "🚗";
-  segnaRientro(io, { arrivo: arrivo, min: rt.min, mezzo: rt.mezzo, da: io, t: Date.now() });
+  var punti = null;   // il percorso, ridotto a una trentina di punti: lo disegna l'orologio «Dove siete?»
+  if (rt.punti && rt.punti.length > 1) { var passo = Math.max(1, Math.ceil(rt.punti.length / 30)); punti = rt.punti.filter(function (x, i) { return i % passo === 0; }); punti.push(rt.punti[rt.punti.length - 1]); punti = punti.map(function (x) { return [Math.round(x[0] * 1e4) / 1e4, Math.round(x[1] * 1e4) / 1e4]; }); }
+  segnaRientro(io, { arrivo: arrivo, min: rt.min, mezzo: rt.mezzo, da: io, t: Date.now(), punti: punti, km: rt.metri ? Math.round(rt.metri / 100) / 10 : null });
   if (fuoriDi(io)) segnaFuori(io, null);
   inviaChat("🏠 Sto tornando! Arrivo verso le " + oraHM(arrivo) + " (" + ico + " circa " + rt.min + " min)");
   chiudi("ed-rientro"); disegnaOggi();
