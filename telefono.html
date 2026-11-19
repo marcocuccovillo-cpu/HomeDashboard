@@ -514,10 +514,6 @@
     <div class="eroe" id="eroe"></div>
     <div class="card" id="oggi-card"><div id="oggi-turni"></div></div>
     <div id="occhiata"></div>
-    <div class="card" id="card-app">
-      <div class="titolo" style="margin-top:0"><h2>Prossimi appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
-      <div id="app-lista"></div>
-    </div>
   </section>
 
   <section class="scheda" id="s-turni">
@@ -533,13 +529,19 @@
   </section>
 
   <section class="scheda" id="s-note">
-    <div class="seg vista" id="note-vista"><button type="button" data-v="note">Promemoria</button><button type="button" data-v="spesa">🛒 Spesa<small id="spesa-conta-tab"></small></button></div>
+    <div class="seg vista" id="note-vista"><button type="button" data-v="note">Promemoria</button><button type="button" data-v="spesa">🛒 Spesa<small id="spesa-conta-tab"></small></button><button type="button" data-v="app">📅 Appuntamenti<small id="app-conta-tab"></small></button></div>
     <div id="v-note">
       <form class="aggiungi" id="form-nota"><input id="in-nota" placeholder="Scrivi un promemoria…" enterkeyhint="send" autocomplete="off"><button aria-label="Aggiungi">+</button></form>
       <p class="spiega" style="margin:0 0 14px">Tocca un bigliettino per cambiarlo, colorarlo o toglierlo.</p>
       <div class="note-griglia" id="note"></div>
     </div>
     <div id="v-spesa" hidden><div class="spesa-box card" id="spesa-tel"></div></div>
+    <div id="v-app" hidden>
+      <div class="card" id="card-app">
+      <div class="titolo" style="margin-top:0"><h2>Appuntamenti</h2><button type="button" class="app-piu" id="app-nuovo" aria-label="Nuovo appuntamento">+</button></div>
+      <div id="app-lista"></div>
+    </div>
+    </div>
   </section>
 
   <section class="scheda" id="s-giochi">
@@ -742,22 +744,22 @@
   </div>
 </div>
 
-<script src="comune.js?v=78"></script>
-<script src="forza4.js?v=78"></script>
-<script src="giochi.js?v=78"></script>
-<script src="rete.js?v=78"></script>
-<script src="tragitti.js?v=78"></script>
-<script src="suoni.js?v=78"></script>
-<script src="telecomando.js?v=78"></script>
-<script src="spesa.js?v=78"></script>
-<script src="coppia.js?v=78"></script>
-<script src="occhiata.js?v=78"></script>
-<script src="chatplus.js?v=78"></script>
-<script src="giochi2.js?v=78"></script>
-<script src="scacchi.js?v=78"></script>
-<script src="eroefoto.js?v=78"></script>
-<script src="compleanni.js?v=78"></script>
-<script src="gattino.js?v=78"></script>
+<script src="comune.js?v=79"></script>
+<script src="forza4.js?v=79"></script>
+<script src="giochi.js?v=79"></script>
+<script src="rete.js?v=79"></script>
+<script src="tragitti.js?v=79"></script>
+<script src="suoni.js?v=79"></script>
+<script src="telecomando.js?v=79"></script>
+<script src="spesa.js?v=79"></script>
+<script src="coppia.js?v=79"></script>
+<script src="occhiata.js?v=79"></script>
+<script src="chatplus.js?v=79"></script>
+<script src="giochi2.js?v=79"></script>
+<script src="scacchi.js?v=79"></script>
+<script src="eroefoto.js?v=79"></script>
+<script src="compleanni.js?v=79"></script>
+<script src="gattino.js?v=79"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1193,10 +1195,14 @@ $("foto-input").onchange = function () {
 var vistaNote = leggi("telefono_note_vista", "note");
 function mostraVistaNote(v) {
   vistaNote = v; salva("telefono_note_vista", v); seg("note-vista", v);
-  $("v-note").hidden = v !== "note"; $("v-spesa").hidden = v !== "spesa";
+  $("v-note").hidden = v !== "note"; $("v-spesa").hidden = v !== "spesa"; $("v-app").hidden = v !== "app";
 }
 $("note-vista").onclick = function (e) { var b = e.target.closest("button"); if (b) mostraVistaNote(b.getAttribute("data-v")); };
-function contaSpesaTab() { var n = spesa.filter(function (v) { return !v.fatto; }).length; $("spesa-conta-tab").textContent = n ? n + " da prendere" : "lista vuota"; }
+function contaSpesaTab() {
+  var n = spesa.filter(function (v) { return !v.fatto; }).length; $("spesa-conta-tab").textContent = n ? n + " da prendere" : "lista vuota";
+  var oggiK = iso(new Date()), limite = iso(piuGiorni(new Date(), 14)), a = appTutti().filter(function (e) { return e.data >= oggiK && e.data <= limite; }).length;
+  if ($("app-conta-tab")) $("app-conta-tab").textContent = a ? a + " in arrivo" : "niente in vista";
+}
 
 // ================= appuntamenti (stesso calendario del tablet: cfg.eventi) =================
 function appTutti() { cfg.eventi = cfg.eventi || []; return cfg.eventi; }
@@ -1213,8 +1219,9 @@ function rigaApp(e, conData) {
   r.onclick = function () { modificaApp(e); };
   return r;
 }
-function disegnaApp() {   // in Oggi: i prossimi 14 giorni
+function disegnaApp() {   // in Promemoria → Appuntamenti: i prossimi 14 giorni
   var box = $("app-lista"); if (!box) return;
+  setTimeout(contaSpesaTab, 0);   // il numero sulla linguetta
   var oggi = iso(new Date()), fine = iso(piuGiorni(new Date(), 14));
   var l = appTutti().filter(function (e) { return e.data >= oggi && e.data <= fine; })
     .sort(function (a, b) { return a.data.localeCompare(b.data) || (a.ora || "99").localeCompare(b.ora || "99"); });

@@ -148,7 +148,7 @@ function disegnaOcchiata() {
   a.innerHTML = '<span class="icona">📅</span><div><span class="t"></span><b></b></div>';
   a.querySelector(".t").textContent = e ? ocQuando(e) : "Agenda";
   a.querySelector("b").textContent = e ? e.testo : "Niente in programma";
-  a.onclick = function () { var c = $("card-app"); if (c) c.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  a.onclick = function () { mostraScheda("note"); mostraVistaNote("app"); };   // gli appuntamenti stanno in Promemoria
   box.appendChild(a);
 }
 function avviaOcchiata() {
