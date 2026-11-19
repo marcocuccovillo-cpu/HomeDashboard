@@ -37,20 +37,24 @@
   .tondo { border: 0; width: 6.4vmin; height: 6.4vmin; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--ink); font-size: 3vmin; cursor: pointer; margin-left: 1vmin; -webkit-flex: none; flex: none; }
   /* elenco dei canali */
   #lista { -webkit-flex: 1; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: .6vmin 3vmin 3vmin; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-content: flex-start; align-content: flex-start; }
-  .can { width: 100%; display: -webkit-flex; display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 2.2vmin; padding: 1.6vmin 2vmin; margin-bottom: 1.4vmin; }
+  .can { width: 100%; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 2.2vmin; padding: 1.6em 2em; margin-bottom: 1.4vmin; font-size: 1vmin; }
   body.oriz .can { width: calc(50% - .7vmin); } body.oriz .can:nth-child(odd) { margin-right: 1.4vmin; }
-  .num { -webkit-flex: none; flex: none; width: 9vmin; text-align: center; margin-right: 2vmin; }
-  .num b { display: block; font-size: 5vmin; font-weight: 700; line-height: 1; }
-  .num small { display: block; font-size: 1.8vmin; color: var(--muted); margin-top: .6vmin; line-height: 1.15; }
+  body.oriz #lista.uno .can { width: 100%; margin-right: 0; }
+  .num { -webkit-flex: none; flex: none; width: 9em; text-align: center; margin-right: 2em; }
+  .num b { display: block; font-size: 5em; font-weight: 700; line-height: 1; }
+  .num small { display: block; font-size: 1.8em; color: var(--muted); margin-top: .35em; line-height: 1.15; }
   .prog { -webkit-flex: 1; flex: 1; min-width: 0; }
-  .prog .t { font-size: 3vmin; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .prog .h { font-size: 2.2vmin; color: var(--muted); margin-top: .4vmin; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prog .t { font-size: 3em; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prog .h { font-size: 2.2em; color: var(--muted); margin-top: .2em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .prog .h i { font-style: normal; color: var(--oro); }
-  .prog .barra { height: .7vmin; min-height: 3px; border-radius: 1vmin; background: rgba(255,255,255,.12); margin: 1vmin 0 .8vmin; overflow: hidden; }
-  .prog .barra span { display: block; height: 100%; background: var(--accent); border-radius: 1vmin; }
-  .prog .dopo { font-size: 2.2vmin; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prog .barra { height: .7em; min-height: 3px; border-radius: 1em; background: rgba(255,255,255,.12); margin: 1em 0 .8em; overflow: hidden; }
+  .prog .barra span { display: block; height: 100%; background: var(--accent); border-radius: 1em; }
+  .prog .dopo { font-size: 2.2em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .prog .dopo b { color: var(--ink); font-weight: 400; }
-  .prog .d { font-size: 2.1vmin; color: var(--muted); margin-top: .6vmin; line-height: 1.35; max-height: 5.7vmin; overflow: hidden; }
+  .prog .d { font-size: 2.1em; color: var(--muted); margin-top: .3em; line-height: 1.35; max-height: 2.7em; overflow: hidden; }
+  #lista.grande .prog .t { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  #lista.grande .prog .d { max-height: 5.4em; -webkit-line-clamp: 4; display: -webkit-box; -webkit-box-orient: vertical; }
+  #lista.grande .prog .dopo, #lista.grande .prog .h { white-space: normal; }
   .vuoto { width: 100%; text-align: center; color: var(--muted); font-size: 3vmin; padding: 10vmin 4vmin; }
   #agg { font-size: 1.8vmin; color: var(--muted); padding: 0 3vmin 1.6vmin; -webkit-flex: none; flex: none; }
   /* scelta dei canali */
@@ -135,7 +139,24 @@ function disegna() {
     }
   });
   $("lista").innerHTML = html;
+  adatta();
   $("agg").textContent = "Palinsesto di " + (P.fonte || "Tivùsat") + " · aggiornato alle " + hm(P.aggiornato) + (new Date(P.aggiornato).getDate() !== d.getDate() ? " di ieri" : "");
+}
+// pochi canali: le schede si allungano fino a riempire lo schermo e scritte e numeri crescono in proporzione
+function adatta() {
+  var l = $("lista"), sc = [].slice.call(l.getElementsByClassName("can")); if (!sc.length) return;
+  var oriz = document.body.className === "oriz", col = oriz && sc.length > 1 ? 2 : 1;
+  l.className = col === 1 ? "uno" : ""; l.classList.remove("grande");
+  sc.forEach(function (c) { c.style.fontSize = ""; c.style.minHeight = ""; });
+  var righe = Math.ceil(sc.length / col), gap = parseFloat(getComputedStyle(sc[0]).marginBottom) || 0;
+  var stile = getComputedStyle(l), alto = l.clientHeight - parseFloat(stile.paddingTop) - parseFloat(stile.paddingBottom) - gap * righe;
+  var base = 0; sc.forEach(function (c) { base = Math.max(base, c.offsetHeight); });
+  var h = alto / righe - 2; if (h <= base * 1.02) { l.classList.remove("grande"); return; }
+  l.classList.add("grande");   // titoli e descrizioni possono andare a capo   // non c'è spazio in più: resta com'è, con lo scorrimento
+  var k = Math.min(1.7, Math.max(1, (h / base) * .8)), unita = Math.min(innerWidth, innerHeight) / 100;
+  sc.forEach(function (c) { c.style.fontSize = (unita * k).toFixed(2) + "px"; c.style.minHeight = Math.floor(h) + "px"; });
+  var fuori = 0; sc.forEach(function (c) { fuori = Math.max(fuori, c.offsetHeight - h); });   // il testo è venuto troppo grande: lo riduco un po'
+  if (fuori > 1) { var k2 = k * h / (h + fuori) * .97; sc.forEach(function (c) { c.style.fontSize = (unita * k2).toFixed(2) + "px"; }); }
 }
 $("vista").onclick = function (e) { var b = e.target.closest ? e.target.closest("button") : e.target; if (!b || !b.getAttribute("data-v")) return; vista = b.getAttribute("data-v"); salva("tv_vista", vista); $("lista").scrollTop = 0; disegna(); };
 
@@ -163,6 +184,7 @@ function applicaVerso() {
   var tr = giro ? (giro > 0 ? "translateX(" + w + "px) rotate(90deg)" : "translateY(" + h + "px) rotate(-90deg)") : "";
   sc.style.width = (giro ? h : w) + "px"; sc.style.height = (giro ? w : h) + "px"; sc.style.webkitTransform = tr; sc.style.transform = tr;
   document.body.className = (giro ? h : w) > (giro ? w : h) ? "oriz" : "vert";
+  if (window.P) setTimeout(adatta, 0);
   $("b-ruota").textContent = { auto: "⟳", dx: "▭", sx: "▭", vert: "▯" }[verso];
 }
 $("b-ruota").onclick = function (e) { e.stopPropagation(); var l = ["auto", "dx", "sx", "vert"]; verso = l[(l.indexOf(verso) + 1) % l.length]; salva("tv_verso", verso); applicaVerso(); };

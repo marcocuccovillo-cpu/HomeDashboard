@@ -58,17 +58,22 @@ def testo(x):
     return (x or "").strip() if isinstance(x, str) else ""
 
 
-def da_sky(cid, adesso, da, a):
-    j = scarica(API_SKY.format(da=(adesso - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z"),
-                               a=(adesso + timedelta(days=3)).strftime("%Y-%m-%dT00:00:00Z"), id=cid))
-    l = []
-    for ev in (j or {}).get("events") or []:
+def da_sky(cid, adesso, da, a):   # Sky accetta un giorno per richiesta
+    eventi = []
+    for g in range(-1, 3):
+        giorno = adesso + timedelta(days=g)
+        j = scarica(API_SKY.format(da=giorno.strftime("%Y-%m-%dT00:00:00Z"), a=(giorno + timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z"), id=cid))
+        eventi += (j or {}).get("events") or []
+        time.sleep(.3)
+    l, visti = [], set()
+    for ev in eventi:
         if not ev.get("starttime") or not ev.get("endtime"):
             continue
         i = int(datetime.fromisoformat(ev["starttime"].replace("Z", "+00:00")).timestamp() * 1000)
         f = int(datetime.fromisoformat(ev["endtime"].replace("Z", "+00:00")).timestamp() * 1000)
-        if f < da or i > a:
+        if f < da or i > a or (i, f) in visti:
             continue
+        visti.add((i, f))
         cont = ev.get("content") or {}
         genere = testo((cont.get("subgenre") or {}).get("name")) or testo((cont.get("genre") or {}).get("name"))
         desc = testo(ev.get("eventSynopsis"))
