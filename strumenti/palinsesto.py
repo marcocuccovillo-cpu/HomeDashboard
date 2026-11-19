@@ -9,7 +9,9 @@ c'è sempre) e scrive palinsesto.json. Sono dati pubblici: niente da cifrare.
 Uso:  python3 strumenti/palinsesto.py [file di uscita]   (predefinito: palinsesto.json)
 """
 
+import html
 import json
+import re
 import sys
 import time
 import urllib.request
@@ -34,6 +36,9 @@ API = "https://services.tivulaguida.it/api/epg/channels/{id}/date/{giorno}"
 SKY = {1: 899, 2: 898, 3: 897, 4: 10464, 5: 10354, 6: 10454, 7: 319, 8: 8195, 20: 10458, 21: 6622, 22: 10467, 23: 6607,
        24: 6608, 25: 6623, 26: 8133, 27: 11342, 28: 7588, 30: 10466, 32: 6626, 34: 10893, 35: 10470, 40: 6628,
        42: 6629, 47: 6460, 48: 895, 55: 10465, 58: 807}
+# secondo ripiego: Super Guida TV (pagine web, una per giorno)
+SUPERGUIDA = {7: "la7/253"}
+PAGINA_SG = "https://www.superguidatv.it/programmazione-canale/{giorno}/guida-programmi-tv-{id}/"
 API_SKY = "https://apid.sky.it/gtv/v1/events?from={da}&to={a}&pageSize=999&pageNum=0&env=DTH&channels={id}"
 
 
@@ -81,6 +86,45 @@ def da_sky(cid, adesso, da, a):   # Sky accetta un giorno per richiesta
     return l
 
 
+def scarica_testo(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Home2Love palinsesto)"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return r.read().decode("utf-8", "replace")
+
+
+def da_superguida(sid, adesso, da, a):
+    oggi = adesso.astimezone(ROMA).date()
+    righe = []
+    for n, nome in enumerate(["oggi", "domani", "dopodomani"]):
+        try:
+            pagina = scarica_testo(PAGINA_SG.format(giorno=nome, id=sid))
+        except Exception:
+            continue
+        giorno, prima = oggi + timedelta(days=n), None
+        for pezzo in pagina.split("sgtvchannelplan_hoursCell")[1:]:
+            ora = re.search(r"(\d{1,2}):(\d{2})", pezzo)
+            tit = re.search(r'sgtvchannelplan_spanInfoNextSteps">\s*([^<]+?)\s*<', pezzo)
+            gen = re.search(r'sgtvchannelplan_spanEventType">\s*([^<(]+)', pezzo)
+            if not ora or not tit:
+                continue
+            ini = datetime(giorno.year, giorno.month, giorno.day, int(ora.group(1)), int(ora.group(2)), tzinfo=ROMA)
+            if prima and ini < prima:   # passata la mezzanotte
+                giorno += timedelta(days=1)
+                ini += timedelta(days=1)
+            prima = ini
+            righe.append((int(ini.timestamp() * 1000), html.unescape(tit.group(1)), html.unescape(gen.group(1)).strip() if gen else ""))
+        time.sleep(.5)
+    righe.sort()
+    l, visti = [], set()
+    for k, (i, t, g) in enumerate(righe):
+        f = righe[k + 1][0] if k + 1 < len(righe) else i + 3600000   # finisce quando inizia il prossimo
+        if f < da or i > a or i in visti or f <= i:
+            continue
+        visti.add(i)
+        l.append({"t": t, "i": i, "f": f, "g": g, "d": ""})
+    return l
+
+
 def main():
     uscita = sys.argv[1] if len(sys.argv) > 1 else "palinsesto.json"
     adesso = datetime.now(timezone.utc)
@@ -123,6 +167,13 @@ def main():
                     print(f"{nome}: preso da Sky Guida TV")
             except Exception as e:
                 falliti.append(f"{nome} (Sky): {e}")
+        if not programmi and lcn in SUPERGUIDA:   # ancora niente: provo Super Guida TV
+            try:
+                programmi = da_superguida(SUPERGUIDA[lcn], adesso, da, a)
+                if programmi:
+                    print(f"{nome}: preso da Super Guida TV")
+            except Exception as e:
+                falliti.append(f"{nome} (Super Guida TV): {e}")
         programmi.sort(key=lambda p: p["i"])
         canali.append({"lcn": lcn, "nome": nome, "programmi": programmi})
     print(f"{sum(len(c['programmi']) for c in canali)} programmi su {len(canali)} canali" + (f"; non riusciti: {falliti[:6]}" if falliti else ""))
