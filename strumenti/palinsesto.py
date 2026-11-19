@@ -2,8 +2,9 @@
 """Home2Love — palinsesto del digitale terrestre per la pagina tv.html.
 
 Gira su GitHub (Actions) ogni 6 ore: chiede la guida TV dei canali in chiaro a Tivùsat
-(services.tivulaguida.it, la stessa fonte usata dal progetto open source iptv-org/epg), tiene da 3 ore fa
-alle prossime 36 e scrive palinsesto.json. Sono dati pubblici: niente da cifrare.
+(services.tivulaguida.it, la stessa fonte usata dal progetto open source iptv-org/epg); per i canali che lì
+non hanno dati (es. LA7) ripiega su Sky Guida TV. Tiene da 3 ore fa alle prossime 60 (così "domani sera"
+c'è sempre) e scrive palinsesto.json. Sono dati pubblici: niente da cifrare.
 
 Uso:  python3 strumenti/palinsesto.py [file di uscita]   (predefinito: palinsesto.json)
 """
@@ -29,6 +30,11 @@ CANALI = [
     (57, "Rai Scuola", 135), (58, "Rai Sport", 88),
 ]
 API = "https://services.tivulaguida.it/api/epg/channels/{id}/date/{giorno}"
+# ripiego: codici degli stessi canali su Sky Guida TV
+SKY = {1: 899, 2: 898, 3: 897, 4: 10464, 5: 10354, 6: 10454, 7: 319, 8: 8195, 20: 10458, 21: 6622, 22: 10467, 23: 6607,
+       24: 6608, 25: 6623, 26: 8133, 27: 11342, 28: 7588, 30: 10466, 32: 6626, 34: 10893, 35: 10470, 40: 6628,
+       42: 6629, 47: 6460, 48: 895, 55: 10465, 58: 807}
+API_SKY = "https://apid.sky.it/gtv/v1/events?from={da}&to={a}&pageSize=999&pageNum=0&env=DTH&channels={id}"
 
 
 def scarica(url):
@@ -52,12 +58,30 @@ def testo(x):
     return (x or "").strip() if isinstance(x, str) else ""
 
 
+def da_sky(cid, adesso, da, a):
+    j = scarica(API_SKY.format(da=(adesso - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00Z"),
+                               a=(adesso + timedelta(days=3)).strftime("%Y-%m-%dT00:00:00Z"), id=cid))
+    l = []
+    for ev in (j or {}).get("events") or []:
+        if not ev.get("starttime") or not ev.get("endtime"):
+            continue
+        i = int(datetime.fromisoformat(ev["starttime"].replace("Z", "+00:00")).timestamp() * 1000)
+        f = int(datetime.fromisoformat(ev["endtime"].replace("Z", "+00:00")).timestamp() * 1000)
+        if f < da or i > a:
+            continue
+        cont = ev.get("content") or {}
+        genere = testo((cont.get("subgenre") or {}).get("name")) or testo((cont.get("genre") or {}).get("name"))
+        desc = testo(ev.get("eventSynopsis"))
+        l.append({"t": testo(ev.get("eventTitle")), "i": i, "f": f, "g": genere, "d": desc[:180] + ("…" if len(desc) > 180 else "")})
+    return l
+
+
 def main():
     uscita = sys.argv[1] if len(sys.argv) > 1 else "palinsesto.json"
     adesso = datetime.now(timezone.utc)
-    da, a = (adesso - timedelta(hours=3)).timestamp() * 1000, (adesso + timedelta(hours=36)).timestamp() * 1000
+    da, a = (adesso - timedelta(hours=3)).timestamp() * 1000, (adesso + timedelta(hours=60)).timestamp() * 1000
     oggi = adesso.astimezone(ROMA).date()
-    giorni = [oggi - timedelta(days=1), oggi, oggi + timedelta(days=1)]   # ieri: per i programmi iniziati prima di mezzanotte
+    giorni = [oggi - timedelta(days=1), oggi, oggi + timedelta(days=1), oggi + timedelta(days=2)]   # ieri: per i programmi iniziati prima di mezzanotte
     canali, falliti = [], []
     for lcn, nome, cid in CANALI:
         visti, programmi = set(), []
@@ -87,6 +111,13 @@ def main():
                 programmi.append({"t": testo(pr.get("title")), "i": i, "f": int(f), "g": testo(genere),
                                   "d": desc[:180] + ("…" if len(desc) > 180 else "")})
             time.sleep(.3)   # gentili con il server
+        if not programmi and lcn in SKY:   # Tivùsat non ha dati per questo canale: provo Sky Guida TV
+            try:
+                programmi = da_sky(SKY[lcn], adesso, da, a)
+                if programmi:
+                    print(f"{nome}: preso da Sky Guida TV")
+            except Exception as e:
+                falliti.append(f"{nome} (Sky): {e}")
         programmi.sort(key=lambda p: p["i"])
         canali.append({"lcn": lcn, "nome": nome, "programmi": programmi})
     print(f"{sum(len(c['programmi']) for c in canali)} programmi su {len(canali)} canali" + (f"; non riusciti: {falliti[:6]}" if falliti else ""))
