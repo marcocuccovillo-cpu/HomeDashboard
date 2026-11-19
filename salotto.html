@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#120c0e">
+<title>Home2Love · Salotto</title>
+<link rel="manifest" href="salotto.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Salotto">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
+<style>
+  /* Home2Love — Salotto: per un dispositivo accanto alla TV, da leggere dal divano.
+     A sinistra le vostre foto; a destra l'ora, il meteo di adesso e di domani, dove siete, i turni di domani
+     e quello che arriva (appuntamenti, compleanni, feste, spesa). Scritto per funzionare anche su Safari
+     vecchi (iPad): niente "inset", niente "gap" nei flex, solo JavaScript classico. */
+  :root { --ink: #fff7f2; --muted: rgba(255,247,242,.62); --p0: #ff9a62; --p1: #52d1c6; --accent: #ff5468; --bg: #120c0e; --card: #1f171a; --line: rgba(255,255,255,.12); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: Outfit, -apple-system, system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+  body { transition: opacity 2s; }
+  body.notte #scena { opacity: .55; }
+  #scena { position: fixed; top: 0; left: 0; right: 0; bottom: 0; transition: opacity 2s; }
+  /* sfondo: la foto sfocata */
+  #sfondo { position: absolute; top: -40px; left: -40px; right: -40px; bottom: -40px; background: #2a1418 center / cover no-repeat; -webkit-filter: blur(30px) brightness(.38) saturate(1.2); filter: blur(30px) brightness(.38) saturate(1.2); transition: background-image 1.5s; }
+  #corpo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: -webkit-flex; display: flex; padding: 4vmin; }
+  /* sinistra: la foto */
+  #foto { position: relative; -webkit-flex: 1.35; flex: 1.35; margin-right: 4vmin; border-radius: 3vmin; overflow: hidden; background: rgba(0,0,0,.25); box-shadow: 0 3vmin 8vmin rgba(0,0,0,.45); }
+  #foto img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.6s ease; }
+  #foto img.on { opacity: 1; }
+  #foto .vuoto { position: absolute; top: 50%; left: 0; right: 0; text-align: center; -webkit-transform: translateY(-50%); transform: translateY(-50%); font-size: 3vmin; color: var(--muted); padding: 0 6vmin; }
+  /* destra: le informazioni */
+  #info { -webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; min-width: 0; }
+  #ora { font-size: 14vmin; font-weight: 200; line-height: .9; letter-spacing: -.03em; }
+  #data { font-size: 3.2vmin; color: var(--muted); margin: .8vmin 0 2.2vmin; text-transform: capitalize; }
+  .blocco { background: rgba(255,255,255,.08); border: 1px solid var(--line); border-radius: 2.4vmin; padding: 1.5vmin 2.4vmin; margin-bottom: 1.5vmin; -webkit-flex: none; flex: none; }
+  .tit { font-size: 1.9vmin; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: .6vmin; }
+  #meteo { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+  #meteo .ic { font-size: 6vmin; margin-right: 2vmin; }
+  #meteo .gr { font-size: 5.6vmin; font-weight: 300; margin-right: 3vmin; }
+  #meteo .tx { font-size: 2.6vmin; line-height: 1.35; color: var(--muted); }
+  #meteo .tx b { color: var(--ink); font-weight: 400; }
+  .persona { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: .45vmin 0; }
+  .persona .av { width: 4.8vmin; height: 4.8vmin; border-radius: 50%; text-align: center; line-height: 4.8vmin; font-weight: 600; font-size: 2.5vmin; margin-right: 2vmin; -webkit-flex: none; flex: none; color: #1a120c; }
+  .persona.p0 .av { background: var(--p0); } .persona.p1 .av { background: var(--p1); }
+  .persona .tx { font-size: 2.7vmin; min-width: 0; line-height: 1.25; }
+  .persona .tx b { font-weight: 600; } .persona .tx span { color: var(--muted); }
+  .persona .tx em { font-style: normal; color: var(--ink); }
+  .riga { font-size: 2.6vmin; padding: .35vmin 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .riga .q { color: var(--muted); }
+  #prossimi { -webkit-flex: 1 1 auto; flex: 1 1 auto; overflow: hidden; min-height: 0; margin-bottom: 0; }
+  /* verticale: foto sopra, informazioni sotto */
+  body.vert #corpo { -webkit-flex-direction: column; flex-direction: column; }
+  body.vert #foto { margin: 0 0 2.5vmin; -webkit-flex: 1 1 34vh; flex: 1 1 34vh; min-height: 26vh; }
+  body.vert #info { -webkit-flex: 0 1 auto; flex: 0 1 auto; min-height: 0; }
+  body.vert #ora { font-size: 13vmin; }
+  #lucchetto { z-index: 50; }
+</style>
+</head>
+<body>
+<div id="scena">
+  <div id="sfondo"></div>
+  <div id="corpo">
+    <div id="foto"><img alt=""><img alt=""><div class="vuoto" id="foto-vuoto">Le vostre foto compariranno qui (si aggiungono dalla scheda Foto del telefono).</div></div>
+    <div id="info">
+      <div id="ora">–</div>
+      <div id="data"></div>
+      <div class="blocco"><div id="meteo"><span class="ic">·</span><span class="gr">–</span><span class="tx">carico il meteo…</span></div></div>
+      <div class="blocco"><div class="tit">Noi</div><div id="noi"></div></div>
+      <div class="blocco"><div class="tit" id="domani-tit">Domani</div><div id="domani"></div></div>
+      <div class="blocco" id="prossimi"><div class="tit">In arrivo</div><div id="arrivo"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="comune.js?v=80"></script>
+<script src="telecomando.js?v=80"></script>
+<script src="compleanni.js?v=80"></script>
+<script>
+// ================= ora e data =================
+function nome(p) { return (cfg.nomi[p] || (p ? "Lei" : "Lui")).split(" ")[0]; }
+function testoSicuro(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function disegnaOra() {
+  var d = new Date();
+  $("ora").textContent = d.getHours() + ":" + due(d.getMinutes());
+  $("data").textContent = GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
+  var h = d.getHours(); document.body.className = (h >= 23 || h < 7 ? "notte " : "") + (innerHeight > innerWidth ? "vert" : "");
+}
+
+// ================= meteo: adesso e domani =================
+var METEO = null;
+function icona(c) { return c === 0 ? "☀️" : c <= 2 ? "🌤️" : c === 3 ? "☁️" : c === 45 || c === 48 ? "🌫️" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "🌧️" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "🌨️" : c >= 95 ? "⛈️" : "☁️"; }
+function descr(c) { return c === 0 ? "sereno" : c <= 2 ? "poco nuvoloso" : c === 3 ? "coperto" : c === 45 || c === 48 ? "nebbia" : c >= 95 ? "temporale" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "neve" : c >= 51 ? "pioggia" : ""; }
+function leggiMeteo() {
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON + "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FRome&forecast_days=2")
+    .then(function (r) { return r.json(); }).then(function (j) { METEO = j; disegnaMeteo(); }, function () {});
+}
+function disegnaMeteo() {
+  var j = METEO; if (!j || !j.current) return;
+  var m = $("meteo"), d = j.daily;
+  m.querySelector(".ic").textContent = icona(j.current.weather_code);
+  m.querySelector(".gr").textContent = Math.round(j.current.temperature_2m) + "°";
+  m.querySelector(".tx").innerHTML = "<b>" + descr(j.current.weather_code) + "</b><br>domani " + icona(d.weather_code[1]) + " " + Math.round(d.temperature_2m_min[1]) + "° / " + Math.round(d.temperature_2m_max[1]) + "°" +
+    (d.precipitation_probability_max[1] >= 50 ? " · pioggia " + d.precipitation_probability_max[1] + "%" : "");
+}
+
+// ================= noi: dove siete adesso =================
+function doveAdesso(p) {
+  var r = rientroDi(p);
+  if (r && Date.now() < r.arrivo) { var resta = Math.max(0, Math.round((r.arrivo - Date.now()) / 60000)); return "<em>sta tornando</em> · arriva alle " + oraHM(r.arrivo) + (resta > 1 ? " (tra " + resta + " min)" : ""); }
+  var f = fuoriDi(p); if (f) return "<em>fuori</em> · " + testoSicuro(f.dove);
+  var st = statoAdesso(p);
+  if (st.stato === "lavoro") return "<em>al lavoro</em> · " + st.cosa.replace(/^al lavoro /, "");
+  var h = new Date().getHours();
+  return "<em>" + (h >= 23 || h < 7 ? "a nanna" : "a casa") + "</em>";
+}
+function disegnaNoi() {
+  var box = $("noi"), html = "";
+  [0, 1].forEach(function (p) { html += '<div class="persona p' + p + '"><div class="av">' + testoSicuro(nome(p).charAt(0).toUpperCase()) + '</div><div class="tx"><b>' + testoSicuro(nome(p)) + '</b> <span>' + doveAdesso(p) + '</span></div></div>'; });
+  box.innerHTML = html;
+}
+
+// ================= domani: i turni =================
+function disegnaDomani() {
+  var dom = piuGiorni(new Date(), 1), html = "";
+  $("domani-tit").textContent = "Domani · " + GIORNI[dom.getDay()];
+  [0, 1].forEach(function (p) {
+    var v = turno(dom, p);
+    html += '<div class="riga"><b>' + testoSicuro(nome(p)) + '</b> <span class="q">' + (v ? testoSicuro(ordinato(v).replace(/:00/g, "").replace(/\s*\/\s*/g, " · ")) : "riposo") + '</span></div>';
+  });
+  $("domani").innerHTML = html;
+}
+
+// ================= in arrivo: appuntamenti, compleanni, feste, spesa =================
+function quando(d) {
+  var o = new Date(), oggi = new Date(o.getFullYear(), o.getMonth(), o.getDate()), n = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - oggi) / 864e5);
+  return n === 0 ? "oggi" : n === 1 ? "domani" : n < 7 ? GIORNI[d.getDay()] : d.getDate() + " " + MESI[d.getMonth()].slice(0, 3);
+}
+function disegnaArrivo() {
+  var l = [], o = new Date(), k = iso(o), hm = due(o.getHours()) + ":" + due(o.getMinutes()), fine = iso(piuGiorni(o, 7));
+  (cfg.eventi || []).filter(function (e) { return (e.data > k || (e.data === k && (!e.ora || e.ora >= hm))) && e.data <= fine; })
+    .sort(function (a, b) { return (a.data + (a.ora || "99")).localeCompare(b.data + (b.ora || "99")); })
+    .slice(0, 3).forEach(function (e) { l.push({ t: e.data, html: "📅 " + testoSicuro(e.testo) + ' <span class="q">' + quando(daIso(e.data)) + (e.ora ? " " + e.ora : "") + "</span>" }); });
+  for (var i = 0; i <= 7; i++) {
+    var d = piuGiorni(o, i);
+    if (window.compleanniDel) compleanniDel(d).forEach(function (c) { l.push({ t: iso(d), html: "🎂 " + testoSicuro(c.nome) + ' <span class="q">' + quando(d) + "</span>" }); });
+    if (window.festeDel) festeDel(d).forEach(function (f) { l.push({ t: iso(d), html: f.ico + " " + testoSicuro(f.nome) + ' <span class="q">' + quando(d) + "</span>" }); });
+  }
+  l.sort(function (a, b) { return a.t.localeCompare(b.t); });
+  var n = spesa.filter(function (v) { return !v.fatto; }).length;
+  if (n) l.push({ html: "🛒 " + n + (n === 1 ? " cosa" : " cose") + ' da prendere <span class="q">in spesa</span>' });
+  $("arrivo").innerHTML = l.length ? l.slice(0, 6).map(function (x) { return '<div class="riga">' + x.html + "</div>"; }).join("") : '<div class="riga q">Niente in vista: serata tranquilla ♥</div>';
+}
+
+// ================= foto: le stesse del carosello, una ogni 20 secondi =================
+var FOTO = { lista: [], i: 0, vista: 0, url: {}, letta: 0 };
+function aggiornaFoto() {
+  if (!token || !chiaveCripto || Date.now() - FOTO.letta < 20 * 60000) return;
+  FOTO.letta = Date.now();
+  listaFotoRemote().then(function (l) {
+    FOTO.lista = l.sort(function () { return Math.random() - .5; });   // in ordine sparso: in salotto è più bello
+    $("foto-vuoto").hidden = !!l.length; if (l.length && !FOTO.mostrata) mostraFoto(0);
+  }, function () { FOTO.letta = 0; });
+}
+function urlFoto(x) { return FOTO.url[x.sha] ? Promise.resolve(FOTO.url[x.sha]) : scaricaFotoRemota(x).then(function (b) { return (FOTO.url[x.sha] = URL.createObjectURL(b)); }); }
+function mostraFoto(i) {
+  var n = FOTO.lista.length; if (!n) return;
+  FOTO.i = (i % n + n) % n; var x = FOTO.lista[FOTO.i];
+  urlFoto(x).then(function (u) {
+    var imgs = $("foto").getElementsByTagName("img"), nuova = imgs[FOTO.vista ? 0 : 1], vecchia = imgs[FOTO.vista ? 1 : 0];
+    nuova.onload = function () { nuova.className = "on"; vecchia.className = ""; FOTO.vista = FOTO.vista ? 0 : 1; FOTO.mostrata = true; $("sfondo").style.backgroundImage = "url(" + u + ")"; };
+    nuova.src = u;
+    var dopo = FOTO.lista[(FOTO.i + 1) % n]; if (dopo !== x) urlFoto(dopo).catch(function () {});
+    var tieni = {}; tieni[x.sha] = 1; tieni[dopo.sha] = 1;   // in memoria solo quella che si vede e la prossima
+    Object.keys(FOTO.url).forEach(function (k) { if (!tieni[k]) { URL.revokeObjectURL(FOTO.url[k]); delete FOTO.url[k]; } });
+  }, function () {});
+}
+$("foto").onclick = function () { mostraFoto(FOTO.i + 1); };
+
+// ================= tutto insieme =================
+function disegna() { disegnaOra(); disegnaNoi(); disegnaDomani(); disegnaArrivo(); disegnaMeteo(); }
+function ridisegna() { disegna(); }
+function dopoSblocco() { FOTO.letta = 0; aggiornaFoto(); }
+function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+document.addEventListener("visibilitychange", tieniAcceso);
+document.addEventListener("click", function () { var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {}); });
+window.addEventListener("resize", disegnaOra);
+
+disegna(); leggiMeteo(); tieniAcceso();
+setInterval(function () { if (new Date().getSeconds() < 5) disegna(); else disegnaOra(); }, 5000);
+setInterval(function () { mostraFoto(FOTO.i + 1); }, 20000);
+setInterval(leggiMeteo, 30 * 60000);
+setInterval(aggiornaFoto, 60000);
+avviaSync();
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
