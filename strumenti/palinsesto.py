@@ -98,8 +98,11 @@ def da_superguida(sid, adesso, da, a):
     for n, nome in enumerate(["oggi", "domani", "dopodomani"]):
         try:
             pagina = scarica_testo(PAGINA_SG.format(giorno=nome, id=sid))
-        except Exception:
+        except Exception as e:
+            print(f"Super Guida TV {nome}: {e}")
             continue
+        titolo = re.search(r"<title>([^<]*)", pagina)
+        print(f"Super Guida TV {nome}: {len(pagina)} caratteri, «{titolo.group(1).strip() if titolo else '?'}», {pagina.count('sgtvchannelplan_hoursCell')} orari")
         giorno, prima = oggi + timedelta(days=n), None
         for pezzo in pagina.split("sgtvchannelplan_hoursCell")[1:]:
             ora = re.search(r"(\d{1,2}):(\d{2})", pezzo)
