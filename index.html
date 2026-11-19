@@ -179,7 +179,7 @@
   #card-cuccia { flex: 1; min-height: 17vh; display: flex; flex-direction: column; padding-bottom: 1.4vh; }
   #card-cuccia h2 small { margin-left: auto; font-size: 1.8vh; color: var(--muted); font-weight: 400; }
   .cuccia-scena { flex: 1; min-height: 9vh; position: relative; }
-  #cuccia { position: absolute; left: 0; bottom: 0; image-rendering: pixelated; }
+  #cuccia { position: absolute; left: 0; bottom: 0; }
   .cuccia-livelli { display: flex; gap: 1.2vw; align-items: center; font-size: 1.7vh; color: var(--muted); margin-top: .8vh; white-space: nowrap; }
   .cuccia-livelli i { display: inline-block; width: 4vw; height: .9vh; border-radius: 1vh; background: var(--line); vertical-align: middle; margin-left: .3vw; overflow: hidden; }
   .cuccia-livelli b { display: block; height: 100%; border-radius: 1vh; background: #c98a4b; transition: width .3s; }
@@ -325,8 +325,8 @@
 
   /* --- gatto --- */
   #gatto-strato { position: fixed; inset: 0; z-index: 9; pointer-events: none; overflow: hidden; }
-  #gatto { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: grab; image-rendering: pixelated; transform-origin: 50% 11%; touch-action: none;
-           filter: drop-shadow(0 4px 3px rgba(0,0,0,.25)); }
+  #gatto { position: absolute; left: 0; top: 0; pointer-events: auto; cursor: grab; transform-origin: 50% 11%; touch-action: none;
+           filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
   #gatto-zzz, #gatto-fumetto { position: absolute; left: 0; top: 0; }
   #gatto-zzz { font: 700 2.4vh/1 sans-serif; color: #6c7aa8; animation: zzz 2.4s ease-in-out infinite; }
   #gatto-zzz small { font-size: .75em; margin-left: .2em; }
@@ -928,20 +928,21 @@
   </div>
 </div>
 
-<script src="comune.js?v=84"></script>
-<script src="rete.js?v=84"></script>
-<script src="radio.js?v=84"></script>
-<script src="forza4.js?v=84"></script>
+<script src="comune.js?v=85"></script>
+<script src="rete.js?v=85"></script>
+<script src="radio.js?v=85"></script>
+<script src="forza4.js?v=85"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=84"></script>
-<script src="bus.js?v=84"></script>
-<script src="spesa.js?v=84"></script>
-<script src="giochi.js?v=84"></script>
-<script src="calendario.js?v=84"></script>
-<script src="compleanni.js?v=84"></script>
-<script src="suoni.js?v=84"></script>
-<script src="telecomando.js?v=84"></script>
-<script src="gatto.js?v=84"></script>
+<script src="tragitti.js?v=85"></script>
+<script src="bus.js?v=85"></script>
+<script src="spesa.js?v=85"></script>
+<script src="giochi.js?v=85"></script>
+<script src="calendario.js?v=85"></script>
+<script src="compleanni.js?v=85"></script>
+<script src="suoni.js?v=85"></script>
+<script src="telecomando.js?v=85"></script>
+<script src="gattodisegno.js?v=85"></script>
+<script src="gatto.js?v=85"></script>
 <script>
 
 // ================= orologio =================
@@ -1601,7 +1602,7 @@ function aggiornaPunti() {
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
   window.paginaDove = i === 4;   // la pagina 5 si anima solo quando si vede
-  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=84";
+  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=85";
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });

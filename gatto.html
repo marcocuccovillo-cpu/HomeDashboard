@@ -47,9 +47,10 @@
   <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
 </div>
 
-<script src="comune.js?v=84"></script>
-<script src="telecomando.js?v=84"></script>
-<script src="compleanni.js?v=84"></script>
+<script src="comune.js?v=85"></script>
+<script src="telecomando.js?v=85"></script>
+<script src="compleanni.js?v=85"></script>
+<script src="gattodisegno.js?v=85"></script>
 <script>
 // ================= la stanza: coordinate "logiche" 1000×600, disegnate a piena risoluzione =================
 var LW = 1000, LH = 600, MURO = 448, PAV = 520;   // dove finisce il muro, dove poggia il gatto
@@ -217,86 +218,6 @@ function gomitolo(x) {
   g.strokeStyle = "#3aa79a"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x - 6, PAV - 2); g.quadraticCurveTo(x - 30, PAV + 6, x - 52, PAV + 1); g.stroke();
 }
 
-// ---------------- il gatto (disegnato a mano: tigrato arancione)
-var PELO = "#f0963d", SCURO = "#c8682a", CHIARO = "#fde8d2", ROSA = "#f4a2ab", OCCHI = "#8fbf3f";
-function orecchio(x, y, w, h, rot) {
-  g.save(); g.translate(x, y); g.rotate(rot);
-  g.fillStyle = PELO; g.beginPath(); g.moveTo(-w / 2, 0); g.quadraticCurveTo(-w * .2, -h * .7, 0, -h); g.quadraticCurveTo(w * .2, -h * .7, w / 2, 0); g.fill();
-  g.fillStyle = ROSA; g.beginPath(); g.moveTo(-w * .28, -2); g.quadraticCurveTo(-w * .1, -h * .55, 0, -h * .74); g.quadraticCurveTo(w * .1, -h * .55, w * .28, -2); g.fill();
-  g.restore();
-}
-function testa(x, y, r, profilo, t, chiusi) {
-  // orecchie
-  if (profilo) { orecchio(x - r * .2, y - r * .7, r * .8, r * .85, -.25); orecchio(x + r * .45, y - r * .62, r * .7, r * .8, .3); }
-  else { orecchio(x - r * .55, y - r * .6, r * .8, r * .9, -.35); orecchio(x + r * .55, y - r * .6, r * .8, r * .9, .35); }
-  g.fillStyle = rad(x - r * .3, y - r * .3, r * .2, r * 1.2, [[0, "#f6a656"], [1, PELO]]); ell(x, y, r * 1.08, r); g.fill();
-  // strisce sulla fronte
-  g.strokeStyle = SCURO; g.lineWidth = r * .1; g.lineCap = "round";
-  [-.25, 0, .25].forEach(function (k) { g.beginPath(); g.moveTo(x + k * r, y - r * .95); g.lineTo(x + k * r * 1.2, y - r * .55); g.stroke(); });
-  // muso chiaro
-  var mx = profilo ? x + r * .55 : x, my = y + r * .32;
-  g.fillStyle = CHIARO; ell(mx - r * .18, my, r * .32, r * .25); g.fill(); ell(mx + r * .18, my, r * .32, r * .25); g.fill();
-  // occhi
-  var occhi = profilo ? [[x + r * .45, y - r * .1]] : [[x - r * .38, y - r * .08], [x + r * .38, y - r * .08]];
-  occhi.forEach(function (o) {
-    if (chiusi || ST.occhi > 0) { g.strokeStyle = "#3a2418"; g.lineWidth = r * .07; g.beginPath(); g.arc(o[0], o[1] - r * .02, r * .17, .25, Math.PI - .25); g.stroke(); return; }
-    g.fillStyle = "#fffbe8"; ell(o[0], o[1], r * .2, r * .22); g.fill();
-    g.fillStyle = OCCHI; ell(o[0], o[1], r * .17, r * .2); g.fill();
-    g.fillStyle = "#1f1a14"; ell(o[0] + (profilo ? r * .04 : 0), o[1], r * .06, r * .17); g.fill();
-    g.fillStyle = "#fff"; ell(o[0] - r * .06, o[1] - r * .08, r * .05, r * .05); g.fill();
-  });
-  // naso e bocca
-  g.fillStyle = "#e57f8f"; g.beginPath(); g.moveTo(mx - r * .1, my - r * .14); g.lineTo(mx + r * .1, my - r * .14); g.lineTo(mx, my - r * .02); g.closePath(); g.fill();
-  g.strokeStyle = "#7a4a3a"; g.lineWidth = r * .045; g.beginPath(); g.moveTo(mx, my - r * .02); g.quadraticCurveTo(mx - r * .08, my + r * .1, mx - r * .17, my + r * .04); g.moveTo(mx, my - r * .02); g.quadraticCurveTo(mx + r * .08, my + r * .1, mx + r * .17, my + r * .04); g.stroke();
-  // baffi
-  g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = r * .03;
-  [-1, 1].forEach(function (s) { if (profilo && s < 0) return; for (var k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(mx + s * r * .2, my + k * r * .06); g.quadraticCurveTo(mx + s * r * .6, my + k * r * .1 - r * .04, mx + s * r * .95, my + k * r * .18); g.stroke(); } });
-  if (ST.cappello) {   // cappellino della festa
-    var hx = profilo ? x + r * .05 : x, hy = y - r * .8;
-    g.fillStyle = "#ff5468"; g.beginPath(); g.moveTo(hx - r * .38, hy); g.lineTo(hx + r * .38, hy); g.lineTo(hx + r * .05, hy - r * 1.1); g.closePath(); g.fill();
-    g.fillStyle = "#ffd166"; [.25, .55].forEach(function (k) { ell(hx + r * .02 - k * r * .05, hy - k * r * 1.05 + r * .1, r * .07, r * .07); g.fill(); });
-    ell(hx + r * .05, hy - r * 1.12, r * .12, r * .12); g.fill();
-  }
-}
-function coda(punti, sp) { g.strokeStyle = PELO; g.lineWidth = sp; g.lineCap = "round"; g.beginPath(); g.moveTo(punti[0], punti[1]); g.bezierCurveTo(punti[2], punti[3], punti[4], punti[5], punti[6], punti[7]); g.stroke();
-  g.strokeStyle = SCURO; g.lineWidth = sp * .9; g.setLineDash([sp * .5, sp * 1.1]); g.stroke(); g.setLineDash([]); }
-function disegnaGatto(x, posa, t, verso) {
-  var y = PAV, resp = Math.sin(t / 700) * .02;
-  g.fillStyle = "rgba(0,0,0,.2)"; ell(x, y + 2, posa === "dorme" ? 70 : 62, 9); g.fill();
-  g.save(); g.translate(x, y); g.scale(verso, 1);
-  if (posa === "dorme") {
-    g.scale(1, 1 + resp * 1.5);
-    coda([-55, -10, -70, 10, 10, 14, 50, -2], 13);
-    g.fillStyle = rad(-10, -40, 10, 80, [[0, "#f6a656"], [1, PELO]]); ell(-5, -30, 62, 32); g.fill();
-    g.strokeStyle = SCURO; g.lineWidth = 6; g.lineCap = "round"; [-35, -15, 5].forEach(function (k) { g.beginPath(); g.arc(k, -30, 26, -2.4, -1.4); g.stroke(); });
-    testa(40, -28, 27, false, t, true);
-    g.fillStyle = PELO; ell(30, -6, 18, 8); g.fill(); g.fillStyle = CHIARO; ell(42, -5, 9, 6); g.fill();
-  } else if (posa === "seduto") {
-    var cs = Math.sin(t / 500) * 12;
-    coda([-28, -6, -70, 0 + cs * .2, -60, -40 + cs, -40, -60 + cs], 13);
-    g.fillStyle = rad(-10, -70, 10, 70, [[0, "#f6a656"], [1, PELO]]); g.beginPath(); g.moveTo(-40, 0); g.bezierCurveTo(-50, -60, -30, -96, 0, -98); g.bezierCurveTo(30, -96, 46, -60, 38, 0); g.closePath(); g.fill();
-    g.strokeStyle = SCURO; g.lineWidth = 6; g.lineCap = "round"; [-60, -40, -20].forEach(function (k) { g.beginPath(); g.moveTo(-36, k); g.quadraticCurveTo(-26, k - 6, -18, k - 2); g.stroke(); });
-    g.fillStyle = CHIARO; ell(6, -48, 18, 34); g.fill();
-    g.fillStyle = PELO; rr(-12, -40, 15, 40, 7); g.fill(); rr(10, -40, 15, 40, 7); g.fill();
-    g.fillStyle = CHIARO; ell(-4, -3, 10, 6); g.fill(); ell(18, -3, 10, 6); g.fill();
-    testa(4, -118 + resp * 40, 36, false, t, ST.fusa > 0);
-  } else {   // cammina / mangia (di profilo, verso destra)
-    var mangia = posa === "mangia", ph = mangia ? 0 : t / 110, sw = mangia ? 0 : 1;
-    var cs2 = Math.sin(t / 400) * 10;
-    coda([-58, -62, -95, -80 + cs2, -96, -128 + cs2, -78, -146 + cs2], 12);
-    [[-38, 0], [-24, Math.PI], [26, Math.PI], [40, 0]].forEach(function (z, i) {   // zampe
-      var a = Math.sin(ph + z[1]) * .45 * sw;
-      g.save(); g.translate(z[0], -44); g.rotate(a); g.fillStyle = i === 1 || i === 2 ? SCURO : PELO; rr(-7, 0, 14, 44, 7); g.fill(); g.fillStyle = CHIARO; ell(1, 42, 9, 5); g.fill(); g.restore();
-    });
-    g.fillStyle = rad(-10, -70, 10, 90, [[0, "#f6a656"], [1, PELO]]); ell(0, -62, 64, 30); g.fill();
-    g.fillStyle = CHIARO; ell(18, -44, 34, 12); g.fill();
-    g.strokeStyle = SCURO; g.lineWidth = 6; g.lineCap = "round"; [-40, -20, 0].forEach(function (k) { g.beginPath(); g.moveTo(k, -90); g.quadraticCurveTo(k + 6, -76, k + 2, -64); g.stroke(); });
-    if (mangia) testa(66, -38 + Math.abs(Math.sin(t / 220)) * 4, 28, true, t, true);
-    else testa(70, -96 + Math.sin(ph * 2) * 1.5, 30, true, t, false);
-  }
-  g.restore();
-}
-
 // ---------------- un fotogramma
 function disegna(t) {
   var m = momento();
@@ -315,7 +236,7 @@ function disegna(t) {
   var dorme = ST.posa === "dorme" && Math.abs(ST.x - POSTI.cuccia) < 4;
   if (!dorme) gomitolo(ST.palla.x);
   g.save(); if (dorme) g.translate(0, -12);
-  disegnaGatto(ST.x, ST.posa, t, ST.verso); g.restore();
+  GATTO_VET.disegna(g, ST.x, PAV, ST.posa, t, ST.verso, { blink: ST.occhi > 0, fusa: ST.fusa > 0, cappello: ST.cappello }); g.restore();
   if (dorme) gomitolo(ST.palla.x);
   // luce dell'ora: sera calda, notte buia con la lampada
   var x0 = -OFX / SCALA, x1 = (SW - OFX) / SCALA, y0 = -OFY / SCALA, y1 = (SH - OFY) / SCALA;

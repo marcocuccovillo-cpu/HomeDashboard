@@ -1,50 +1,25 @@
-// HomeDashboard — il gatto di casa: pixel art che vive sopra tutta l'interfaccia (come i bigliettini).
+// HomeDashboard — il gatto di casa: disegnato (gattodisegno.js), vive sopra tutta l'interfaccia (come i bigliettini).
 // Gira, si siede, dorme di notte e quando lavorate tutti e due, trema se fuori piove o nevica,
 // è felice nei giorni liberi insieme, fa le fusa se lo tocchi e salta quando suona un timer.
 
 var G = { preso: false, dondolo: 0, attivita: null, W: 24, H: 18, S: 5, x: 200, y: 400, tx: 200, ty: 400, verso: 1, stato: "seduto", fino: 0, f: 0, coccole: 0, salto: 0 };
-var COL = { O: "#e8913f", D: "#b8622a", W: "#fff1e0", K: "#2b1d14", P: "#f4a6ae" };
-
-function pix(g, c, x, y, w, h) { g.fillStyle = COL[c]; g.fillRect(x, y, w || 1, h || 1); }
-function disegnaGatto(g, posa, f) {
-  g.clearRect(0, 0, G.W, G.H);
-  if (posa === "dorme") {   // acciambellato, con la coda davanti
-    pix(g, "O", 5, 11, 13, 5); pix(g, "O", 6, 10, 11, 1); pix(g, "D", 8, 11, 1, 2); pix(g, "D", 11, 11, 1, 2);
-    pix(g, "O", 13, 8, 6, 5); pix(g, "O", 13, 7, 1, 1); pix(g, "O", 18, 7, 1, 1); pix(g, "P", 13, 8); pix(g, "P", 18, 8);
-    pix(g, "K", 14, 10, 2, 1); pix(g, "K", 17, 10, 1, 1); pix(g, "W", 15, 11, 3, 2);
-    var r = f % 40 < 20 ? 0 : 1;   // respiro
-    pix(g, "O", 5, 16 - r, 9, 1); pix(g, "W", 4, 15 - r, 2, 1);
-    return;
+var DPR = Math.min(2, window.devicePixelRatio || 1);
+function cappelloOggi() {   // cappellino a feste e compleanni (calcolato una volta al giorno)
+  var d = new Date(), k = d.toDateString();
+  if (cappelloOggi.k !== k) {
+    cappelloOggi.k = k;
+    var feste = window.festeDel ? festeDel(d) : [], comp = window.compleanniDel ? compleanniDel(d) : [];
+    cappelloOggi.v = feste.some(function (x) { return x.festivo || x.regalo; }) || comp.length > 0;
   }
-  if (posa === "preso") {
-    var dz = f % 10 < 5 ? 0 : 1, cd = Math.round(Math.sin(f / 3) * 2);
-    pix(g, "O", 9, 0, 7, 6); pix(g, "O", 9, 0, 1, 1); pix(g, "O", 15, 0, 1, 1); pix(g, "P", 10, 1); pix(g, "P", 14, 1);
-    pix(g, "K", 11, 2, 1, 1); pix(g, "K", 14, 2, 1, 1); pix(g, "W", 12, 3, 3, 2); pix(g, "P", 13, 3);   // occhioni sorpresi
-    pix(g, "O", 10, 6, 5, 8); pix(g, "W", 11, 7, 3, 5); pix(g, "D", 10, 8, 1, 1); pix(g, "D", 14, 10, 1, 1);
-    pix(g, "O", 9, 7, 1, 3 + dz); pix(g, "W", 9, 10 + dz); pix(g, "O", 15, 7, 1, 3 + (1 - dz)); pix(g, "W", 15, 11 - dz);   // zampette davanti
-    pix(g, "O", 10, 14, 1, 2 + dz); pix(g, "W", 10, 16 + dz); pix(g, "O", 14, 14, 1, 3 - dz); pix(g, "W", 14, 17 - dz);   // zampe dietro
-    pix(g, "O", 12 + cd, 14, 1, 3); pix(g, "D", 12 + cd, 17);   // coda
-    return;
-  }
-  if (posa === "seduto") {
-    pix(g, "O", 8, 8, 7, 7); pix(g, "W", 11, 10, 3, 5); pix(g, "D", 9, 9, 1, 2); pix(g, "D", 9, 12, 1, 2);
-    pix(g, "O", 9, 2, 7, 6); pix(g, "O", 9, 1, 1, 1); pix(g, "O", 15, 1, 1, 1); pix(g, "P", 10, 2); pix(g, "P", 14, 2);
-    var occhi = f % 60 < 3 ? "O" : "K";   // ogni tanto sbatte le palpebre
-    pix(g, occhi, 11, 4); pix(g, occhi, 14, 4); pix(g, "W", 12, 5, 3, 2); pix(g, "P", 13, 5);
-    pix(g, "W", 11, 15, 1, 1); pix(g, "W", 13, 15, 1, 1);
-    var c = Math.round(Math.sin(f / 6) * 1.5);   // coda che si muove
-    pix(g, "O", 3, 14, 6, 2); pix(g, "O", 2, 12 + c, 2, 3); pix(g, "D", 2, 11 + c, 1, 1);
-    return;
-  }
-  // in piedi / cammina (verso destra); "mangia" = testa giù nella ciotola
-  var hy = posa === "mangia" ? 4 + (f % 6 < 3 ? 0 : 1) : 0;
-  pix(g, "O", 4, 8, 12, 5); pix(g, "D", 6, 8, 1, 2); pix(g, "D", 9, 8, 1, 2); pix(g, "D", 12, 8, 1, 2); pix(g, "W", 13, 10, 3, 3);
-  pix(g, "O", 14, 3 + hy, 7, 6); pix(g, "O", 15, 2 + hy, 1, 1); pix(g, "O", 19, 2 + hy, 1, 1); pix(g, "P", 15, 3 + hy); pix(g, "P", 19, 3 + hy);
-  pix(g, "K", 16, 5 + hy); pix(g, "K", 19, 5 + hy); pix(g, "W", 18, 6 + hy, 3, 2); pix(g, "P", 20, 6 + hy);
-  var a = posa === "cammina" && f % 8 < 4;   // zampe alternate
-  [[5, a], [7, !a], [12, !a], [14, a]].forEach(function (z) { pix(g, "O", z[0], 13, 1, z[1] ? 3 : 2); pix(g, "W", z[0], z[1] ? 15 : 14); });
-  var t = Math.round(Math.sin(f / 4));
-  pix(g, "O", 3, 8); pix(g, "O", 2, 7); pix(g, "O", 2, 6); pix(g, "O", 1 + t, 5); pix(g, "D", 1 + t, 4);
+  return cappelloOggi.v;
+}
+function disegnaGatto(g, posa, f) {   // il gatto disegnato (gattodisegno.js), nitido alla risoluzione dello schermo
+  var w = G.W * G.S, h = G.H * G.S, t = performance.now();
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, g.canvas.width, g.canvas.height);
+  if (posa === "preso") { g.setTransform(DPR * .33, 0, 0, DPR * .33, DPR * w / 2, DPR * h * .11); GATTO_VET.disegna(g, 0, 0, "preso", t, 1, {}); return; }
+  var k = DPR * .52;
+  g.setTransform(k, 0, 0, k, DPR * w / 2, DPR * (h - 3));
+  GATTO_VET.disegna(g, 0, 0, posa, t, 1, { blink: f % 60 < 2, fusa: G.coccole > Date.now(), cappello: cappelloOggi() });
 }
 
 // ---------------------------------------------------------------- umore: da ora, turni, meteo
@@ -86,7 +61,7 @@ function misuraCuccia() {   // un pixel della scena = un pixel del gatto (G.S)
   var c = $("cuccia"); if (!c) return;
   var box = c.parentNode, w = Math.floor(box.clientWidth / G.S), h = Math.floor(box.clientHeight / G.S);
   if (w === CU.w && h === CU.h) return;
-  CU.w = c.width = w; CU.h = c.height = h; c.style.width = w * G.S + "px"; c.style.height = h * G.S + "px";
+  CU.w = w; CU.h = h; c.width = Math.round(w * G.S * DPR); c.height = Math.round(h * G.S * DPR); c.style.width = w * G.S + "px"; c.style.height = h * G.S + "px";
   var F = h - 2, x = 1;
   CU.F = F; CU.pos = { cuccia: x, cibo: x + 31, acqua: x + 43, gomitolo: x + 58, topo: x + 66 };
 }
@@ -97,39 +72,58 @@ function punto(cosa) {   // dove mettere il gatto (angolo in alto a sinistra del
   else { lx = p[cosa] - 13; ly = F - 16; }   // la testa sopra la ciotola
   return { x: r.left + lx * G.S, y: r.top + ly * G.S };
 }
-function px2(g, col, x, y, w, h) { g.fillStyle = col; g.fillRect(x, y, w || 1, h || 1); }
-function disegnaCuccia() {
+function disegnaCuccia() {   // illustrazione morbida: tappetino, cuccia imbottita, ciotole di ceramica, gomitolo, topolino
   var c = $("cuccia"); if (!c || !CU.w) return;
   var g = c.getContext("2d"), p = CU.pos, F = CU.F, scuro = document.body.classList.contains("notte");
-  g.clearRect(0, 0, CU.w, CU.h);
-  px2(g, scuro ? "#3a332c" : "#e9ddcb", 0, F + 1, CU.w, 1);   // pavimento
-  px2(g, scuro ? "#4a3d4f" : "#d9cbe8", p.cuccia - 1, F, 30, 1);   // tappetino
-  // cuccia: bordo rosso e cuscino
-  var x = p.cuccia;
-  px2(g, "#b8263a", x + 1, F - 7, 24, 1); px2(g, "#d7263d", x, F - 6, 26, 5); px2(g, "#b8263a", x + 1, F - 1, 24, 1);
-  px2(g, "#f7c6cd", x + 3, F - 6, 20, 2); px2(g, "#fbe0e4", x + 5, F - 6, 6, 1);
-  px2(g, "#fff", x + 11, F - 4); px2(g, "#fff", x + 13, F - 4); px2(g, "#fff", x + 12, F - 3);   // cuoricino
-  // ciotole: livello visibile + crocchette/acqua che cadono quando si riempiono
-  function ciotola(cx, col, pieno, cont) {
-    var liv = Math.ceil(pieno / 34);   // 0..3 righe
-    for (var k = 0; k < liv; k++) px2(g, cont, cx + 1 + (k === 2 ? 1 : 0), F - 3 - k, 7 - (k === 2 ? 2 : 0), 1);
-    if (cont === "#7a4a22") for (var q = 0; q < liv; q++) px2(g, "#a8692f", cx + 2 + q * 2, F - 3 - q);
-    px2(g, col, cx, F - 2, 9, 2); px2(g, col, cx + 1, F, 7, 1); px2(g, "rgba(255,255,255,.35)", cx + 1, F - 2, 3, 1);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
+  g.setTransform(G.S * DPR, 0, 0, G.S * DPR, 0, 0);   // da qui in poi: unità della scena (1 = G.S pixel)
+  function ell(x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, Math.max(.01, rx), Math.max(.01, ry), 0, 0, Math.PI * 2); }
+  function lin(x0, y0, x1, y1, st) { var gr = g.createLinearGradient(x0, y0, x1, y1); st.forEach(function (s) { gr.addColorStop(s[0], s[1]); }); return gr; }
+  // pavimento: una striscia di parquet sfumata
+  g.fillStyle = lin(0, F - 2, 0, CU.h, [[0, "rgba(0,0,0,0)"], [.45, scuro ? "rgba(120,80,50,.28)" : "rgba(168,113,74,.18)"], [1, scuro ? "rgba(120,80,50,.4)" : "rgba(168,113,74,.3)"]]);
+  g.fillRect(0, F - 2, CU.w, CU.h);
+  // tappetino e cuccia
+  var cx = p.cuccia + 13.5;
+  g.fillStyle = scuro ? "rgba(140,110,170,.35)" : "rgba(196,170,226,.6)"; ell(cx, F + .6, 16, 1.6); g.fill();
+  g.fillStyle = "rgba(0,0,0,.18)"; ell(cx, F + .5, 13, 1.4); g.fill();
+  g.fillStyle = lin(0, F - 6, 0, F + .5, [[0, "#d65466"], [1, "#a83447"]]); ell(cx, F - 2.3, 13, 3.6); g.fill();
+  g.fillStyle = lin(0, F - 5, 0, F - 2, [[0, "#f6e3d0"], [1, "#e7cdb4"]]); ell(cx, F - 3.3, 10, 2); g.fill();
+  g.strokeStyle = "rgba(255,255,255,.3)"; g.lineWidth = .25; ell(cx, F - 2.3, 12, 3); g.stroke();
+  // ciotole (larghe 9 unità): livello visibile + crocchette e gocce che cadono quando si riempiono
+  function ciotola(x0, tipo, pieno) {
+    var x = x0 + 4.5, l = Math.max(0, Math.min(100, pieno)) / 100;
+    g.fillStyle = "rgba(0,0,0,.18)"; ell(x, F + .7, 4.8, .9); g.fill();
+    g.fillStyle = lin(x - 4.5, 0, x + 4.5, 0, [[0, "#d8dde6"], [.5, "#ffffff"], [1, "#c9cfda"]]);
+    g.beginPath(); g.moveTo(x - 4.5, F - 3); g.lineTo(x + 4.5, F - 3); g.lineTo(x + 3.4, F + .3); g.lineTo(x - 3.4, F + .3); g.closePath(); g.fill();
+    g.fillStyle = tipo === "cibo" ? "#e89b5a" : "#6fb8e8"; g.fillRect(x - 4, F - 1.9, 8, .7);
+    g.fillStyle = "#eef1f5"; ell(x, F - 3, 4.5, 1.1); g.fill(); g.fillStyle = "#c9cfda"; ell(x, F - 3, 3.7, .75); g.fill();
+    if (l > .02) {
+      if (tipo === "cibo") for (var i = 0; i < Math.round(12 * l); i++) { g.fillStyle = i % 2 ? "#9b5a2e" : "#b56d3a"; ell(x - 2.7 + (i * 37 % 54) / 10, F - 3.1 - (i % 3) * .2 - l * .4, .55, .4); g.fill(); }
+      else { g.fillStyle = "rgba(90,170,235,.85)"; ell(x, F - 3 - l * .3, 3.3 * (.6 + l * .4), .6 * (.6 + l * .4)); g.fill(); g.fillStyle = "rgba(255,255,255,.6)"; ell(x - 1, F - 3.1 - l * .3, .8, .15); g.fill(); }
+    }
   }
-  ciotola(p.cibo, "#3f6fbf", CU.cibo, "#7a4a22");
-  ciotola(p.acqua, "#2f9a93", CU.acqua, "#7cc8f0");
-  CU.cade.forEach(function (d) { px2(g, d.col, d.x, Math.floor(d.y), 1, 1); });
+  ciotola(p.cibo, "cibo", CU.cibo);
+  ciotola(p.acqua, "acqua", CU.acqua);
+  CU.cade.forEach(function (d) { g.fillStyle = d.col; ell(d.x + .5, d.y, d.col === "#7cc8f0" ? .3 : .45, d.col === "#7cc8f0" ? .55 : .35); g.fill(); });
   // gomitolo che rimbalza quando ci gioca
-  var gx = p.gomitolo + Math.round(Math.sin(CU.gioco / 3) * (CU.gioco ? 3 : 0)), gy = F - 3 - (CU.gioco ? Math.abs(Math.round(Math.sin(CU.gioco / 2) * 3)) : 0);
-  if (gx + 4 < CU.w) {
-    px2(g, "#e86a8a", gx, gy, 4, 4); px2(g, "#e86a8a", gx - 1, gy + 1, 6, 2); px2(g, "#c24a6c", gx + 1, gy + 1, 1, 2); px2(g, "#c24a6c", gx + 3, gy + 2);
-    px2(g, "#e86a8a", gx + 5, gy + 4, 3, 1);   // filo
+  var gx = p.gomitolo + 2 + Math.sin(CU.gioco / 3) * (CU.gioco ? 3 : 0), alto = CU.gioco ? Math.abs(Math.sin(CU.gioco / 2) * 3) : 0, gy = F - 1.9 - alto;
+  if (gx + 3 < CU.w) {
+    g.fillStyle = "rgba(0,0,0," + (.18 - alto * .03) + ")"; ell(gx, F + .5, 2, .45); g.fill();
+    g.strokeStyle = "#c24a6c"; g.lineWidth = .25; g.beginPath(); g.moveTo(gx + 1, F - .3); g.quadraticCurveTo(gx + 3.5, F + .9, gx + 6, F + .2); g.stroke();
+    var gr = g.createRadialGradient(gx - .6, gy - .6, .2, gx, gy, 2.1); gr.addColorStop(0, "#f59ab2"); gr.addColorStop(1, "#c94a6e");
+    g.fillStyle = gr; ell(gx, gy, 1.9, 1.9); g.fill();
+    g.save(); g.translate(gx, gy); g.rotate(CU.gioco / 4); g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = .18;
+    for (var k = -1; k <= 1; k += .5) { g.beginPath(); g.ellipse(0, 0, 1.75, Math.abs(k) + .4, .6, 0, Math.PI); g.stroke(); }
+    g.restore();
   }
   // topolino di pezza
-  var t = p.topo;
-  if (t + 7 < CU.w) {
-    px2(g, "#9a9aa6", t + 1, F - 2, 5, 2); px2(g, "#9a9aa6", t + 5, F - 3, 2, 2); px2(g, "#f4a6ae", t + 5, F - 4); px2(g, "#2b1d14", t + 6, F - 2);
-    px2(g, "#f4a6ae", t, F - 1); px2(g, "#f4a6ae", t - 1, F - 2);
+  var t = p.topo + 3;
+  if (t + 4 < CU.w) {
+    g.fillStyle = "rgba(0,0,0,.15)"; ell(t, F + .5, 2.6, .4); g.fill();
+    g.strokeStyle = "#f4a6ae"; g.lineWidth = .25; g.lineCap = "round"; g.beginPath(); g.moveTo(t - 2.2, F - .6); g.quadraticCurveTo(t - 4, F - 2.2, t - 4.6, F - .4); g.stroke();
+    g.fillStyle = "#a3a3b0"; g.beginPath(); g.moveTo(t - 2.4, F); g.quadraticCurveTo(t - 2.2, F - 2.6, t + .6, F - 2.2); g.quadraticCurveTo(t + 2.4, F - 1.6, t + 2.8, F - .1); g.closePath(); g.fill();
+    g.fillStyle = "#f4a6ae"; ell(t + .6, F - 2.3, .7, .7); g.fill(); g.fillStyle = "#2b1d14"; ell(t + 1.7, F - 1.1, .22, .22); g.fill();
+    g.fillStyle = "#e57f8f"; ell(t + 2.8, F - .3, .25, .25); g.fill();
   }
   $("liv-cibo").style.width = Math.round(CU.cibo) + "%"; $("liv-acqua").style.width = Math.round(CU.acqua) + "%";
 }
@@ -282,7 +276,7 @@ function avviaGatto() {
   $("gatto-strato").hidden = !acceso;
   if (!acceso || avviaGatto.fatto) return;
   avviaGatto.fatto = true;
-  var c = $("gatto"); c.width = G.W; c.height = G.H; c.style.width = G.W * G.S + "px"; c.style.height = G.H * G.S + "px";
+  var c = $("gatto"); c.width = Math.round(G.W * G.S * DPR); c.height = Math.round(G.H * G.S * DPR); c.style.width = G.W * G.S + "px"; c.style.height = G.H * G.S + "px";
   G.x = innerWidth * 0.6; G.y = innerHeight * 0.75; nuovaMeta(); G.fino = Date.now() + 2000;
   avviaPresa();
   if ($("pagine")) $("pagine").addEventListener("scroll", function () {   // scorrendo le pagine il gatto nella cuccia scorre con lei
