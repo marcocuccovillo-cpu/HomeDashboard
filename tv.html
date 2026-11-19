@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<title>Home2Love · Guida TV</title>
+<link rel="manifest" href="tv.webmanifest">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guida TV">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Home2Love — Guida TV del digitale terrestre, per uno schermo accanto alla TV.
+     I dati arrivano da palinsesto.json (ramo "palinsesto"), che GitHub aggiorna ogni 6 ore da Sky Guida TV
+     (strumenti/palinsesto.py). Si scelgono i canali che interessano (⚙), salvati su questo dispositivo.
+     Niente password: il palinsesto è pubblico. Scritto per funzionare anche su Safari vecchi (iPad). */
+  :root { --ink: #f3f5fa; --muted: rgba(243,245,250,.58); --line: rgba(255,255,255,.1); --card: rgba(255,255,255,.06); --accent: #ff5468; --oro: #ffcf5a; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0f1117; color: var(--ink); font-family: Outfit, -apple-system, system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
+  #scena { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; overflow: hidden; -webkit-transform-origin: 0 0; transform-origin: 0 0;
+           background: radial-gradient(120% 90% at 20% 0%, #23263a 0%, #12141d 55%, #0b0c12 100%); display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
+  /* barra in alto */
+  #testa { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 2.6vmin 3vmin 1.6vmin; -webkit-flex: none; flex: none; }
+  #titolo { font-size: 3.6vmin; font-weight: 700; margin-right: 2.4vmin; white-space: nowrap; } #titolo span { color: var(--accent); }
+  #ora { font-size: 3.6vmin; font-weight: 300; color: var(--muted); margin-right: auto; white-space: nowrap; }
+  .seg { display: -webkit-flex; display: flex; background: rgba(255,255,255,.07); border-radius: 2vmin; padding: .5vmin; margin-right: 1.6vmin; }
+  .seg button { border: 0; background: none; color: var(--muted); font: inherit; font-size: 2.5vmin; padding: 1.1vmin 2.2vmin; border-radius: 1.6vmin; cursor: pointer; white-space: nowrap; }
+  .seg button.sel { background: var(--ink); color: #12141d; font-weight: 600; }
+  body.vert #testa { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+  body.vert .seg { -webkit-order: 3; order: 3; width: 100%; margin: 1.6vmin 0 0; } body.vert .seg button { -webkit-flex: 1; flex: 1; font-size: 3vmin; }
+  .tondo { border: 0; width: 6.4vmin; height: 6.4vmin; border-radius: 50%; background: rgba(255,255,255,.08); color: var(--ink); font-size: 3vmin; cursor: pointer; margin-left: 1vmin; -webkit-flex: none; flex: none; }
+  /* elenco dei canali */
+  #lista { -webkit-flex: 1; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: .6vmin 3vmin 3vmin; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-content: flex-start; align-content: flex-start; }
+  .can { width: 100%; display: -webkit-flex; display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 2.2vmin; padding: 1.6vmin 2vmin; margin-bottom: 1.4vmin; }
+  body.oriz .can { width: calc(50% - .7vmin); } body.oriz .can:nth-child(odd) { margin-right: 1.4vmin; }
+  .num { -webkit-flex: none; flex: none; width: 9vmin; text-align: center; margin-right: 2vmin; }
+  .num b { display: block; font-size: 5vmin; font-weight: 700; line-height: 1; }
+  .num small { display: block; font-size: 1.8vmin; color: var(--muted); margin-top: .6vmin; line-height: 1.15; }
+  .prog { -webkit-flex: 1; flex: 1; min-width: 0; }
+  .prog .t { font-size: 3vmin; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prog .h { font-size: 2.2vmin; color: var(--muted); margin-top: .4vmin; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prog .h i { font-style: normal; color: var(--oro); }
+  .prog .barra { height: .7vmin; min-height: 3px; border-radius: 1vmin; background: rgba(255,255,255,.12); margin: 1vmin 0 .8vmin; overflow: hidden; }
+  .prog .barra span { display: block; height: 100%; background: var(--accent); border-radius: 1vmin; }
+  .prog .dopo { font-size: 2.2vmin; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prog .dopo b { color: var(--ink); font-weight: 400; }
+  .prog .d { font-size: 2.1vmin; color: var(--muted); margin-top: .6vmin; line-height: 1.35; max-height: 5.7vmin; overflow: hidden; }
+  .vuoto { width: 100%; text-align: center; color: var(--muted); font-size: 3vmin; padding: 10vmin 4vmin; }
+  #agg { font-size: 1.8vmin; color: var(--muted); padding: 0 3vmin 1.6vmin; -webkit-flex: none; flex: none; }
+  /* scelta dei canali */
+  #scelta { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,6,10,.82); z-index: 10; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+  #scelta .box { width: 92%; max-width: 900px; max-height: 88%; background: #1a1d29; border-radius: 3vmin; padding: 3vmin; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
+  #scelta h2 { margin: 0 0 .6vmin; font-size: 3.4vmin; } #scelta p { margin: 0 0 2vmin; color: var(--muted); font-size: 2.2vmin; }
+  #scelta .tutti { overflow-y: auto; -webkit-overflow-scrolling: touch; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-flex: 1; flex: 1; }
+  #scelta label { width: 50%; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; font-size: 2.6vmin; padding: 1vmin .6vmin; cursor: pointer; }
+  #scelta input { width: 3vmin; height: 3vmin; margin-right: 1.4vmin; accent-color: var(--accent); }
+  #scelta label b { color: var(--muted); font-weight: 400; margin-right: 1vmin; min-width: 4vmin; display: inline-block; }
+  #scelta .azioni { display: -webkit-flex; display: flex; margin-top: 2vmin; }
+  #scelta .azioni button { -webkit-flex: 1; flex: 1; border: 0; border-radius: 1.6vmin; padding: 1.8vmin; font: inherit; font-size: 2.6vmin; cursor: pointer; margin-left: 1.4vmin; background: rgba(255,255,255,.1); color: var(--ink); }
+  #scelta .azioni button:first-child { margin-left: 0; } #scelta .azioni .ok { background: var(--accent); color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="scena">
+  <div id="testa">
+    <div id="titolo">Guida <span>TV</span></div>
+    <div id="ora"></div>
+    <div class="seg" id="vista"><button type="button" data-v="adesso">Adesso</button><button type="button" data-v="stasera">Stasera</button><button type="button" data-v="domani">Domani sera</button></div>
+    <button class="tondo" id="b-canali" type="button" aria-label="Scegli i canali">⚙</button>
+    <button class="tondo" id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
+  </div>
+  <div id="lista"><div class="vuoto">Carico il palinsesto…</div></div>
+  <div id="agg"></div>
+  <div id="scelta" hidden><div class="box">
+    <h2>I tuoi canali</h2><p>Scegli quelli che vuoi vedere qui. La scelta resta su questo dispositivo.</p>
+    <div class="tutti" id="tutti"></div>
+    <div class="azioni"><button type="button" id="sc-tutti">Tutti</button><button type="button" id="sc-nessuno">Nessuno</button><button type="button" class="ok" id="sc-ok">Fatto</button></div>
+  </div></div>
+</div>
+
+<script>
+var FONTE = "https://raw.githubusercontent.com/marcocuccovillo-cpu/HomeDashboard/palinsesto/palinsesto.json";
+var GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+var PREDEFINITI = [1, 2, 3, 4, 5, 6, 7, 8, 20, 21, 22, 24, 26, 34];
+function $(id) { return document.getElementById(id); }
+function due(n) { return (n < 10 ? "0" : "") + n; }
+function hm(t) { var d = new Date(t); return d.getHours() + ":" + due(d.getMinutes()); }
+function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
+function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function sicuro(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+
+var P = null, vista = leggi("tv_vista", "adesso"), scelti = leggi("tv_canali", PREDEFINITI);
+
+// ================= dati =================
+function carica() {
+  fetch(FONTE + "?t=" + Math.floor(Date.now() / 600000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (j) { P = j; salva("tv_copia", j); disegna(); }, function () { if (!P) { P = leggi("tv_copia", null); disegna(); } });
+}
+
+// ================= viste =================
+function inOnda(c, t) { for (var i = 0; i < c.programmi.length; i++) { var p = c.programmi[i]; if (p.i <= t && p.f > t) return i; } return -1; }
+function primaSerata(c, giorno) {   // il programma di prima serata: il primo che inizia tra le 20:50 e le 22, altrimenti quello in onda alle 21:30
+  var d = new Date(); d.setDate(d.getDate() + giorno);
+  var da = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 20, 50).getTime(), a = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 22, 0).getTime();
+  var l = c.programmi.filter(function (p) { return p.i >= da && p.i < a && p.f - p.i >= 25 * 60000; });
+  if (l.length) return l[0];
+  var x = inOnda(c, new Date(d.getFullYear(), d.getMonth(), d.getDate(), 21, 30).getTime());
+  return x >= 0 ? c.programmi[x] : null;
+}
+function riga(c, html) { return '<div class="can"><div class="num"><b>' + c.lcn + '</b><small>' + sicuro(c.nome) + '</small></div><div class="prog">' + html + '</div></div>'; }
+function disegna() {
+  var d = new Date();
+  $("ora").textContent = d.getHours() + ":" + due(d.getMinutes()) + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()];
+  [].forEach.call($("vista").children, function (b) { b.className = b.getAttribute("data-v") === vista ? "sel" : ""; });
+  if (!P || !P.canali) { $("lista").innerHTML = '<div class="vuoto">' + (P === null ? "Carico il palinsesto…" : "Il palinsesto non è ancora pronto: si aggiorna da solo ogni 6 ore.") + '</div>'; return; }
+  var canali = P.canali.filter(function (c) { return scelti.indexOf(c.lcn) >= 0; }), html = "", ora = Date.now();
+  if (!canali.length) { $("lista").innerHTML = '<div class="vuoto">Nessun canale scelto: tocca ⚙ per sceglierli.</div>'; return; }
+  canali.forEach(function (c) {
+    if (vista === "adesso") {
+      var i = inOnda(c, ora), p = c.programmi[i], dopo = c.programmi[i + 1];
+      if (!p) { html += riga(c, '<div class="t" style="color:var(--muted)">Palinsesto non disponibile</div>'); return; }
+      var pct = Math.max(0, Math.min(100, (ora - p.i) / (p.f - p.i) * 100)), resta = Math.round((p.f - ora) / 60000);
+      html += riga(c, '<div class="t">' + sicuro(p.t) + '</div><div class="h">' + hm(p.i) + " – " + hm(p.f) + (p.g ? " · " + sicuro(p.g) : "") + ' · <i>' + (resta < 60 ? "ancora " + resta + " min" : "fino alle " + hm(p.f)) + '</i></div>' +
+        '<div class="barra"><span style="width:' + pct.toFixed(1) + '%"></span></div>' + (dopo ? '<div class="dopo">Dopo · ' + hm(dopo.i) + ' <b>' + sicuro(dopo.t) + '</b></div>' : ""));
+    } else {
+      var q = primaSerata(c, vista === "domani" ? 1 : 0);
+      if (!q) { html += riga(c, '<div class="t" style="color:var(--muted)">Non ancora in palinsesto</div>'); return; }
+      html += riga(c, '<div class="t">' + sicuro(q.t) + '</div><div class="h"><i>' + hm(q.i) + '</i> – ' + hm(q.f) + (q.g ? " · " + sicuro(q.g) : "") + '</div>' + (q.d ? '<div class="d">' + sicuro(q.d) + '</div>' : ""));
+    }
+  });
+  $("lista").innerHTML = html;
+  $("agg").textContent = "Palinsesto di " + (P.fonte || "Sky Guida TV") + " · aggiornato alle " + hm(P.aggiornato) + (new Date(P.aggiornato).getDate() !== d.getDate() ? " di ieri" : "");
+}
+$("vista").onclick = function (e) { var b = e.target.closest ? e.target.closest("button") : e.target; if (!b || !b.getAttribute("data-v")) return; vista = b.getAttribute("data-v"); salva("tv_vista", vista); $("lista").scrollTop = 0; disegna(); };
+
+// ================= scelta dei canali =================
+$("b-canali").onclick = function (e) {
+  e.stopPropagation();
+  var l = P && P.canali ? P.canali : [];
+  $("tutti").innerHTML = l.map(function (c) { return '<label><input type="checkbox" value="' + c.lcn + '"' + (scelti.indexOf(c.lcn) >= 0 ? " checked" : "") + '><b>' + c.lcn + '</b>' + sicuro(c.nome) + '</label>'; }).join("") || '<p>Il palinsesto non è ancora arrivato.</p>';
+  $("scelta").hidden = false;
+};
+function spunta(v) { [].forEach.call($("tutti").getElementsByTagName("input"), function (x) { x.checked = v; }); }
+$("sc-tutti").onclick = function () { spunta(true); };
+$("sc-nessuno").onclick = function () { spunta(false); };
+$("sc-ok").onclick = function () {
+  scelti = [].filter.call($("tutti").getElementsByTagName("input"), function (x) { return x.checked; }).map(function (x) { return +x.value; });
+  salva("tv_canali", scelti); $("scelta").hidden = true; disegna();
+};
+
+// ================= girare lo schermo (anche con la rotazione automatica spenta) =================
+var verso = leggi("tv_verso", "auto");
+function applicaVerso() {
+  var sc = $("scena"), w = innerWidth, h = innerHeight, giro = 0;
+  if ((verso === "dx" || verso === "sx") && h > w) giro = verso === "dx" ? 90 : -90;
+  if (verso === "vert" && w > h) giro = 90;
+  var tr = giro ? (giro > 0 ? "translateX(" + w + "px) rotate(90deg)" : "translateY(" + h + "px) rotate(-90deg)") : "";
+  sc.style.width = (giro ? h : w) + "px"; sc.style.height = (giro ? w : h) + "px"; sc.style.webkitTransform = tr; sc.style.transform = tr;
+  document.body.className = (giro ? h : w) > (giro ? w : h) ? "oriz" : "vert";
+  $("b-ruota").textContent = { auto: "⟳", dx: "▭", sx: "▭", vert: "▯" }[verso];
+}
+$("b-ruota").onclick = function (e) { e.stopPropagation(); var l = ["auto", "dx", "sx", "vert"]; verso = l[(l.indexOf(verso) + 1) % l.length]; salva("tv_verso", verso); applicaVerso(); };
+window.addEventListener("resize", applicaVerso);
+
+// ================= schermo sempre acceso, tutto schermo =================
+function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+document.addEventListener("visibilitychange", function () { tieniAcceso(); if (document.visibilityState === "visible") carica(); });
+document.addEventListener("click", function () { var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {}); });
+
+applicaVerso(); P = leggi("tv_copia", null); disegna(); carica(); tieniAcceso();
+setInterval(disegna, 30000);
+setInterval(carica, 30 * 60000);
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
