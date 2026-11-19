@@ -1,0 +1,24 @@
+# Home2Love — aggiorna il palinsesto TV ogni 6 ore e lo mette nel ramo "palinsesto"
+# (un solo file, palinsesto.json, letto da tv.html). Così il ramo principale non si riempie di salvataggi.
+name: Palinsesto TV
+on:
+  schedule:
+    - cron: "23 3,9,15,21 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scarica il palinsesto
+        run: python3 strumenti/palinsesto.py /tmp/palinsesto.json
+      - name: Pubblica nel ramo palinsesto
+        run: |
+          mkdir /tmp/ramo && cd /tmp/ramo
+          git init -q -b palinsesto
+          cp /tmp/palinsesto.json .
+          git add palinsesto.json
+          git -c user.name="palinsesto" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Palinsesto TV $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" palinsesto
