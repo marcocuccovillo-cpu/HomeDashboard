@@ -541,6 +541,10 @@
   .campo-imp > input { width: 100%; box-sizing: border-box; }
   .campo-imp .riga { margin: 0; flex-wrap: nowrap; }
   .cmd input { flex: 1; font-family: ui-monospace, "Roboto Mono", Menlo, monospace; font-size: 1.8vh !important; color: var(--muted) !important; }
+  .imp-gruppo { font-size: 2.6vh; font-weight: 700; margin: 3.4vh 0 .6vh; padding-top: 2vh; border-top: 1px solid var(--line); color: var(--ink); }
+  #impostazioni .dentro > .imp-gruppo:first-of-type { border-top: 0; margin-top: 1vh; padding-top: 0; }
+  .imp-avanzate summary { cursor: pointer; list-style: none; } .imp-avanzate summary::-webkit-details-marker { display: none; }
+  .imp-avanzate summary::after { content: " ▾"; color: var(--muted); } .imp-avanzate[open] summary::after { content: " ▴"; }
   .nota-txt { font-size: 1.85vh; color: var(--muted); margin: 4px 0 8px; line-height: 1.4; }
   .btn-rosso { color: #b4412f; border-color: #e5b7ad; }
   .scuro #en-testo.giallo { background: #fbe38b; } .scuro #en-testo.rosa { background: #f7c4cf; } .scuro #en-testo.verde { background: #c9e5ad; }
@@ -833,6 +837,7 @@
   <div class="dentro">
     <button class="btn-piccolo chiudi">Chiudi</button>
 
+    <h2 class="imp-gruppo">💞 Voi due</h2>
     <h3>Nomi</h3>
     <div class="riga">
       <input type="text" autocomplete="off" name="x-nome0" id="nome0" placeholder="Persona 1">
@@ -846,6 +851,59 @@
     </div>
     <div class="nota-txt">I turni si ripetono ogni due settimane (A e B si alternano). Per cambiarli tocca direttamente le caselle della griglia.</div>
 
+    <h2 class="imp-gruppo">🏠 Casa</h2>
+    <h3>Casa → lavoro</h3>
+    <div class="campo-imp"><label>Indirizzo di casa</label><input type="text" autocomplete="off" name="x-tr-casa" id="tr-casa" placeholder="es. Via Indipendenza 10, Bologna"></div>
+    <div class="campo-imp"><label id="tr-lab0">Lavoro</label>
+      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav0" id="tr-lav0" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz0"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+    <div class="campo-imp"><label id="tr-lab1">Lavoro</label>
+      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav1" id="tr-lav1" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz1"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
+    <div class="campo-imp"><label>Chiave TomTom per il traffico in tempo reale (facoltativa)</label><input type="text" id="tr-chiave" placeholder="incolla qui la chiave" autocomplete="off"></div>
+    <div class="riga"><button class="btn-piccolo" id="tr-salva">Salva e trova gli indirizzi</button><span class="stato" id="tr-stato"></span></div>
+    <div class="nota-txt">Senza chiave i tempi sono calcolati con OpenStreetMap, senza traffico. Per il traffico dal vivo create un account gratuito su <a href="https://developer.tomtom.com" target="_blank" rel="noopener" style="color:var(--accent)">developer.tomtom.com</a> e copiate qui la chiave «API key»: il piano gratuito basta e avanza. Indirizzi e chiave sono cifrati come i turni.</div>
+
+    <h3>Bus sotto casa</h3>
+    <div class="campo-imp"><label>Numeri delle fermate TPER (fino a 3, separati da virgola: sono scritti sulla palina)</label>
+      <div class="riga"><input type="text" autocomplete="off" name="x-bus-codici" id="bus-codici" placeholder="es. 3105, 3106" style="flex:1"><button class="btn-piccolo" type="button" id="bus-cerca">Cerca vicino a casa</button></div></div>
+    <div class="riga" id="bus-vicine"></div>
+    <div class="campo-imp"><label>Solo queste linee (facoltativo)</label><input type="text" autocomplete="off" name="x-bus-linee" id="bus-linee" placeholder="es. 27, 11 — vuoto per tutte"></div>
+    <div class="riga"><button class="btn-piccolo" id="bus-salva">Salva fermate</button><span class="stato" id="bus-stato"></span></div>
+    <div class="nota-txt">Gli orari arrivano da HelloBus di TPER passando per il lettore in Termux: dopo questo aggiornamento fate ripartire il lettore con il comando «Aggiorna e fai ripartire il lettore» (in Avanzate, qui in fondo).</div>
+
+    <h3>Foto</h3>
+    <div class="riga">
+      <label class="btn-pieno" style="color:#fff">Aggiungi foto
+        <input type="file" id="foto-input" accept="image/*" multiple style="display:none">
+      </label>
+      <button class="btn-piccolo" id="foto-svuota">Elimina tutte</button>
+      <label id="foto-conta"></label>
+    </div>
+    <div class="riga">
+      <label>Cambia foto ogni</label>
+      <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
+    </div>
+    <div class="nota-txt">Le foto girano nel riquadro a destra. Se il tablet è collegato, si possono caricare anche dal telefono e arrivano qui da sole.</div>
+    <h3>Gatto di casa</h3>
+    <div class="riga">
+      <label>Mostra il gatto</label>
+      <div class="seg" id="seg-gatto"><button data-v="si">Sì</button><button data-v="no">No</button></div>
+    </div>
+
+    <h2 class="imp-gruppo">📱 Questo tablet</h2>
+    <h3>Schermo</h3>
+    <div class="riga">
+      <label>Tieni lo schermo sempre acceso</label>
+      <div class="seg" id="seg-schermo"><button data-v="si">Sì</button><button data-v="no">No</button></div>
+      <span class="stato" id="stato-schermo"></span>
+    </div>
+
+    <h3>Aggiornamenti</h3>
+    <div class="riga">
+      <label>Versione <b id="versione-app"></b></label>
+      <button class="btn-piccolo" id="forza-agg">Scarica di nuovo tutto</button>
+    </div>
+
+    <details class="imp-avanzate"><summary class="imp-gruppo">⚙️ Avanzate · password, codice GitHub e Termux</summary>
     <h3>Password e condivisione</h3>
     <div class="nota-txt">Turni, nomi, promemoria, foto e dispositivi sono cifrati con la password di casa e condivisi tra tablet e telefoni tramite GitHub. Per aggiungere un dispositivo basta aprire la dashboard e scrivere la password.</div>
     <div class="riga"><span class="stato" id="sync-stato"></span></div>
@@ -866,73 +924,24 @@
     <div class="cmd"><label>Ultime righe del registro</label><div class="riga"><input type="text" readonly value="tail -n 20 ~/homedashboard/registro.txt"><button class="btn-piccolo" type="button">Copia</button></div></div>
     <div class="cmd"><label>Diagnosi (se qualcosa non va)</label><div class="riga"><input type="text" readonly value="python ~/homedashboard/dispositivi.py --diagnosi"><button class="btn-piccolo" type="button">Copia</button></div></div>
 
-    <h3>Casa → lavoro</h3>
-    <div class="campo-imp"><label>Indirizzo di casa</label><input type="text" autocomplete="off" name="x-tr-casa" id="tr-casa" placeholder="es. Via Indipendenza 10, Bologna"></div>
-    <div class="campo-imp"><label id="tr-lab0">Lavoro</label>
-      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav0" id="tr-lav0" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz0"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
-    <div class="campo-imp"><label id="tr-lab1">Lavoro</label>
-      <div class="riga"><input type="text" autocomplete="off" name="x-tr-lav1" id="tr-lav1" placeholder="Indirizzo del lavoro" style="flex:1"><div class="seg" id="tr-mz1"><button data-v="auto">🚗 Auto</button><button data-v="bici">🚲 Bici</button></div></div></div>
-    <div class="campo-imp"><label>Chiave TomTom per il traffico in tempo reale (facoltativa)</label><input type="text" id="tr-chiave" placeholder="incolla qui la chiave" autocomplete="off"></div>
-    <div class="riga"><button class="btn-piccolo" id="tr-salva">Salva e trova gli indirizzi</button><span class="stato" id="tr-stato"></span></div>
-    <div class="nota-txt">Senza chiave i tempi sono calcolati con OpenStreetMap, senza traffico. Per il traffico dal vivo create un account gratuito su <a href="https://developer.tomtom.com" target="_blank" rel="noopener" style="color:var(--accent)">developer.tomtom.com</a> e copiate qui la chiave «API key»: il piano gratuito basta e avanza. Indirizzi e chiave sono cifrati come i turni.</div>
-
-    <h3>Bus sotto casa</h3>
-    <div class="campo-imp"><label>Numeri delle fermate TPER (fino a 3, separati da virgola: sono scritti sulla palina)</label>
-      <div class="riga"><input type="text" autocomplete="off" name="x-bus-codici" id="bus-codici" placeholder="es. 3105, 3106" style="flex:1"><button class="btn-piccolo" type="button" id="bus-cerca">Cerca vicino a casa</button></div></div>
-    <div class="riga" id="bus-vicine"></div>
-    <div class="campo-imp"><label>Solo queste linee (facoltativo)</label><input type="text" autocomplete="off" name="x-bus-linee" id="bus-linee" placeholder="es. 27, 11 — vuoto per tutte"></div>
-    <div class="riga"><button class="btn-piccolo" id="bus-salva">Salva fermate</button><span class="stato" id="bus-stato"></span></div>
-    <div class="nota-txt">Gli orari arrivano da HelloBus di TPER passando per il lettore in Termux: dopo questo aggiornamento fate ripartire il lettore con il comando «Aggiorna e fai ripartire il lettore» qui sopra.</div>
-
-    <h3>Gatto di casa</h3>
-    <div class="riga">
-      <label>Mostra il gatto</label>
-      <div class="seg" id="seg-gatto"><button data-v="si">Sì</button><button data-v="no">No</button></div>
-    </div>
-
-    <h3>Aggiornamenti</h3>
-    <div class="riga">
-      <label>Versione <b id="versione-app"></b></label>
-      <button class="btn-piccolo" id="forza-agg">Scarica di nuovo tutto</button>
-    </div>
-
-    <h3>Schermo</h3>
-    <div class="riga">
-      <label>Tieni lo schermo sempre acceso</label>
-      <div class="seg" id="seg-schermo"><button data-v="si">Sì</button><button data-v="no">No</button></div>
-      <span class="stato" id="stato-schermo"></span>
-    </div>
-
-    <h3>Foto</h3>
-    <div class="riga">
-      <label class="btn-pieno" style="color:#fff">Aggiungi foto
-        <input type="file" id="foto-input" accept="image/*" multiple style="display:none">
-      </label>
-      <button class="btn-piccolo" id="foto-svuota">Elimina tutte</button>
-      <label id="foto-conta"></label>
-    </div>
-    <div class="riga">
-      <label>Cambia foto ogni</label>
-      <input type="number" id="foto-ogni" min="3" max="600" style="width:10vh"> <label>secondi</label>
-    </div>
-    <div class="nota-txt">Le foto girano nel riquadro a destra. Se il tablet è collegato, si possono caricare anche dal telefono e arrivano qui da sole.</div>
+    </details>
   </div>
 </div>
 
-<script src="comune.js?v=77"></script>
-<script src="rete.js?v=77"></script>
-<script src="radio.js?v=77"></script>
-<script src="forza4.js?v=77"></script>
+<script src="comune.js?v=78"></script>
+<script src="rete.js?v=78"></script>
+<script src="radio.js?v=78"></script>
+<script src="forza4.js?v=78"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=77"></script>
-<script src="bus.js?v=77"></script>
-<script src="spesa.js?v=77"></script>
-<script src="giochi.js?v=77"></script>
-<script src="calendario.js?v=77"></script>
-<script src="compleanni.js?v=77"></script>
-<script src="suoni.js?v=77"></script>
-<script src="telecomando.js?v=77"></script>
-<script src="gatto.js?v=77"></script>
+<script src="tragitti.js?v=78"></script>
+<script src="bus.js?v=78"></script>
+<script src="spesa.js?v=78"></script>
+<script src="giochi.js?v=78"></script>
+<script src="calendario.js?v=78"></script>
+<script src="compleanni.js?v=78"></script>
+<script src="suoni.js?v=78"></script>
+<script src="telecomando.js?v=78"></script>
+<script src="gatto.js?v=78"></script>
 <script>
 
 // ================= orologio =================
@@ -1592,7 +1601,7 @@ function aggiornaPunti() {
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
   window.paginaDove = i === 4;   // la pagina 5 si anima solo quando si vede
-  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=77";
+  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=78";
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });

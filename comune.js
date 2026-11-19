@@ -162,7 +162,7 @@ function piatto() {   // tutti i dati condivisi come elenco chiave → valore
     if (typeof n.x === "number") { v.x = n.x; v.y = n.y; }   // dove è attaccato sul tablet
     f["nota." + n.id] = v;
   });
-  spesa.forEach(function (v, i) { f["spesa." + v.id] = { testo: v.testo, fatto: !!v.fatto, pos: i }; });
+  spesa.forEach(function (v, i) { var x = { testo: v.testo, fatto: !!v.fatto, pos: i }; if (v.negozio) x.negozio = v.negozio; f["spesa." + v.id] = x; });   // il negozio va con il prodotto
   viaggi.forEach(function (v) { f["viaggio." + v.id] = { nome: v.nome, paese: v.paese || "", lat: v.lat, lon: v.lon, stato: v.stato, data: v.data || "" }; });
   if (cfg.forza4) f["gioco.forza4"] = cfg.forza4;
   if (cfg.tris) f["gioco.tris"] = cfg.tris;
@@ -251,12 +251,12 @@ function applica() {   // ricostruisce turni, nomi, note e spesa dal registro
     var e = val(k); if (!e) return;
     if (k.indexOf("ecc.") === 0) cfg.eccezioni[k.slice(4)] = e.v;
     else if (k.indexOf("nota.") === 0) nn.push({ id: +k.slice(5), testo: e.v.testo, colore: e.v.colore, pos: e.v.pos, x: e.v.x, y: e.v.y });
-    else if (k.indexOf("spesa.") === 0) ss.push({ id: +k.slice(6), testo: e.v.testo, fatto: e.v.fatto, pos: e.v.pos });
+    else if (k.indexOf("spesa.") === 0) ss.push({ id: +k.slice(6), testo: e.v.testo, fatto: e.v.fatto, pos: e.v.pos, negozio: e.v.negozio });
     else if (k.indexOf("viaggio.") === 0) { var v = e.v; v.id = +k.slice(8); vv.push(v); }
   });
   function ordina(a, b) { return a.pos - b.pos || a.id - b.id; }
   note = nn.sort(ordina).map(function (n) { var o = { id: n.id, testo: n.testo, colore: n.colore }; if (typeof n.x === "number") { o.x = n.x; o.y = n.y; } return o; });
-  spesa = ss.sort(ordina).map(function (v) { return { id: v.id, testo: v.testo, fatto: v.fatto }; });
+  spesa = ss.sort(ordina).map(function (v) { var o = { id: v.id, testo: v.testo, fatto: v.fatto }; if (v.negozio) o.negozio = v.negozio; return o; });
   regPronto = false;   // salvataggi senza registrare: sono già nel registro
   viaggi = vv.sort(function (a, b) { return a.id - b.id; });
   salvaCfg(); salva("cucina_note", note); salva("cucina_spesa", spesa); salva("cucina_viaggi", viaggi);

@@ -202,6 +202,12 @@
             padding: 24px 18px calc(18px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; }
   .foglio::before { content: ""; position: absolute; top: 9px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: var(--line); }
   .foglio h3 { margin: 0 0 12px; font-size: 18px; font-weight: 700; }
+  .imp-sez { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+  .imp-riga { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 15px; }
+  .imp-riga .seg { margin: 0; flex: none; } .imp-riga .seg button { padding: 7px 14px; }
+  .imp-link { display: block; text-decoration: none; color: var(--ink); background: var(--soft); border-radius: 14px; padding: 10px 12px; margin-bottom: 6px; }
+  .imp-link b { display: block; font-size: 15px; } .imp-link small { color: var(--muted); font-size: 12.5px; }
+  .imp-avanzate summary { cursor: pointer; font-size: 13.5px; color: var(--muted); padding: 6px 0; }
   .foglio input[type=text], .foglio textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
             background: var(--bg); color: var(--ink); outline: none; font-size: 17px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -719,32 +725,39 @@
 <!-- impostazioni / collegamento -->
 <div class="velo" id="ed-imp">
   <div class="foglio">
-    <h3>Collegamento</h3>
+    <h3>Impostazioni</h3>
+    <div class="imp-sez">Questo telefono</div>
+    <div class="imp-riga"><span>Lo usa</span><div class="seg" id="imp-chi"><button type="button" data-v="0"></button><button type="button" data-v="1"></button></div></div>
+    <div class="imp-riga"><span>Il gatto passa a trovarti</span><div class="seg" id="imp-gatto"><button type="button" data-v="si">Sì</button><button type="button" data-v="no">No</button></div></div>
+    <div class="imp-riga"><span>Versione <b id="imp-versione"></b></span><button type="button" class="btn" id="imp-agg">Scarica di nuovo tutto</button></div>
+    <div class="imp-sez">Altre pagine</div>
+    <a class="imp-link" href="dove.html" target="_blank" rel="noopener"><b>🕰️ Casa · «Dove siete?»</b><small>Il cielo di Bologna e l'orologio con le vostre lancette, da appendere</small></a>
+    <a class="imp-link" href="comodino.html" target="_blank" rel="noopener"><b>🌙 Comodino</b><small>Orologio e sveglia dai turni, per un telefono sul comodino</small></a>
+    <a class="imp-link" href="index.html?completa"><b>🖥️ Dashboard completa</b><small>Quella del tablet, anche qui</small></a>
+    <div class="imp-sez">Collegamento</div>
     <p class="nota-txt" id="imp-stato"></p>
-    <p class="nota-txt"><a href="index.html?completa" style="color:var(--accent)">Apri la dashboard completa (quella del tablet)</a></p>
-    <p class="nota-txt"><a href="comodino.html" target="_blank" rel="noopener" style="color:var(--accent)">Apri la versione comodino (per un telefono sul comodino)</a></p>
-    <p class="nota-txt"><a href="dove.html" target="_blank" rel="noopener" style="color:var(--accent)">Apri «Casa» (il cielo di Bologna e l'orologio «Dove siete?», da appendere)</a></p>
-    <div class="campo" style="margin-top:14px"><label>Nuovo codice GitHub (solo se l'avete rigenerato)</label>
-      <div class="riga2"><input type="text" id="imp-codice" placeholder="github_pat_…" autocomplete="off" style="flex:1"><button type="button" class="btn" id="imp-salva-codice">Salva</button></div></div>
+    <details class="imp-avanzate"><summary>Nuovo codice GitHub (solo se l'avete rigenerato)</summary>
+      <div class="riga2" style="margin-top:8px"><input type="text" id="imp-codice" placeholder="github_pat_…" autocomplete="off" style="flex:1"><button type="button" class="btn" id="imp-salva-codice">Salva</button></div></details>
     <div class="azioni"><button type="button" class="btn rosso sx" id="imp-esci">Esci</button><button type="button" class="btn" id="imp-sync">Aggiorna ora</button><button type="button" class="btn pieno chiudi">Chiudi</button></div>
   </div>
 </div>
 
-<script src="comune.js?v=77"></script>
-<script src="forza4.js?v=77"></script>
-<script src="giochi.js?v=77"></script>
-<script src="rete.js?v=77"></script>
-<script src="tragitti.js?v=77"></script>
-<script src="suoni.js?v=77"></script>
-<script src="telecomando.js?v=77"></script>
-<script src="spesa.js?v=77"></script>
-<script src="coppia.js?v=77"></script>
-<script src="occhiata.js?v=77"></script>
-<script src="chatplus.js?v=77"></script>
-<script src="giochi2.js?v=77"></script>
-<script src="scacchi.js?v=77"></script>
-<script src="eroefoto.js?v=77"></script>
-<script src="compleanni.js?v=77"></script>
+<script src="comune.js?v=78"></script>
+<script src="forza4.js?v=78"></script>
+<script src="giochi.js?v=78"></script>
+<script src="rete.js?v=78"></script>
+<script src="tragitti.js?v=78"></script>
+<script src="suoni.js?v=78"></script>
+<script src="telecomando.js?v=78"></script>
+<script src="spesa.js?v=78"></script>
+<script src="coppia.js?v=78"></script>
+<script src="occhiata.js?v=78"></script>
+<script src="chatplus.js?v=78"></script>
+<script src="giochi2.js?v=78"></script>
+<script src="scacchi.js?v=78"></script>
+<script src="eroefoto.js?v=78"></script>
+<script src="compleanni.js?v=78"></script>
+<script src="gattino.js?v=78"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -1530,7 +1543,31 @@ function mostraStatoSync() {
   s.className = ultimaSync ? "ok" : ""; s.textContent = ultimaSync ? "Aggiornato " + ora : "Collego…";
   $("imp-stato").textContent = ultimaSync ? "Cifrata e sincronizzata ✓ · ultimo aggiornamento alle " + ora + "." : "Sincronizzo…";
 }
-$("apri-imp").onclick = function () { mostraStatoSync(); apri("ed-imp"); };
+$("apri-imp").onclick = function () {
+  mostraStatoSync();
+  [].forEach.call($("imp-chi").children, function (b) { var p = +b.getAttribute("data-v"); b.textContent = (cfg.nomi[p] || "").split(" ")[0]; b.classList.toggle("sel", io === p); });
+  seg("imp-gatto", GATTINO.attivo() ? "si" : "no");
+  var m = /\?v=(\d+)/.exec((document.querySelector('script[src*="comune.js"]') || {}).src || ""); $("imp-versione").textContent = m ? m[1] : "?";
+  apri("ed-imp");
+};
+$("imp-gatto").onclick = function (e) {
+  var b = e.target.closest("button"); if (!b) return; var si = b.getAttribute("data-v") === "si";
+  try { localStorage.setItem("gattino_si", JSON.stringify(si)); } catch (x) {}
+  seg("imp-gatto", si ? "si" : "no"); if (si) GATTINO.visita(true);
+};
+$("imp-chi").onclick = function (e) {   // chi usa questo telefono (lo stesso della chat e dei giochi)
+  var b = e.target.closest("button"); if (!b) return;
+  io = +b.getAttribute("data-v"); salva("telefono_io", io);
+  [].forEach.call(this.children, function (x) { x.classList.toggle("sel", x === b); });
+  ridisegna(); disegnaChat();
+};
+$("imp-agg").onclick = function () {
+  this.textContent = "Scarico…"; this.disabled = true;
+  var via = [];
+  if ("caches" in window) via.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+  if (navigator.serviceWorker) via.push(navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }));
+  Promise.all(via).catch(function () {}).then(function () { location.replace(location.pathname + "?agg=" + Date.now()); });
+};
 $("imp-sync").onclick = function () { remoto.etag = ""; sincronizza(); };
 $("imp-salva-codice").onclick = function () {
   $("imp-stato").textContent = "Salvo il nuovo codice…";
@@ -1543,7 +1580,7 @@ function dopoSblocco() { if (window.efAggiorna) efAggiorna(true); if (scheda ===
 
 // ================= avvio =================
 function ridisegna() { disegnaApp(); ridisegnaSpesa(); contaSpesaTab(); disegnaReteTel(); disegnaTelecomando(); disegnaOggi(); disegnaTurni(); disegnaNote(); if ($("f4-griglia")) f4Disegna($("f4-griglia"), $("f4-info")); if (scheda === "giochi" && !(SN.timer) && !(window.PA && PA.gioco)) disegnaGiochi(); }
-avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote); avviaOcchiata();
+avviaGiochi(); avviaSpesa(); mostraVistaNote(vistaNote); avviaOcchiata(); GATTINO.avvia();
 mostraScheda(scheda);
 cambiaVista(vista);
 ridisegna();

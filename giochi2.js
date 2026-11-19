@@ -69,8 +69,13 @@ function bnTurno(pa, a, b) {   // chi spara adesso
   return n[i] <= n[1 - i] ? i : 1 - i;
 }
 function bnFinita(navi, colpi) { var tutte = [].concat.apply([], navi || []); return tutte.length && tutte.every(function (x) { return colpi.indexOf(x) >= 0; }); }
+function g2pulisci(prefisso, tieni) {   // toglie i dati delle partite vecchie (restano solo quelle per cui tieni() dice sì)
+  var ora = Date.now();
+  Object.keys(reg).forEach(function (k) { if (k.indexOf(prefisso) === 0 && !reg[k].d && !tieni(k)) reg[k] = { d: 1, t: ora }; });
+}
 function bnNuova(inizia) {
   if (!g2pronto()) return;
+  g2pulisci("bn.", function (k) { return /^bn\.(p|vinte\.)/.test(k); });   // le navi e i colpi delle partite finite
   g2scrivi("bn.p", { id: String(nuovoId()), inizia: inizia === undefined ? Math.round(Math.random()) : inizia, t: Date.now() });
   disegnaGiochi();
 }
@@ -252,6 +257,8 @@ function paTick() {
 function paFine() {
   var s = PA.gioco; if (!s) return; clearInterval(s.timer); PA.gioco = null;
   if (navigator.vibrate) navigator.vibrate([80, 60, 200]);
+  var limite = iso(piuGiorni(new Date(), -14));   // le sfide di più di due settimane fa
+  g2pulisci("pa.", function (k) { return k === "pa.p" || k.slice(3, 13) >= limite; });
   g2scrivi("pa." + s.id + "." + io, { punti: s.punti, parole: s.trovate, t: Date.now() });
   if (window.inviaChat) inviaChat("🔤 A Parole ho fatto " + s.punti + " punti con " + s.trovate.length + " parole. Tocca a te!");
   disegnaGiochi();
