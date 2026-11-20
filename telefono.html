@@ -514,6 +514,7 @@
   d.innerHTML = '<div style="font-size:54px">📺</div><h1 style="font-weight:600;font-size:28px;margin:10px 0">Questo dispositivo è un po’ vecchio</h1>' +
     '<p style="color:#b9bccb;margin:0 0 28px">La bacheca completa ha bisogno di un browser più recente (per i dati cifrati di casa).<br>Qui funzionano:</p>' +
     '<a href="tv.html" style="display:block;max-width:420px;margin:0 auto 14px;padding:18px;border-radius:16px;background:#ff4d5e;color:#fff;text-decoration:none;font-size:22px;font-weight:600">Guida TV 📺</a>' +
+    '<a href="divano.html" style="display:block;max-width:420px;margin:0 auto 14px;padding:18px;border-radius:16px;background:#2c2e3d;color:#fff;text-decoration:none;font-size:22px;font-weight:600">Giochi da divano 🎲</a>' +
     '<a href="gatto.html" style="display:block;max-width:420px;margin:0 auto;padding:18px;border-radius:16px;background:#2c2e3d;color:#fff;text-decoration:none;font-size:22px;font-weight:600">La stanza del gatto 🐱</a>';
   function metti() { document.body.appendChild(d); }
   if (document.body) metti(); else document.addEventListener("DOMContentLoaded", metti);
@@ -760,6 +761,7 @@
     <div class="imp-sez">Altre pagine</div>
     <a class="imp-link" href="dove.html" target="_blank" rel="noopener"><b>🕰️ Casa · «Dove siete?»</b><small>Il cielo di Bologna e l'orologio con le vostre lancette, da appendere</small></a>
     <a class="imp-link" href="gatto.html" target="_blank" rel="noopener"><b>🐱 La stanza del gatto</b><small>Per un telefono avanzato in casa: il gatto vive lì e segue quello che succede</small></a>
+    <a class="imp-link" href="divano.html" target="_blank" rel="noopener"><b>🎲 Giochi da divano</b><small>In due sullo stesso schermo, passandovi il dispositivo: va anche sull'iPad vecchio</small></a>
     <a class="imp-link" href="tv.html" target="_blank" rel="noopener"><b>📺 Guida TV</b><small>Il palinsesto del digitale terrestre con i canali che scegli, per lo schermo accanto alla TV</small></a>
     <a class="imp-link" href="comodino.html" target="_blank" rel="noopener"><b>🌙 Comodino</b><small>Orologio e sveglia dai turni, per un telefono sul comodino</small></a>
     <a class="imp-link" href="index.html?completa"><b>🖥️ Dashboard completa</b><small>Quella del tablet, anche qui</small></a>
@@ -771,23 +773,23 @@
   </div>
 </div>
 
-<script src="comune.js?v=93"></script>
-<script src="forza4.js?v=93"></script>
-<script src="giochi.js?v=93"></script>
-<script src="rete.js?v=93"></script>
-<script src="tragitti.js?v=93"></script>
-<script src="suoni.js?v=93"></script>
-<script src="telecomando.js?v=93"></script>
-<script src="spesa.js?v=93"></script>
-<script src="coppia.js?v=93"></script>
-<script src="occhiata.js?v=93"></script>
-<script src="chatplus.js?v=93"></script>
-<script src="giochi2.js?v=93"></script>
-<script src="scacchi.js?v=93"></script>
-<script src="eroefoto.js?v=93"></script>
-<script src="compleanni.js?v=93"></script>
-<script src="gattodisegno.js?v=93"></script>
-<script src="gattino.js?v=93"></script>
+<script src="comune.js?v=94"></script>
+<script src="forza4.js?v=94"></script>
+<script src="giochi.js?v=94"></script>
+<script src="rete.js?v=94"></script>
+<script src="tragitti.js?v=94"></script>
+<script src="suoni.js?v=94"></script>
+<script src="telecomando.js?v=94"></script>
+<script src="spesa.js?v=94"></script>
+<script src="coppia.js?v=94"></script>
+<script src="occhiata.js?v=94"></script>
+<script src="chatplus.js?v=94"></script>
+<script src="giochi2.js?v=94"></script>
+<script src="scacchi.js?v=94"></script>
+<script src="eroefoto.js?v=94"></script>
+<script src="compleanni.js?v=94"></script>
+<script src="gattodisegno.js?v=94"></script>
+<script src="gattino.js?v=94"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -801,7 +803,7 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=93";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=94";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");

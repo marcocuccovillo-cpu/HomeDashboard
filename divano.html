@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1d1a22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Divano">
+<link rel="apple-touch-icon" href="icone/icona-180.png">
+<link rel="icon" href="icone/icona.svg" type="image/svg+xml">
+<title>Home2Love · Giochi da divano</title>
+<style>
+  /* Home2Love — giochi da divano: in due sullo stesso schermo, passandosi l'iPad (o il tablet).
+     Tutto resta su questo dispositivo: niente rete, niente dati di casa. Scritto per i browser vecchi
+     (Safari 9: niente grid, niente gap nei flex, solo JavaScript ES5). */
+  :root { --bg: #1d1a22; --card: #2a2631; --line: #3b3644; --ink: #fff7f0; --muted: #b8aebf; --p0: #ef4d5a; --p1: #f5b82e; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 18px/1.35 -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-user-select: none; user-select: none; overflow: hidden; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  #app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
+
+  /* --- home --- */
+  #home { -webkit-flex: 1; flex: 1; overflow: auto; padding: 4vh 4vw; text-align: center; }
+  #home h1 { margin: 0 0 4px; font-size: 34px; font-weight: 700; }
+  #home h1 span { color: var(--p0); }
+  #home p { margin: 0 0 3vh; color: var(--muted); }
+  .giocatori { margin: 0 auto 3vh; }
+  .giocatori button { border: 2px solid var(--line); background: var(--card); border-radius: 30px; padding: 10px 22px; margin: 0 6px 8px; font-weight: 600; }
+  .giocatori button b { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; vertical-align: -1px; }
+  .tessere { text-align: center; }
+  .tessera { display: inline-block; vertical-align: top; width: 200px; height: 170px; margin: 0 8px 16px; border: 0; border-radius: 22px; background: var(--card); padding: 18px 10px; box-shadow: 0 10px 24px -14px rgba(0,0,0,.8); }
+  .tessera .ico { display: block; font-size: 58px; line-height: 70px; }
+  .tessera b { display: block; font-size: 21px; margin-top: 8px; }
+  .tessera small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+  /* --- partita --- */
+  #gioco { -webkit-flex: 1; flex: 1; display: none; -webkit-flex-direction: column; flex-direction: column; min-height: 0; }
+  #testa { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 12px 16px 6px; }
+  #indietro { border: 0; background: var(--card); border-radius: 22px; padding: 10px 18px; font-weight: 600; }
+  #titolo { margin-left: 14px; font-size: 22px; font-weight: 700; }
+  #punti { margin-left: auto; color: var(--muted); font-size: 17px; white-space: nowrap; }
+  #punti b { color: var(--ink); }
+  #stato { text-align: center; font-size: 22px; font-weight: 700; padding: 4px 10px 8px; min-height: 38px; }
+  #stato .pal { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; vertical-align: 0; }
+  #tavolo { -webkit-flex: 1; flex: 1; min-height: 0; position: relative; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+  #piede { text-align: center; padding: 8px 10px 14px; }
+  #piede button { border: 0; background: var(--card); border-radius: 22px; padding: 11px 20px; margin: 0 5px; font-weight: 600; }
+  #piede button.forte { background: var(--p0); }
+  #piede button[disabled] { opacity: .35; }
+
+  .riga { white-space: nowrap; font-size: 0; }
+  .cella { display: inline-block; vertical-align: top; position: relative; font-size: 16px; }
+  .pedina { position: absolute; left: 12%; top: 12%; width: 76%; height: 76%; border-radius: 50%; box-shadow: inset 0 -4px 0 rgba(0,0,0,.25), 0 3px 6px rgba(0,0,0,.35); }
+  .pedina.p0 { background: var(--p0); } .pedina.p1 { background: var(--p1); }
+  .pedina.re::after { content: "♛"; position: absolute; left: 0; right: 0; top: 50%; margin-top: -.62em; text-align: center; color: rgba(0,0,0,.45); }
+  .punto { position: absolute; left: 36%; top: 36%; width: 28%; height: 28%; border-radius: 50%; background: rgba(120,220,140,.7); }
+  .tris-x, .tris-o { position: absolute; left: 0; right: 0; top: 50%; text-align: center; font-weight: 800; line-height: 1; }
+  .copertura { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: var(--bg); z-index: 5; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; text-align: center; }
+  .copertura button { border: 0; border-radius: 26px; padding: 26px 40px; font-size: 26px; font-weight: 700; color: #1d1a22; }
+  .copertura p { color: var(--muted); margin-top: 16px; font-size: 16px; }
+  .etichetta { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 6px; }
+  .colonna { display: inline-block; vertical-align: middle; margin: 0 14px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="home">
+    <h1>Giochi da <span>divano</span></h1>
+    <p>In due sullo stesso schermo: si gioca e ci si passa l'iPad.</p>
+    <div class="giocatori" id="giocatori"></div>
+    <div class="tessere" id="tessere"></div>
+  </div>
+  <div id="gioco">
+    <div id="testa"><button id="indietro" type="button">‹ Giochi</button><span id="titolo"></span><span id="punti"></span></div>
+    <div id="stato"></div>
+    <div id="tavolo"></div>
+    <div id="piede"></div>
+  </div>
+</div>
+
+<script src="vecchi.js?v=94"></script>
+<script src="scacchi.js?v=94"></script>
+<script>
+// ================================================================ base
+function $(id) { return document.getElementById(id); }
+function leggi(k, def) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } }
+function salva(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function el(tag, cl, txt) { var e = document.createElement(tag); if (cl) e.className = cl; if (txt != null) e.textContent = txt; return e; }
+function copia(o) { return JSON.parse(JSON.stringify(o)); }
+var COL = ["#ef4d5a", "#f5b82e"];
+var NOMI = leggi("divano_nomi", ["Giocatore 1", "Giocatore 2"]);
+var PUNTI = leggi("divano_punti", {});
+var PARTITE = leggi("divano_partite", {});
+var GIOCHI = [
+  { id: "forza4", nome: "Forza 4", ico: "🔴", sotto: "quattro in fila" },
+  { id: "tris", nome: "Tris", ico: "❌", sotto: "tre in fila" },
+  { id: "dama", nome: "Dama", ico: "⚪", sotto: "regole italiane" },
+  { id: "scacchi", nome: "Scacchi", ico: "♞", sotto: "con arrocco e en passant" },
+  { id: "navale", nome: "Battaglia navale", ico: "🚢", sotto: "passatevi l'iPad" }
+];
+var G = null, S = null, STORIA = [], SEL = -1, AVVISO = "";   // gioco aperto, suo stato, mosse da annullare
+
+function punti(g) { return PUNTI[g] || [0, 0]; }
+function vince(chi) {   // fine partita: un punto a chi ha vinto ("pari": nessuno)
+  S.vincitore = chi;
+  if (chi === 0 || chi === 1) { var p = punti(G); p[chi]++; PUNTI[G] = p; salva("divano_punti", PUNTI); }
+}
+function salvaPartita() { PARTITE[G] = S; salva("divano_partite", PARTITE); }
+function mossa(fai) {   // ogni mossa si può annullare
+  STORIA.push(copia(S)); if (STORIA.length > 60) STORIA.shift();
+  fai(); salvaPartita(); disegna();
+}
+function annulla() {
+  if (!STORIA.length) return;
+  if (S.vincitore === 0 || S.vincitore === 1) { var p = punti(G); p[S.vincitore] = Math.max(0, p[S.vincitore] - 1); PUNTI[G] = p; salva("divano_punti", PUNTI); }
+  S = STORIA.pop(); SEL = -1; AVVISO = ""; salvaPartita(); disegna();
+}
+function nuova() {
+  var prima = S && S.primo != null ? S.primo : 1, inizia = S && (S.vincitore === 0 || S.vincitore === 1) ? 1 - S.vincitore : 1 - prima;   // inizia chi ha perso, se no si alterna
+  S = MOTORI[G].nuova(inizia); STORIA = []; SEL = -1; AVVISO = ""; salvaPartita(); disegna();
+}
+function arrenditi() {
+  var chi = S.turno;
+  if (!confirm(NOMI[chi] + ", ti arrendi? La partita la vince " + NOMI[1 - chi] + ".")) return;
+  mossa(function () { S.arreso = chi; vince(1 - chi); });
+}
+
+// ================================================================ home
+function disegnaHome() {
+  $("home").style.display = ""; $("gioco").style.display = "none"; G = null;
+  var g = $("giocatori"); g.innerHTML = "";
+  [0, 1].forEach(function (p) {
+    var b = el("button"); b.type = "button"; var pal = el("b"); pal.style.background = COL[p]; b.appendChild(pal); b.appendChild(document.createTextNode(NOMI[p] + " ✎"));
+    b.onclick = function () { var n = prompt("Nome del giocatore " + (p + 1) + ":", NOMI[p]); if (n && n.replace(/\s/g, "")) { NOMI[p] = n.trim().slice(0, 16); salva("divano_nomi", NOMI); disegnaHome(); } };
+    g.appendChild(b);
+  });
+  var t = $("tessere"); t.innerHTML = "";
+  GIOCHI.forEach(function (x) {
+    var b = el("button", "tessera"); b.type = "button";
+    b.appendChild(el("span", "ico", x.ico)); b.appendChild(el("b", null, x.nome));
+    var p = punti(x.id); b.appendChild(el("small", null, p[0] + p[1] ? NOMI[0] + " " + p[0] + " – " + p[1] + " " + NOMI[1] : x.sotto));
+    b.onclick = function () { apri(x.id); };
+    t.appendChild(b);
+  });
+}
+function apri(id) {
+  G = id; S = PARTITE[id] && PARTITE[id].tipo === id ? PARTITE[id] : null; STORIA = []; SEL = -1; AVVISO = "";
+  if (!S) { S = MOTORI[id].nuova(0); salvaPartita(); }
+  if (S.attesa) { S.attesa = false; S.turno = 1 - S.turno; S.coperto = true; }
+  $("home").style.display = "none"; $("gioco").style.display = "-webkit-flex"; $("gioco").style.display = "flex";
+  $("titolo").textContent = GIOCHI.filter(function (x) { return x.id === id; })[0].nome;
+  disegna();
+}
+$("indietro").onclick = disegnaHome;
+
+// ================================================================ disegno comune
+function lato(R, C, riserva) {   // grandezza di una casella perché il tavolo stia nello spazio libero
+  var t = $("tavolo"), w = t.clientWidth - 24, h = t.clientHeight - 16 - (riserva || 0);
+  return Math.max(18, Math.floor(Math.min(w / C, h / R)));
+}
+function griglia(R, C, s, fai) {
+  var g = el("div"); g.style.borderRadius = "14px"; g.style.overflow = "hidden"; g.style.boxShadow = "0 14px 30px -14px rgba(0,0,0,.9)";
+  for (var r = 0; r < R; r++) {
+    var riga = el("div", "riga");
+    for (var c = 0; c < C; c++) { var d = el("div", "cella"); d.style.width = s + "px"; d.style.height = s + "px"; fai(r, c, d); riga.appendChild(d); }
+    g.appendChild(riga);
+  }
+  return g;
+}
+function pallino(p) { var b = el("span", "pal"); b.style.background = COL[p]; return b; }
+function scriviStato(testo, p) {
+  var st = $("stato"); st.innerHTML = "";
+  if (p === 0 || p === 1) st.appendChild(pallino(p));
+  st.appendChild(document.createTextNode(testo));
+}
+function statoStandard() {
+  if (S.vincitore === "pari") scriviStato("Pareggio! 🤝");
+  else if (S.arreso === 0 || S.arreso === 1) scriviStato(NOMI[S.arreso] + " si è arreso: vince " + NOMI[S.vincitore] + " 🎉", S.vincitore);
+  else if (S.vincitore === 0 || S.vincitore === 1) scriviStato("Ha vinto " + NOMI[S.vincitore] + "! 🎉", S.vincitore);
+  else scriviStato((AVVISO ? AVVISO + " · " : "") + "Tocca a " + NOMI[S.turno], S.turno);
+}
+function disegna() {
+  var p = punti(G); $("punti").innerHTML = "";
+  $("punti").appendChild(document.createTextNode(NOMI[0] + " ")); $("punti").appendChild(el("b", null, p[0] + " – " + p[1])); $("punti").appendChild(document.createTextNode(" " + NOMI[1]));
+  var piede = $("piede"); piede.innerHTML = "";
+  var finita = S.vincitore != null, m = MOTORI[G];
+  if (m.annulla !== false) { var a = el("button", null, "↶ Annulla"); a.type = "button"; a.disabled = !STORIA.length; a.onclick = annulla; piede.appendChild(a); }
+  if (m.resa && !finita) { var r = el("button", null, "🏳️ Arrenditi"); r.type = "button"; r.onclick = arrenditi; piede.appendChild(r); }
+  var n = el("button", finita ? "forte" : null, finita ? "Rivincita" : "Nuova partita"); n.type = "button";
+  n.onclick = function () { if (finita || confirm("Ricominciare da capo? La partita in corso si perde.")) nuova(); };
+  piede.appendChild(n);
+  var t = $("tavolo"); t.innerHTML = "";
+  m.disegna(t);
+}
+window.addEventListener("resize", function () { if (G) disegna(); });
+
+// ================================================================ i giochi
+var MOTORI = {};
+
+// ---------- Tris
+MOTORI.tris = {
+  nuova: function (primo) { return { tipo: "tris", c: ".........", turno: primo, primo: primo, vincitore: null, linea: null }; },
+  disegna: function (t) {
+    statoStandard();
+    var s = Math.min(lato(3, 3), 180), L = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    t.appendChild(griglia(3, 3, s, function (r, c, d) {
+      var i = r * 3 + c, v = S.c.charAt(i);
+      d.style.background = (S.linea && S.linea.indexOf(i) >= 0) ? "#3f3a4a" : "#2a2631"; d.style.border = "2px solid #1d1a22";
+      if (v !== ".") { var x = el("div", v === "0" ? "tris-x" : "tris-o", v === "0" ? "✕" : "◯"); x.style.fontSize = Math.round(s * .62) + "px"; x.style.marginTop = -Math.round(s * .31) + "px"; x.style.color = COL[+v]; d.appendChild(x); }
+      d.onclick = function () {
+        if (S.vincitore != null || v !== ".") return;
+        mossa(function () {
+          var c2 = S.c.split(""); c2[i] = String(S.turno); S.c = c2.join("");
+          var ln = L.filter(function (l) { return l.every(function (k) { return S.c.charAt(k) === String(S.turno); }); })[0];
+          if (ln) { S.linea = ln; vince(S.turno); } else if (S.c.indexOf(".") < 0) vince("pari"); else S.turno = 1 - S.turno;
+        });
+      };
+    }));
+  }
+};
+
+// ---------- Forza 4
+MOTORI.forza4 = {
+  nuova: function (primo) { var c = ""; for (var i = 0; i < 42; i++) c += "."; return { tipo: "forza4", c: c, turno: primo, primo: primo, vincitore: null, linea: null, ultima: -1 }; },
+  disegna: function (t) {
+    statoStandard();
+    var s = lato(6, 7);
+    var g = griglia(6, 7, s, function (r, c, d) {
+      var i = r * 7 + c, v = S.c.charAt(i);
+      d.style.background = "#2f5fc4";
+      var buco = el("div", "pedina"); buco.style.background = v === "." ? "#1d1a22" : COL[+v]; buco.style.boxShadow = v === "." ? "inset 0 4px 6px rgba(0,0,0,.6)" : "inset 0 -4px 0 rgba(0,0,0,.25)";
+      if (S.linea && S.linea.indexOf(i) >= 0) buco.style.boxShadow = "0 0 0 4px #fff";
+      d.appendChild(buco);
+      d.onclick = function () { cade(c); };
+    });
+    t.appendChild(g);
+    function cade(c) {
+      if (S.vincitore != null) return;
+      for (var r = 5; r >= 0; r--) if (S.c.charAt(r * 7 + c) === ".") break;
+      if (r < 0) return;
+      mossa(function () {
+        var i = r * 7 + c, a = S.c.split(""); a[i] = String(S.turno); S.c = a.join(""); S.ultima = i;
+        var ln = quattro(S.c, i);
+        if (ln) { S.linea = ln; vince(S.turno); } else if (S.c.indexOf(".") < 0) vince("pari"); else S.turno = 1 - S.turno;
+      });
+    }
+    function quattro(C, i) {
+      var r0 = Math.floor(i / 7), c0 = i % 7, v = C.charAt(i), dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+      for (var k = 0; k < 4; k++) {
+        var linea = [i], d = dirs[k];
+        for (var verso = -1; verso <= 1; verso += 2) {
+          var r = r0 + d[0] * verso, c = c0 + d[1] * verso;
+          while (r >= 0 && r < 6 && c >= 0 && c < 7 && C.charAt(r * 7 + c) === v) { linea.push(r * 7 + c); r += d[0] * verso; c += d[1] * verso; }
+        }
+        if (linea.length >= 4) return linea;
+      }
+      return null;
+    }
+  }
+};
+
+// ---------- Dama (regole italiane: presa obbligatoria, prese multiple, la pedina non mangia la dama)
+function dDi(v) { return v === "a" || v === "A" ? 0 : v === "b" || v === "B" ? 1 : null; }
+function dRe(v) { return v === "A" || v === "B"; }
+function dMosse(s, chi) {
+  var prese = [], passi = [], C = s.c;
+  for (var i = 0; i < 64; i++) {
+    if (s.cattura >= 0 && i !== s.cattura) continue;
+    var v = C.charAt(i); if (dDi(v) !== chi) continue;
+    var r = Math.floor(i / 8), c = i % 8, avanti = chi === 0 ? -1 : 1;
+    var dirs = dRe(v) ? [[-1, -1], [-1, 1], [1, -1], [1, 1]] : [[avanti, -1], [avanti, 1]];
+    dirs.forEach(function (d) {
+      var r1 = r + d[0], c1 = c + d[1], r2 = r + 2 * d[0], c2 = c + 2 * d[1];
+      if (r1 < 0 || r1 > 7 || c1 < 0 || c1 > 7) return;
+      var m = C.charAt(r1 * 8 + c1);
+      if (m === "." && s.cattura < 0) passi.push({ da: i, a: r1 * 8 + c1, preso: -1 });
+      else if (dDi(m) === 1 - chi && !(dRe(m) && !dRe(v)) && r2 >= 0 && r2 <= 7 && c2 >= 0 && c2 <= 7 && C.charAt(r2 * 8 + c2) === ".") prese.push({ da: i, a: r2 * 8 + c2, preso: r1 * 8 + c1 });
+    });
+  }
+  return prese.length ? prese : passi;
+}
+MOTORI.dama = {
+  resa: true,
+  nuova: function (primo) {
+    var c = ""; for (var r = 0; r < 8; r++) for (var k = 0; k < 8; k++) c += (r + k) % 2 ? (r < 3 ? "b" : r > 4 ? "a" : ".") : ".";
+    return { tipo: "dama", c: c, turno: primo, primo: primo, vincitore: null, cattura: -1, ultima: [] };
+  },
+  disegna: function (t) {
+    var mosse = S.vincitore == null ? dMosse(S, S.turno) : [];
+    if (S.cattura >= 0) SEL = S.cattura;
+    AVVISO = S.cattura >= 0 ? "Mangia ancora!" : mosse.length && mosse[0].preso >= 0 ? "Devi mangiare" : "";
+    statoStandard();
+    var mete = mosse.filter(function (m) { return m.da === SEL; }), s = lato(8, 8);
+    t.appendChild(griglia(8, 8, s, function (r, c, d) {
+      var i = r * 8 + c, v = S.c.charAt(i), scura = (r + c) % 2 === 1;
+      d.style.background = scura ? "#8a5a3c" : "#f0dfc2";
+      if (S.ultima && S.ultima.indexOf(i) >= 0) d.style.boxShadow = "inset 0 0 0 100px rgba(255,214,77,.28)";
+      if (i === SEL) d.style.boxShadow = "inset 0 0 0 100px rgba(80,170,90,.55)";
+      else if (SEL < 0 && mosse.some(function (m) { return m.da === i; })) d.style.boxShadow = "inset 0 0 0 3px rgba(120,220,140,.9)";
+      if (v !== ".") { var p = el("div", "pedina p" + dDi(v) + (dRe(v) ? " re" : "")); p.style.fontSize = Math.round(s * .45) + "px"; d.appendChild(p); }
+      var meta = mete.filter(function (m) { return m.a === i; })[0];
+      if (meta) d.appendChild(el("div", "punto"));
+      d.onclick = function () {
+        if (S.vincitore != null) return;
+        if (meta) {
+          mossa(function () {
+            var C = S.c.split(""), x = C[meta.da], chi = S.turno, prima = S.cattura;
+            C[meta.a] = x; C[meta.da] = "."; if (meta.preso >= 0) C[meta.preso] = ".";
+            var promossa = !dRe(x) && ((chi === 0 && r === 0) || (chi === 1 && r === 7));
+            if (promossa) C[meta.a] = x.toUpperCase();
+            S.c = C.join(""); S.ultima = prima >= 0 && S.ultima.length ? S.ultima.concat([meta.a]) : [meta.da, meta.a]; S.cattura = -1;
+            if (meta.preso >= 0 && !promossa) { S.cattura = meta.a; if (!dMosse(S, chi).some(function (x) { return x.preso >= 0; })) S.cattura = -1; }
+            if (S.cattura < 0) { S.turno = 1 - chi; SEL = -1; if (!dMosse(S, S.turno).length) vince(chi); }
+          });
+          return;
+        }
+        SEL = mosse.some(function (m) { return m.da === i; }) && S.cattura < 0 ? (SEL === i ? -1 : i) : (S.cattura >= 0 ? S.cattura : -1);
+        disegna();
+      };
+    }));
+  }
+};
+
+// ---------- Scacchi (regole da scacchi.js: arrocco, en passant; il pedone diventa regina)
+MOTORI.scacchi = {
+  resa: true,
+  nuova: function (primo) { return { tipo: "scacchi", b: SC_INIZIO, t: "w", arr: "KQkq", ep: -1, bianco: primo, turno: primo, primo: primo, vincitore: null, ultima: null, mosse: 0 }; },
+  disegna: function (t) {
+    var legali = S.vincitore == null ? scLegali(S).filter(function (m) { return !m.promo || m.promo === "q"; }) : [];
+    var scacco = S.vincitore == null && scInScacco(S, S.t);
+    if (S.vincitore === "pari") scriviStato("Stallo: pareggio 🤝");
+    else if (S.vincitore != null && S.arreso == null) scriviStato("Scacco matto! Vince " + NOMI[S.vincitore] + " 🎉", S.vincitore);
+    else { AVVISO = scacco ? "Scacco!" : ""; statoStandard(); if (S.vincitore == null) $("stato").appendChild(document.createTextNode(" (" + (S.t === "w" ? "bianco" : "nero") + ")")); }
+    var mete = legali.filter(function (m) { return m.da === SEL; }), s = lato(8, 8), re = scacco ? scRe(S.b, S.t) : -1;
+    t.appendChild(griglia(8, 8, s, function (r, c, d) {
+      var i = r * 8 + c, x = S.b[i];
+      d.style.background = (r + c) % 2 ? "#b88762" : "#f0dfc2";
+      if (S.ultima && S.ultima.indexOf(i) >= 0) d.style.boxShadow = "inset 0 0 0 100px rgba(255,214,77,.35)";
+      if (i === re) d.style.boxShadow = "inset 0 0 0 100px rgba(230,60,50,.6)";
+      if (i === SEL) d.style.boxShadow = "inset 0 0 0 100px rgba(80,170,90,.55)";
+      if (x !== ".") {
+        var p = el("div", null, SC_GLIFI[x.toLowerCase()]);
+        p.style.cssText = "position:absolute;left:0;right:0;top:50%;text-align:center;line-height:1;font-family:'Apple Symbols','Segoe UI Symbol','DejaVu Sans',serif;font-size:" + Math.round(s * .78) + "px;margin-top:-" + Math.round(s * .42) + "px;" +
+          (scBianco(x) ? "color:#fff;text-shadow:0 0 1px #000,0 0 1px #000,0 1px 2px rgba(0,0,0,.6)" : "color:#1c1410;text-shadow:0 1px 1px rgba(255,255,255,.3)");
+        d.appendChild(p);
+      }
+      var meta = mete.filter(function (m) { return m.a === i; })[0];
+      if (meta) d.appendChild(el("div", "punto"));
+      d.onclick = function () {
+        if (S.vincitore != null) return;
+        if (meta) {
+          mossa(function () {
+            var n = scApplica(S, meta); n.turno = n.t === "w" ? S.bianco : 1 - S.bianco; S = n; SEL = -1;
+            if (!scLegali(S).length) { if (scInScacco(S, S.t)) vince(1 - S.turno); else vince("pari"); }
+          });
+          return;
+        }
+        SEL = scDi(x) === S.t && legali.some(function (m) { return m.da === i; }) ? (SEL === i ? -1 : i) : -1;
+        disegna();
+      };
+    }));
+  }
+};
+
+// ---------- Battaglia navale (ognuno ha la sua flotta nascosta; tra un turno e l'altro lo schermo si copre)
+var NAVI = [4, 3, 3, 2, 2], N = 8;
+function flotta() {   // navi a caso, che non si toccano
+  for (var tent = 0; tent < 200; tent++) {
+    var occ = {}, navi = [], ok = true;
+    for (var k = 0; k < NAVI.length && ok; k++) {
+      var messa = false;
+      for (var q = 0; q < 300 && !messa; q++) {
+        var oriz = Math.random() < .5, L = NAVI[k], r = Math.floor(Math.random() * (oriz ? N : N - L + 1)), c = Math.floor(Math.random() * (oriz ? N - L + 1 : N)), celle = [], libero = true;
+        for (var j = 0; j < L; j++) celle.push((r + (oriz ? 0 : j)) * N + c + (oriz ? j : 0));
+        celle.forEach(function (x) { var rr = Math.floor(x / N), cc = x % N; for (var a = -1; a <= 1; a++) for (var b = -1; b <= 1; b++) if (occ[(rr + a) * N + cc + b] && rr + a >= 0 && rr + a < N && cc + b >= 0 && cc + b < N) libero = false; });
+        if (libero) { celle.forEach(function (x) { occ[x] = 1; }); navi.push(celle); messa = true; }
+      }
+      if (!messa) ok = false;
+    }
+    if (ok) return navi;
+  }
+  return [];
+}
+function naveIn(navi, i) { for (var k = 0; k < navi.length; k++) if (navi[k].indexOf(i) >= 0) return k; return -1; }
+function affondata(nave, colpi) { return nave.every(function (x) { return colpi[x] === 1; }); }
+MOTORI.navale = {
+  annulla: false,
+  nuova: function (primo) { return { tipo: "navale", flotte: [flotta(), flotta()], colpi: [{}, {}], turno: primo, primo: primo, vincitore: null, coperto: true, msg: "" }; },
+  disegna: function (t) {
+    var me = S.turno, lui = 1 - me, suoi = S.flotte[lui], miei = S.colpi[me];
+    if (S.vincitore != null) { S.coperto = false; me = S.vincitore; lui = 1 - me; suoi = S.flotte[lui]; miei = S.colpi[me]; }
+    if (S.vincitore != null) scriviStato("Flotta affondata! Vince " + NOMI[S.vincitore] + " 🎉", S.vincitore);
+    else scriviStato((S.msg ? S.msg + " · " : "") + NOMI[me] + ", spara!", me);
+    if (S.coperto && S.vincitore == null) {
+      var cop = el("div", "copertura"), box = el("div"), b = el("button", null, "Tocca a " + NOMI[me]); b.type = "button"; b.style.background = COL[me];
+      b.onclick = function () { S.coperto = false; S.msg = ""; salvaPartita(); disegna(); };
+      box.appendChild(b); box.appendChild(el("p", null, "Passa l'iPad a " + NOMI[me] + " e non sbirciare 😉")); cop.appendChild(box); t.appendChild(cop);
+      scriviStato(S.msg || "Battaglia navale"); return;
+    }
+    var largo = t.clientWidth > t.clientHeight * 1.25, sGrande = largo ? Math.min(lato(N, N, 30), Math.floor((t.clientWidth - 80) * .62 / N)) : lato(N + N * .5, N, 60), sPiccola = Math.max(14, Math.floor(sGrande * .5));
+    var c1 = el("div", "colonna"), c2 = el("div", "colonna");
+    c1.appendChild(el("div", "etichetta", "Il mare di " + NOMI[lui] + " (tocca per sparare)"));
+    c1.appendChild(griglia(N, N, sGrande, function (r, c, d) {
+      var i = r * N + c, x = miei[i], k = naveIn(suoi, i);
+      d.style.background = "#1f4f86"; d.style.border = "1px solid rgba(255,255,255,.08)";
+      if (x === 0) { d.appendChild(el("div", "punto")); d.lastChild.style.background = "rgba(255,255,255,.55)"; }
+      if (x === 1) { var f = el("div", "pedina"); f.style.background = affondata(suoi[k], miei) ? "#3a3036" : "#ef4d5a"; d.appendChild(f); }
+      if (S.vincitore != null && k >= 0 && x !== 1) d.style.background = "#5a6b80";
+      d.onclick = function () {
+        if (S.vincitore != null || x != null || S.attesa) return;
+        S.colpi[me][i] = k >= 0 ? 1 : 0;
+        if (k >= 0) {
+          S.msg = affondata(suoi[k], S.colpi[me]) ? "Colpita e affondata! 💥" : "Colpita! 🔥";
+          if (suoi.every(function (n) { return affondata(n, S.colpi[me]); })) vince(me);
+          salvaPartita(); disegna();
+        } else {
+          S.msg = "Acqua 💧"; S.attesa = true; salvaPartita(); disegna();
+          setTimeout(function () { S.attesa = false; S.turno = lui; S.coperto = true; S.msg = "Acqua: tocca a " + NOMI[lui]; salvaPartita(); if (G === "navale") disegna(); }, 1300);
+        }
+      };
+    }));
+    c2.appendChild(el("div", "etichetta", "La tua flotta"));
+    var colpitoDa = S.colpi[lui];
+    c2.appendChild(griglia(N, N, sPiccola, function (r, c, d) {
+      var i = r * N + c, k = naveIn(S.flotte[me], i), x = colpitoDa[i];
+      d.style.background = k >= 0 ? "#8b95a5" : "#1f4f86"; d.style.border = "1px solid rgba(255,255,255,.06)";
+      if (x === 1) d.style.background = "#ef4d5a"; else if (x === 0) { d.appendChild(el("div", "punto")); d.lastChild.style.background = "rgba(255,255,255,.45)"; }
+    }));
+    if (!largo) { var w = el("div"); w.style.textAlign = "center"; w.appendChild(c1); w.appendChild(el("div")); w.lastChild.style.height = "12px"; w.appendChild(c2); t.appendChild(w); }
+    else { t.appendChild(c1); t.appendChild(c2); }
+  }
+};
+
+disegnaHome();
+document.addEventListener("touchmove", function (e) { if (!e.target.closest || !e.target.closest("#home")) e.preventDefault(); }, { passive: false });
+</script>
+</body>
+</html>
