@@ -692,15 +692,8 @@
     <div class="seg" id="rt-mezzo"><button type="button" data-v="auto">🚗 Auto</button><button type="button" data-v="bici">🚲 Bici</button><button type="button" data-v="piedi">🚶 A piedi</button></div>
     <div id="rt-calcolo"><b id="rt-ora">…</b><span id="rt-come">calcolo il percorso…</span></div>
     <div class="regola"><button type="button" data-d="-5">−5 min</button><button type="button" data-d="5">+5 min</button><button type="button" data-d="15">+15 min</button></div>
-    <label class="rt-pos"><input type="checkbox" id="rt-pos"><span id="rt-pos-testo">📍 Fammi vedere finché arrivo</span></label>
     <div class="azioni"><button type="button" class="btn chiudi sx">Annulla</button><button class="btn pieno" id="rt-invia">Avvisa</button></div>
   </form>
-</div>
-
-<!-- ritorno sicuro: dove si trova chi sta tornando -->
-<div class="velo" id="ed-vs">
-  <div class="foglio"><h3 id="vs-titolo"></h3><div id="vs-corpo"></div>
-    <div class="azioni"><a class="btn sx" id="vs-apri" target="_blank" rel="noopener">Apri in Mappe</a><button type="button" class="btn pieno chiudi">Chiudi</button></div></div>
 </div>
 
 <!-- esco: dove vado -->
@@ -790,26 +783,25 @@
   </div>
 </div>
 
-<script src="comune.js?v=101"></script>
-<script src="stato.js?v=101"></script>
-<script src="forza4.js?v=101"></script>
-<script src="giochi.js?v=101"></script>
-<script src="rete.js?v=101"></script>
-<script src="tragitti.js?v=101"></script>
-<script src="suoni.js?v=101"></script>
-<script src="telecomando.js?v=101"></script>
-<script src="spesa.js?v=101"></script>
-<script src="coppia.js?v=101"></script>
-<script src="occhiata.js?v=101"></script>
-<script src="chatplus.js?v=101"></script>
-<script src="giochi2.js?v=101"></script>
-<script src="scacchi.js?v=101"></script>
-<script src="carte.js?v=101"></script>
-<script src="eroefoto.js?v=101"></script>
-<script src="compleanni.js?v=101"></script>
-<script src="gattodisegno.js?v=101"></script>
-<script src="gattino.js?v=101"></script>
-<script src="viaggiosicuro.js?v=101"></script>
+<script src="comune.js?v=102"></script>
+<script src="stato.js?v=102"></script>
+<script src="forza4.js?v=102"></script>
+<script src="giochi.js?v=102"></script>
+<script src="rete.js?v=102"></script>
+<script src="tragitti.js?v=102"></script>
+<script src="suoni.js?v=102"></script>
+<script src="telecomando.js?v=102"></script>
+<script src="spesa.js?v=102"></script>
+<script src="coppia.js?v=102"></script>
+<script src="occhiata.js?v=102"></script>
+<script src="chatplus.js?v=102"></script>
+<script src="giochi2.js?v=102"></script>
+<script src="scacchi.js?v=102"></script>
+<script src="carte.js?v=102"></script>
+<script src="eroefoto.js?v=102"></script>
+<script src="compleanni.js?v=102"></script>
+<script src="gattodisegno.js?v=102"></script>
+<script src="gattino.js?v=102"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -823,7 +815,7 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=101";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=102";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");
@@ -1165,11 +1157,7 @@ function disegnaOggi() {
     var r = rientroDi(p); if (!r) return;
     var x = el("span", "rientro-info"), arrivato = Date.now() >= r.arrivo;
     x.textContent = (p === io ? "Hai avvisato: arrivi" : cfg.nomi[p] + " arriva") + (arrivato ? " adesso ♥" : " alle " + oraHM(r.arrivo) + " (" + traQuanto(r.arrivo) + ")");
-    if (p === io) { var a = el("button"); a.type = "button"; a.textContent = arrivato ? "ok" : "annulla"; a.onclick = function () { segnaRientro(io, null); if (vsAttivo()) vsFerma(); disegnaOggi(); }; x.appendChild(a); }
-    else if (posDi(p)) {   // ritorno sicuro: dove si trova adesso, e la mappetta
-      x.appendChild(document.createTextNode(" · 📍 " + vsTesto(p)));
-      var m = el("button"); m.type = "button"; m.textContent = "mappa"; m.onclick = function () { apriVS(p); }; x.appendChild(m);
-    }
+    if (p === io) { var a = el("button"); a.type = "button"; a.textContent = arrivato ? "ok" : "annulla"; a.onclick = function () { segnaRientro(io, null); disegnaOggi(); }; x.appendChild(a); }
     e.appendChild(x);
   });
   [0, 1].forEach(function (p) {   // chi è fuori e dove
@@ -1329,8 +1317,6 @@ function apriRientro() {
   var t = trCfg();
   rt.mezzo = t.mezzo[io] || "auto"; rt.base = null; rt.min = null;
   $("rt-invia").textContent = "Avvisa " + cfg.nomi[1 - io];
-  var h = new Date().getHours(); $("rt-pos").checked = h >= 20 || h < 6 ? true : leggi("vs_scelta", false);   // la sera è già spuntato
-  $("rt-pos-testo").textContent = "📍 Fai vedere a " + cfg.nomi[1 - io] + " dove sei, finché arrivi";
   seg("rt-mezzo", rt.mezzo); apri("ed-rientro"); calcolaRientro();
 }
 function mostraRientro() {
@@ -1371,23 +1357,10 @@ $("ed-rientro").querySelector("form").onsubmit = function (e) {
   var punti = null;   // il percorso, ridotto a una trentina di punti: lo disegna l'orologio «Dove siete?»
   if (rt.punti && rt.punti.length > 1) { var passo = Math.max(1, Math.ceil(rt.punti.length / 30)); punti = rt.punti.filter(function (x, i) { return i % passo === 0; }); punti.push(rt.punti[rt.punti.length - 1]); punti = punti.map(function (x) { return [Math.round(x[0] * 1e4) / 1e4, Math.round(x[1] * 1e4) / 1e4]; }); }
   segnaRientro(io, { arrivo: arrivo, min: rt.min, mezzo: rt.mezzo, da: io, t: Date.now(), punti: punti, km: rt.metri ? Math.round(rt.metri / 100) / 10 : null });
-  salva("vs_scelta", $("rt-pos").checked); if ($("rt-pos").checked) vsAvvia(arrivo + 20 * 60000);
   if (fuoriDi(io)) segnaFuori(io, null);
   inviaChat("🏠 Sto tornando! Arrivo verso le " + oraHM(arrivo) + " (" + ico + " circa " + rt.min + " min)");
   chiudi("ed-rientro"); disegnaOggi();
 };
-
-// ================= ritorno sicuro: la mappetta di chi sta tornando =================
-function apriVS(p) {
-  var giro = function () {
-    if (!$("ed-vs").classList.contains("on")) return clearInterval(giro.t);
-    var pos = posDi(p), r = rientroDi(p);
-    $("vs-titolo").textContent = cfg.nomi[p] + (pos ? " sta tornando" : ": posizione non più condivisa");
-    $("vs-corpo").innerHTML = pos ? vsMappa(p) + '<p class="spiega" style="text-align:center">' + vsTesto(p) + (r ? " · arrivo previsto alle " + oraHM(r.arrivo) : "") + "</p>" : '<p class="spiega">O è già a casa, o ha fermato la condivisione.</p>';
-    $("vs-apri").hidden = !pos; if (pos) $("vs-apri").href = "https://www.google.com/maps/search/?api=1&query=" + pos.lat + "," + pos.lon;
-  };
-  apri("ed-vs"); giro(); clearInterval(giro.t); giro.t = setInterval(giro, 10000);
-}
 
 // ================= esco: dove vado =================
 var FUORI_SCELTE = ["🏋️ Palestra", "🛒 Spesa", "👪 Dai miei", "🍻 Con gli amici", "🍝 A cena fuori", "📋 Commissioni"];

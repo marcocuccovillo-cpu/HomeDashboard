@@ -77,11 +77,11 @@
 </div>
 </div>
 
-<script src="comune.js?v=101"></script>
-<script src="stato.js?v=101"></script>
-<script src="telecomando.js?v=101"></script>
-<script src="paesaggio.js?v=101"></script>
-<script src="gattodisegno.js?v=101"></script>
+<script src="comune.js?v=102"></script>
+<script src="stato.js?v=102"></script>
+<script src="telecomando.js?v=102"></script>
+<script src="paesaggio.js?v=102"></script>
+<script src="gattodisegno.js?v=102"></script>
 <script>
 var VIAGGIO = 30;   // minuti di strada stimati prima e dopo un turno (se non c'è "Sto tornando")
 // ================= dove si trova ognuno =================
@@ -96,10 +96,8 @@ function fasceIntorno(d, p) {   // ieri, oggi e domani, in minuti rispetto alla 
 function dove(p, d) {
   var m = minDi(d), r = rientroDi(p), f = fasceIntorno(d, p), i;
   if (r && Date.now() < r.arrivo) {
-    var prog = Math.max(0, Math.min(1, (Date.now() - (r.t || Date.now())) / Math.max(1, r.arrivo - (r.t || Date.now())))), km = "";
-    var pv = reg && reg["pos." + p];   // ritorno sicuro: se condivide la posizione, conta la distanza vera da casa
-    if (pv && !pv.d && pv.v && Date.now() - pv.v.t < 15 * 60000 && pv.v.d0 && pv.v.d != null) { prog = Math.max(0, Math.min(1, 1 - pv.v.d / pv.v.d0)); km = " · a <b>" + (pv.v.d >= 1000 ? (pv.v.d / 1000).toFixed(1).replace(".", ",") + " km" : Math.round(pv.v.d / 10) * 10 + " m") + "</b>"; }
-    return { posto: "viaggio", verso: "casa", prog: prog, mezzo: r.mezzo, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" + km };
+    var prog = Math.max(0, Math.min(1, (Date.now() - (r.t || Date.now())) / Math.max(1, r.arrivo - (r.t || Date.now()))));
+    return { posto: "viaggio", verso: "casa", prog: prog, mezzo: r.mezzo, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" };
   }
   var fu = fuoriDi(p);
   if (fu) return { posto: "fuori", dove: fu.dove || "", testo: "fuori · <b>" + (fu.dove || "").replace(/[<>&]/g, "") + "</b>" };
