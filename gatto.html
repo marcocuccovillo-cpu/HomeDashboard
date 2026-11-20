@@ -47,11 +47,11 @@
   <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
 </div>
 
-<script src="vecchi.js?v=88"></script>
-<script src="comune.js?v=88"></script>
-<script src="telecomando.js?v=88"></script>
-<script src="compleanni.js?v=88"></script>
-<script src="gattodisegno.js?v=88"></script>
+<script src="vecchi.js?v=89"></script>
+<script src="comune.js?v=89"></script>
+<script src="telecomando.js?v=89"></script>
+<script src="compleanni.js?v=89"></script>
+<script src="gattodisegno.js?v=89"></script>
 <script>
 // ================= la stanza: coordinate "logiche" 1000×600, disegnate a piena risoluzione =================
 var LW = 1000, LH = 600, MURO = 448, PAV = 520;   // dove finisce il muro, dove poggia il gatto
@@ -372,6 +372,7 @@ window.addEventListener("resize", applicaVerso);
 var ultimo = 0;
 function frame(t) {
   requestAnimationFrame(frame);
+  if (window.inPausa) return;   // scheda del telefono non in vista
   if (t - ultimo < 40) return; ultimo = t;   // 25 al secondo
   passo();
   if (VERT) { var nx = segui(false); if (Math.abs(nx - OFX) > .5) { OFX = nx; rifaiSfondo(); } }
@@ -379,7 +380,7 @@ function frame(t) {
   if (!$("fumetto").classList.contains("via")) posFumetto();
 }
 function ridisegna() { controllaCasa(); }
-function tieniAcceso() { if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
+function tieniAcceso() { if (window.parent !== window) return; if ("wakeLock" in navigator && document.visibilityState === "visible") navigator.wakeLock.request("screen").catch(function () {}); }
 document.addEventListener("visibilitychange", tieniAcceso);
 document.addEventListener("dblclick", function () { var e = document.documentElement; if (!document.fullscreenElement && e.requestFullscreen) e.requestFullscreen().catch(function () {}); });
 (function () {   // le ciotole si sono svuotate un po' mentre la pagina era chiusa
@@ -390,8 +391,15 @@ applicaVerso(); disegnaInfo(); leggiMeteo(); scegli(); tieniAcceso(); requestAni
 setInterval(controllaCasa, 5000);
 setInterval(function () { CIOT.t = Date.now(); salva("gatto_stanza", CIOT); }, 60000);
 setInterval(leggiMeteo, 30 * 60000);
-avviaSync();
-if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+var DENTRO = window.parent !== window;   // dentro il telefono (scheda Gatto): i dati li sincronizza il telefono, qui si leggono e basta
+if (DENTRO) {
+  document.documentElement.classList.add("dentro");
+  salvaCfg = function () {};
+  setInterval(function () { Object.assign(cfg, leggi("cucina_cfg", {})); reg = leggi("cucina_registro", reg) || {}; }, 5000);
+} else {
+  avviaSync();
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+}
 </script>
 </body>
 </html>

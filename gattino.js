@@ -60,8 +60,10 @@ var GATTINO = (function () {
     raf = requestAnimationFrame(passo);
   }
   function via() { cancelAnimationFrame(raf); if (box) box.remove(); box = null; s = null; }
+  var nascosto = false;
+  function nascondi(si) { nascosto = si; if (si && s) via(); }
   function visita(forza) {
-    if (s || !attivo()) return;
+    if (s || nascosto || !attivo()) return;
     if (!forza && Date.now() - (+localStorage.getItem("gattino_ultima") || 0) < 25 * 60000) return;
     try { localStorage.setItem("gattino_ultima", String(Date.now())); } catch (e) {}
     box = document.createElement("div"); box.id = "gattino";
@@ -81,5 +83,5 @@ var GATTINO = (function () {
     setTimeout(function () { if (Math.random() < .6 && document.visibilityState === "visible") visita(); }, 9000 + Math.random() * 15000);
     setInterval(function () { if (document.visibilityState === "visible" && Math.random() < .35) visita(); }, 6 * 60000);
   }
-  return { avvia: avvia, visita: visita, attivo: attivo };
+  return { avvia: avvia, visita: visita, attivo: attivo, nascondi: nascondi };
 })();
