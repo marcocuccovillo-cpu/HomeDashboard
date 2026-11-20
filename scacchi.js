@@ -169,11 +169,10 @@ function disegnaScacchi(box) {
   var sp = el("p", "spiega"); sp.style.textAlign = "center";
   sp.textContent = "Tu hai il " + (mio === "w" ? "bianco" : "nero") + ". Tocca un tuo pezzo, poi la casa dove vuoi muoverlo." + (s.mosse ? " Mossa " + Math.ceil(s.mosse / 2) + "." : "");
   box.appendChild(sp);
-  if (!s.fine && s.mosse >= 2) {
-    var r1 = el("div", "g2-riga"), ab = el("button", "btn"); ab.type = "button"; ab.textContent = "Abbandona";
-    ab.onclick = function () { if (!confirm("Ti arrendi? La partita la vince " + nomi[1 - io] + ".")) return; var n2 = JSON.parse(JSON.stringify(scStato())); n2.fine = "abbandono"; n2.vincitore = 1 - io; n2.punti[1 - io]++; scSalva(n2); disegnaGiochi(); };
-    r1.appendChild(ab); box.appendChild(r1);
-  }
+  if (!s.fine) box.appendChild(bottoneArrenditi(function () {
+    var n2 = JSON.parse(JSON.stringify(scStato())); if (n2.fine) return;
+    n2.fine = "abbandono"; n2.vincitore = 1 - io; n2.punti[1 - io]++; scSalva(n2); disegnaGiochi();
+  }));
   var firma = s.id + ":" + s.mosse;   // un tocco quando l'altro ha mosso
   if (tocca && s.mosse && leggi("scacchi_visto", "") !== firma) { salva("scacchi_visto", firma); if (navigator.vibrate) navigator.vibrate([30, 60, 30]); }
 }

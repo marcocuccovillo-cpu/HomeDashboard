@@ -23,6 +23,7 @@ function scegliChi(box, poi) {   // la prima volta: chi usa questo telefono? (lo
 function infoPartita(box, s, rivincita) {   // "Tocca a…" / "Ha vinto…" + punteggio + rivincita
   var nomi = cfg.nomi, me = SUL_TABLET ? null : chiSono(), t = el("span", "f4-turno");
   if (s.vincitore === "pari") t.textContent = "Pareggio!";
+  else if (s.vincitore !== null && s.arreso != null) { t.textContent = s.arreso === me ? "Ti sei arreso: ha vinto " + nomi[s.vincitore] : nomi[s.arreso] + " si è arreso: hai vinto! 🎉"; if (me === null) t.textContent = nomi[s.arreso] + " si è arreso: vince " + nomi[s.vincitore]; t.className += " p" + s.vincitore; }
   else if (s.vincitore !== null) { t.textContent = (s.vincitore === me ? "Hai vinto! 🎉" : "Ha vinto " + nomi[s.vincitore]); t.className += " p" + s.vincitore; }
   else { t.textContent = s.turno === me ? "Tocca a te" : "Tocca a " + nomi[s.turno]; t.className += " p" + s.turno; }
   var p = el("span", "f4-punti"); p.textContent = nomi[0] + " " + s.punti[0] + " – " + s.punti[1] + " " + nomi[1];
@@ -145,6 +146,15 @@ function disegnaDama(box) {
     mosse.length && mosse[0].preso >= 0 ? "Devi mangiare: le pedine che possono farlo sono evidenziate." :
     "Tocca una tua pedina e poi la casella dove spostarla. Mangiare è obbligatorio, la pedina non mangia la dama.";
   box.appendChild(n);
+  if (s.vincitore === null && !SUL_TABLET && cfg.dama && me !== null) box.appendChild(bottoneArrenditi(function () {
+    var v = JSON.parse(JSON.stringify(damaStato())); if (v.vincitore !== null) return;
+    v.vincitore = 1 - me; v.arreso = me; v.punti[1 - me]++; cfg.dama = v; salvaCfg(); damaSel = -1; ridisegnaGiochi();
+  }));
+}
+function bottoneArrenditi(poi) {   // dama e scacchi: bandiera bianca, con conferma
+  var r = el("div", "g2-riga"), b = el("button", "btn arrenditi"); b.type = "button"; b.textContent = "🏳️ Arrenditi";
+  b.onclick = function () { var altro = cfg.nomi[1 - chiSono()] || "l'altro"; if (confirm("Ti arrendi? La partita la vince " + altro + ".")) poi(); };
+  r.appendChild(b); return r;
 }
 
 // ================================================================ record (2048 e Snake)
