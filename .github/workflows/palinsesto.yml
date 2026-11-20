@@ -1,5 +1,6 @@
 # Home2Love — aggiorna il palinsesto TV ogni 6 ore e lo mette nel ramo "palinsesto"
-# (un solo file, palinsesto.json, letto da tv.html). Così il ramo principale non si riempie di salvataggi.
+# (un solo file, palinsesto.json, letto da tv.html). Ne mette una copia anche nel sito (ramo principale):
+# serve ai dispositivi vecchi (l'iPad con iOS 9) che raggiungono solo github.io.
 name: Palinsesto TV
 on:
   schedule:
@@ -22,3 +23,13 @@ jobs:
           git add palinsesto.json
           git -c user.name="palinsesto" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Palinsesto TV $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" palinsesto
+      - name: Copia nel sito (per i dispositivi vecchi)
+        run: |
+          cp /tmp/palinsesto.json palinsesto.json
+          git add palinsesto.json
+          git -c user.name="palinsesto" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "Palinsesto TV (copia per il sito)" || exit 0
+          for prova in 1 2 3 4; do
+            git pull -q --rebase origin main && git push -q origin HEAD:main && exit 0
+            sleep $((prova * 10))
+          done
+          exit 1

@@ -511,9 +511,10 @@
   if (window.crypto && crypto.subtle && window.TextEncoder && window.fetch) return;
   var d = document.createElement("div");
   d.setAttribute("style", "position:fixed;left:0;top:0;right:0;bottom:0;z-index:1000;background:#1b1c26;color:#fff;font:18px/1.45 -apple-system,Helvetica,sans-serif;text-align:center;padding:12vh 8vw;overflow:auto");
-  d.innerHTML = '<div style="font-size:54px">🐱</div><h1 style="font-weight:600;font-size:28px;margin:10px 0">Questo dispositivo è un po’ vecchio</h1>' +
-    '<p style="color:#b9bccb;margin:0 0 28px">La bacheca completa ha bisogno di un browser più recente (per i dati cifrati di casa).<br>Qui funziona:</p>' +
-    '<a href="gatto.html" style="display:block;max-width:420px;margin:0 auto;padding:18px;border-radius:16px;background:#ff4d5e;color:#fff;text-decoration:none;font-size:22px;font-weight:600">La stanza del gatto 🐱</a>';
+  d.innerHTML = '<div style="font-size:54px">📺</div><h1 style="font-weight:600;font-size:28px;margin:10px 0">Questo dispositivo è un po’ vecchio</h1>' +
+    '<p style="color:#b9bccb;margin:0 0 28px">La bacheca completa ha bisogno di un browser più recente (per i dati cifrati di casa).<br>Qui funzionano:</p>' +
+    '<a href="tv.html" style="display:block;max-width:420px;margin:0 auto 14px;padding:18px;border-radius:16px;background:#ff4d5e;color:#fff;text-decoration:none;font-size:22px;font-weight:600">Guida TV 📺</a>' +
+    '<a href="gatto.html" style="display:block;max-width:420px;margin:0 auto;padding:18px;border-radius:16px;background:#2c2e3d;color:#fff;text-decoration:none;font-size:22px;font-weight:600">La stanza del gatto 🐱</a>';
   function metti() { document.body.appendChild(d); }
   if (document.body) metti(); else document.addEventListener("DOMContentLoaded", metti);
 })();
@@ -770,23 +771,23 @@
   </div>
 </div>
 
-<script src="comune.js?v=91"></script>
-<script src="forza4.js?v=91"></script>
-<script src="giochi.js?v=91"></script>
-<script src="rete.js?v=91"></script>
-<script src="tragitti.js?v=91"></script>
-<script src="suoni.js?v=91"></script>
-<script src="telecomando.js?v=91"></script>
-<script src="spesa.js?v=91"></script>
-<script src="coppia.js?v=91"></script>
-<script src="occhiata.js?v=91"></script>
-<script src="chatplus.js?v=91"></script>
-<script src="giochi2.js?v=91"></script>
-<script src="scacchi.js?v=91"></script>
-<script src="eroefoto.js?v=91"></script>
-<script src="compleanni.js?v=91"></script>
-<script src="gattodisegno.js?v=91"></script>
-<script src="gattino.js?v=91"></script>
+<script src="comune.js?v=92"></script>
+<script src="forza4.js?v=92"></script>
+<script src="giochi.js?v=92"></script>
+<script src="rete.js?v=92"></script>
+<script src="tragitti.js?v=92"></script>
+<script src="suoni.js?v=92"></script>
+<script src="telecomando.js?v=92"></script>
+<script src="spesa.js?v=92"></script>
+<script src="coppia.js?v=92"></script>
+<script src="occhiata.js?v=92"></script>
+<script src="chatplus.js?v=92"></script>
+<script src="giochi2.js?v=92"></script>
+<script src="scacchi.js?v=92"></script>
+<script src="eroefoto.js?v=92"></script>
+<script src="compleanni.js?v=92"></script>
+<script src="gattodisegno.js?v=92"></script>
+<script src="gattino.js?v=92"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -800,7 +801,7 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=91";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=92";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");
