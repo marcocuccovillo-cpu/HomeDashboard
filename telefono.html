@@ -195,6 +195,12 @@
   /* schede a tutto schermo: guida TV e stanza del gatto (le pagine vere, dentro) */
   .scheda-piena.on { position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; background: #14151d; animation: none; }
   #s-gatto.on { background: #2a1d18; }
+  .scheda-piena:fullscreen iframe, .scheda-piena:-webkit-full-screen iframe { top: 0; bottom: 0; height: 100%; }
+  .b-pieno { position: absolute; z-index: 2; right: 18px; bottom: calc(158px + env(safe-area-inset-bottom)); width: 46px; height: 46px; border-radius: 50%; border: 0;
+             background: rgba(0,0,0,.35); color: #fff; font-size: 22px; line-height: 46px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .b-pieno::before { content: "⛶"; }
+  .scheda-piena:fullscreen .b-pieno, .scheda-piena:-webkit-full-screen .b-pieno { bottom: 56px; right: 14px; opacity: .55; }
+  .scheda-piena:fullscreen .b-pieno::before, .scheda-piena:-webkit-full-screen .b-pieno::before { content: "✕"; }
   .scheda-piena iframe { position: absolute; left: 0; right: 0; top: env(safe-area-inset-top); bottom: calc(78px + env(safe-area-inset-bottom)); width: 100%; height: calc(100% - 78px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border: 0; display: block; }
   nav button.on { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 
@@ -616,8 +622,8 @@
     </div>
   </section>
 
-  <section class="scheda scheda-piena" id="s-tv"><iframe title="Guida TV" data-src="tv.html"></iframe></section>
-  <section class="scheda scheda-piena" id="s-gatto"><iframe title="La stanza del gatto" data-src="gatto.html"></iframe></section>
+  <section class="scheda scheda-piena" id="s-tv"><iframe title="Guida TV" data-src="tv.html"></iframe><button type="button" class="b-pieno" aria-label="Schermo intero"></button></section>
+  <section class="scheda scheda-piena" id="s-gatto"><iframe title="La stanza del gatto" data-src="gatto.html"></iframe><button type="button" class="b-pieno" aria-label="Schermo intero"></button></section>
   <section class="scheda" id="s-foto">
     <div class="titolo"><h2>Foto</h2></div>
     <label class="carica">Aggiungi foto<input type="file" id="foto-input" accept="image/*" multiple hidden></label>
@@ -769,28 +775,29 @@
   </div>
 </div>
 
-<script src="comune.js?v=89"></script>
-<script src="forza4.js?v=89"></script>
-<script src="giochi.js?v=89"></script>
-<script src="rete.js?v=89"></script>
-<script src="tragitti.js?v=89"></script>
-<script src="suoni.js?v=89"></script>
-<script src="telecomando.js?v=89"></script>
-<script src="spesa.js?v=89"></script>
-<script src="coppia.js?v=89"></script>
-<script src="occhiata.js?v=89"></script>
-<script src="chatplus.js?v=89"></script>
-<script src="giochi2.js?v=89"></script>
-<script src="scacchi.js?v=89"></script>
-<script src="eroefoto.js?v=89"></script>
-<script src="compleanni.js?v=89"></script>
-<script src="gattodisegno.js?v=89"></script>
-<script src="gattino.js?v=89"></script>
+<script src="comune.js?v=90"></script>
+<script src="forza4.js?v=90"></script>
+<script src="giochi.js?v=90"></script>
+<script src="rete.js?v=90"></script>
+<script src="tragitti.js?v=90"></script>
+<script src="suoni.js?v=90"></script>
+<script src="telecomando.js?v=90"></script>
+<script src="spesa.js?v=90"></script>
+<script src="coppia.js?v=90"></script>
+<script src="occhiata.js?v=90"></script>
+<script src="chatplus.js?v=90"></script>
+<script src="giochi2.js?v=90"></script>
+<script src="scacchi.js?v=90"></script>
+<script src="eroefoto.js?v=90"></script>
+<script src="compleanni.js?v=90"></script>
+<script src="gattodisegno.js?v=90"></script>
+<script src="gattino.js?v=90"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
 function mostraScheda(n) {
   scheda = n; salva("telefono_scheda", n);
+  if (n !== "tv" && n !== "gatto") esciPieno();
   [].forEach.call(document.querySelectorAll(".scheda"), function (s) { s.classList.toggle("on", s.id === "s-" + n); });
   [].forEach.call(document.querySelectorAll("nav button"), function (b) { b.classList.toggle("on", b.getAttribute("data-s") === n); });
   window.scrollTo(0, 0);
@@ -799,12 +806,24 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=89";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=90";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");   // nella stanza il gatto c'è già: niente visite
 }
-[].forEach.call(document.querySelectorAll("nav button"), function (b) { b.onclick = function () { mostraScheda(b.getAttribute("data-s")); }; });
+[].forEach.call(document.querySelectorAll("nav button"), function (b) { b.onclick = function () { var n = b.getAttribute("data-s"); mostraScheda(n); if (n === "tv" || n === "gatto") schermoIntero($("s-" + n)); }; });
+// TV e gatto: a schermo intero (spariscono menù e barre del telefono, e si può girare in orizzontale). Si esce con ✕ o col tasto indietro.
+function inPieno() { return document.fullscreenElement || document.webkitFullscreenElement; }
+function schermoIntero(el) {
+  var f = el.requestFullscreen || el.webkitRequestFullscreen; if (!f || inPieno()) return;
+  try { var p = f.call(el, { navigationUI: "hide" }); if (p && p.then) p.then(function () { try { screen.orientation.lock("any").catch(function () {}); } catch (e) {} }, function () {}); } catch (e) {}
+  if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then(function (w) { schermoIntero.wl = w; }, function () {});
+}
+function esciPieno() { var f = document.exitFullscreen || document.webkitExitFullscreen; if (f && inPieno()) f.call(document); }
+[].forEach.call(document.querySelectorAll(".b-pieno"), function (b) { b.onclick = function () { if (inPieno()) esciPieno(); else schermoIntero(b.parentNode); }; });
+["fullscreenchange", "webkitfullscreenchange"].forEach(function (ev) { document.addEventListener(ev, function () {
+  if (!inPieno()) { try { screen.orientation.unlock(); } catch (e) {} if (schermoIntero.wl) { schermoIntero.wl.release().catch(function () {}); schermoIntero.wl = null; } }
+}); });
 
 // ================= fogli =================
 function apri(id) { $(id).classList.add("on"); }
