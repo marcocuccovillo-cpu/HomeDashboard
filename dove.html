@@ -34,20 +34,21 @@
   #q-ora { font-size: min(3vmin, 19px); font-weight: 300; margin-top: 2.2vmin; opacity: .6; letter-spacing: .04em; }
   #tutto { position: absolute; z-index: 2; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; gap: 5vmin; padding: 4vmin;
            padding-top: max(4vmin, env(safe-area-inset-top)); padding-bottom: max(4vmin, env(safe-area-inset-bottom)); transition: transform 4s; }
-  body.vert #tutto { flex-direction: column; justify-content: flex-end; padding-bottom: max(6vmin, env(safe-area-inset-bottom)); }
-  body.oriz #tutto { flex-direction: row-reverse; justify-content: space-between; align-items: flex-end; padding: 5vmin 5vmin 5vmin max(5vmin, env(safe-area-inset-left)); }
+  body.vert #tutto { flex-direction: column; justify-content: flex-start; align-items: flex-start; padding: 33vh 5vmin 0; }
+  body.oriz #tutto { flex-direction: row; justify-content: flex-start; align-items: flex-end; padding: 5vmin 5vmin 5vmin max(5vmin, env(safe-area-inset-left)); }
   /* l'orologio più piccolo, in un angolo, così il cielo si vede */
-  #quadrante { width: 62vmin; height: 62vmin; flex: none; filter: drop-shadow(0 2vmin 4vmin rgba(0,0,0,.5)); }
-  body.oriz #quadrante { width: 58vmin; height: 58vmin; }
+
   .lancetta { transition: transform 3.2s cubic-bezier(.3, 1.35, .45, 1); }
   #lancette text { transform-box: view-box; }
   .etichetta { font-family: "Cormorant Garamond", serif; font-weight: 600; letter-spacing: .32em; font-size: 8.6px; fill: #e9d6b0; }
   #righe { display: flex; flex-direction: column; gap: 2.6vmin; text-shadow: 0 2px 14px rgba(0,0,0,.6); min-width: 0; max-width: 90vmin; }
   body.vert #righe { width: 88vmin; }
+  body.oriz #righe { max-width: 44vw; }
   body.oriz .riga .nome { font-size: min(4.6vmin, 34px); } body.oriz .riga .dove { font-size: min(3vmin, 20px); }
   .dentro #b-ruota { display: none; }
   #b-ruota { position: absolute; z-index: 3; right: 2.6vmin; top: 2.6vmin; width: 9vmin; height: 9vmin; max-width: 52px; max-height: 52px; border: 0; border-radius: 50%;
              background: rgba(0,0,0,.18); color: rgba(255,255,255,.55); font-size: min(4.4vmin, 24px); cursor: pointer; }
+  #righe { background: linear-gradient(90deg, rgba(10,8,16,.42), rgba(10,8,16,.18)); border-radius: 3vmin; padding: 2.4vmin 3vmin; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .riga { display: flex; gap: 2.6vmin; align-items: flex-start; }
   .riga .bollo { margin-top: .4vmin; }
   .riga .bollo { width: 7vmin; height: 7vmin; max-width: 54px; max-height: 54px; border-radius: 50%; flex: none; display: grid; place-items: center;
@@ -72,71 +73,15 @@
 <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
 <div id="testo"><div id="temp">–</div><div id="descr"></div><div id="pioggia"></div><div id="q-ora"></div></div>
 <div id="tutto">
-  <svg id="quadrante" viewBox="-100 -100 200 200" aria-label="Dove siete?">
-    <defs>
-      <radialGradient id="g-faccia" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#2b3550" stop-opacity=".78"/><stop offset=".6" stop-color="#161c2e" stop-opacity=".8"/><stop offset="1" stop-color="#0a0d18" stop-opacity=".86"/></radialGradient>
-      <linearGradient id="g-ottone" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3dca4"/><stop offset=".35" stop-color="#c9a56a"/><stop offset=".7" stop-color="#7d5b2c"/><stop offset="1" stop-color="#d9bb80"/></linearGradient>
-      <linearGradient id="g-ottone2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8cf96"/><stop offset=".5" stop-color="#6e4f25"/><stop offset="1" stop-color="#c9a56a"/></linearGradient>
-      <radialGradient id="g-vetro" cx="35%" cy="25%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".5" stop-color="#fff" stop-opacity=".03"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
-      <path id="arco-su" d="M -71 0 A 71 71 0 0 1 71 0"/>
-      <path id="arco-giu" d="M -71 0 A 71 71 0 0 0 71 0"/>
-      <filter id="ombra" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="1.2" dy="2.2" stdDeviation="1.6" flood-color="#000" flood-opacity=".55"/></filter>
-    </defs>
-    <circle r="99" fill="url(#g-ottone)"/>
-    <circle r="93" fill="url(#g-ottone2)"/>
-    <circle r="89.5" fill="#0b0e19" fill-opacity=".55"/>
-    <circle r="88" fill="url(#g-faccia)"/>
-    <g id="settori"></g>
-    <g id="tacche"></g>
-    <g id="scritte"></g>
-    <text y="-17" text-anchor="middle" style="font: italic 500 7px 'Cormorant Garamond', serif; fill: rgba(233,214,176,.45); letter-spacing: .18em">Home 2 Love</text>
-    <g id="lancette"></g>
-    <circle r="7.5" fill="url(#g-ottone)" filter="url(#ombra)"/>
-    <circle r="3" fill="#6e4f25"/>
-    <circle r="88" fill="url(#g-vetro)" pointer-events="none"/>
-  </svg>
   <div id="righe"></div>
 </div>
 </div>
 
-<script src="comune.js?v=97"></script>
-<script src="telecomando.js?v=97"></script>
+<script src="comune.js?v=98"></script>
+<script src="telecomando.js?v=98"></script>
+<script src="paesaggio.js?v=98"></script>
 <script>
-// ================= il quadrante =================
-var POSTI = { casa: { a: 0, nome: "CASA", icona: "⌂" }, viaggio: { a: 90, nome: "IN VIAGGIO", icona: "➝" }, lavoro: { a: 180, nome: "LAVORO", icona: "✦" }, fuori: { a: 270, nome: "FUORI", icona: "⚑" } };
 var VIAGGIO = 30;   // minuti di strada stimati prima e dopo un turno (se non c'è "Sto tornando")
-var NS = "http://www.w3.org/2000/svg";
-function svg(tag, attr, dentro) { var e = document.createElementNS(NS, tag); for (var k in attr) e.setAttribute(k, attr[k]); if (dentro) dentro.appendChild(e); return e; }
-function punto(a, r) { var x = (a - 90) * Math.PI / 180; return [Math.cos(x) * r, Math.sin(x) * r]; }
-function costruisci() {
-  var set = $("settori"), tac = $("tacche"), scr = $("scritte");
-  Object.keys(POSTI).forEach(function (k, i) {   // spicchi appena più chiari, uno sì e uno no
-    var a = POSTI[k].a, p1 = punto(a - 45, 86), p2 = punto(a + 45, 86);
-    svg("path", { d: "M0 0 L" + p1 + " A86 86 0 0 1 " + p2 + " Z", fill: i % 2 ? "rgba(255,255,255,.025)" : "rgba(201,165,106,.05)" }, set);
-    var l = punto(a + 45, 86), l2 = punto(a + 45, 18);
-    svg("line", { x1: l2[0], y1: l2[1], x2: l[0], y2: l[1], stroke: "rgba(201,165,106,.28)", "stroke-width": ".5" }, set);
-    // nome del posto lungo il bordo (in basso le scritte girano per restare dritte)
-    var g = svg("g", { transform: "rotate(" + (a > 90 && a < 270 ? a - 180 : a) + ")" }, scr);
-    var t = svg("text", { "class": "etichetta", "text-anchor": "middle", dy: a > 90 && a < 270 ? "7.5" : "0" }, g);
-    var tp = svg("textPath", { href: a > 90 && a < 270 ? "#arco-giu" : "#arco-su", startOffset: "50%" }, t); tp.textContent = POSTI[k].nome;
-  });
-  for (var i = 0; i < 72; i++) {   // tacche come un vecchio orologio
-    var lunga = i % 6 === 0, a = i * 5, p1 = punto(a, 86), p2 = punto(a, lunga ? 80.5 : 83.5);
-    svg("line", { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], stroke: lunga ? "rgba(233,214,176,.7)" : "rgba(233,214,176,.3)", "stroke-width": lunga ? "1" : ".5", "stroke-linecap": "round" }, tac);
-  }
-  [0, 1].forEach(function (p) {   // le lancette: affusolate, con il medaglione dell'iniziale in punta
-    var g = svg("g", { "class": "lancetta", id: "lan" + p }, $("lancette")), col = p ? "#52d1c6" : "#ff9a62", lungh = p ? 46 : 58;
-    var h = svg("g", { filter: "url(#ombra)" }, g);
-    svg("path", { d: "M -2.6 12 L -1.3 -" + (lungh - 9) + " L 0 -" + (lungh - 6) + " L 1.3 -" + (lungh - 9) + " L 2.6 12 Z", fill: col }, h);
-    svg("path", { d: "M 0 12 L 0 -" + (lungh - 7), stroke: "rgba(255,255,255,.35)", "stroke-width": ".5" }, h);
-    svg("circle", { cy: -lungh + 2, r: 8.4, fill: "url(#g-ottone)" }, h);
-    svg("circle", { cy: -lungh + 2, r: 6.9, fill: col }, h);
-    var t = svg("text", { id: "ini" + p, "class": "lancetta", y: -lungh + 5.6, "text-anchor": "middle", style: "font: 600 9.5px Outfit, sans-serif; fill: #1a120c; transform-origin: 0 " + (-lungh + 2) + "px" }, h);
-    t.textContent = "?";   // l'iniziale gira al contrario della lancetta: resta sempre dritta
-    g.style.transformOrigin = "0 0"; g.style.transformBox = "view-box";
-  });
-}
-
 // ================= dove si trova ognuno =================
 function minDi(d) { return d.getHours() * 60 + d.getMinutes(); }
 function hm(min) { min = ((Math.round(min) % 1440) + 1440) % 1440; return Math.floor(min / 60) + ":" + due(min % 60); }
@@ -150,31 +95,23 @@ function dove(p, d) {
   var m = minDi(d), r = rientroDi(p), f = fasceIntorno(d, p), i;
   if (r && Date.now() < r.arrivo) {
     var prog = Math.max(0, Math.min(1, (Date.now() - (r.t || Date.now())) / Math.max(1, r.arrivo - (r.t || Date.now()))));
-    return { posto: "viaggio", angolo: 180 - 180 * prog, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" };
+    return { posto: "viaggio", verso: "casa", prog: prog, mezzo: r.mezzo, testo: "sta tornando · arriva alle <b>" + oraHM(r.arrivo) + "</b>" };
   }
   var fu = fuoriDi(p);
-  if (fu) return { posto: "fuori", testo: "fuori · <b>" + fu.dove.replace(/[<>&]/g, "") + "</b>" };
-  for (i = 0; i < f.length; i++) if (m >= f[i][0] && m < f[i][1]) return { posto: "lavoro", testo: "al lavoro fino alle <b>" + hm(f[i][1]) + "</b>" };
-  for (i = 0; i < f.length; i++) if (m >= f[i][0] - VIAGGIO && m < f[i][0]) return { posto: "viaggio", angolo: 180 * (m - f[i][0] + VIAGGIO) / VIAGGIO, testo: "sta andando al lavoro · attacca alle <b>" + hm(f[i][0]) + "</b>" };
-  for (i = 0; i < f.length; i++) if (m >= f[i][1] && m < f[i][1] + VIAGGIO) return { posto: "viaggio", angolo: 180 - 180 * (m - f[i][1]) / VIAGGIO, testo: "dovrebbe essere per strada verso casa" };
+  if (fu) return { posto: "fuori", dove: fu.dove || "", testo: "fuori · <b>" + (fu.dove || "").replace(/[<>&]/g, "") + "</b>" };
+  for (i = 0; i < f.length; i++) if (m >= f[i][0] && m < f[i][1]) return { posto: "lavoro", fino: hm(f[i][1]), testo: "al lavoro fino alle <b>" + hm(f[i][1]) + "</b>" };
+  for (i = 0; i < f.length; i++) if (m >= f[i][0] - VIAGGIO && m < f[i][0]) return { posto: "viaggio", verso: "via", prog: (m - f[i][0] + VIAGGIO) / VIAGGIO, testo: "sta andando al lavoro · attacca alle <b>" + hm(f[i][0]) + "</b>" };
+  for (i = 0; i < f.length; i++) if (m >= f[i][1] && m < f[i][1] + VIAGGIO) return { posto: "viaggio", verso: "casa", prog: (m - f[i][1]) / VIAGGIO, testo: "dovrebbe essere per strada verso casa" };
   var prossimo = f.filter(function (x) { return x[0] > m; })[0];
   var dopo = prossimo ? (prossimo[0] < 1440 ? "oggi attacca alle <b>" + hm(prossimo[0]) + "</b>" : prossimo[0] < 2880 ? "domani attacca alle <b>" + hm(prossimo[0]) + "</b>" : "") : "";
   return { posto: "casa", testo: "a casa" + (dopo ? " · " + dopo : "") };
 }
 
 // ================= disegno =================
-var angoli = [null, null];
-function giraVerso(p, a) {   // sceglie il giro più corto (mai un giro intero all'indietro)
-  var prima = angoli[p]; if (prima !== null) { while (a - prima > 180) a -= 360; while (prima - a > 180) a += 360; }
-  angoli[p] = a; $("lan" + p).style.transform = "rotate(" + a + "deg)"; $("ini" + p).style.transform = "rotate(" + (-a) + "deg)";
-}
+var STATO = null;
 function disegna() {
-  var d = new Date(), s = [dove(0, d), dove(1, d)];
-  var a = s.map(function (x) { return x.angolo !== undefined ? x.angolo : POSTI[x.posto].a; });
-  if (Math.abs(a[0] - a[1]) < 10) { a[0] -= 7; a[1] += 7; }   // nello stesso posto: affiancate, si vedono tutte e due
+  var d = new Date(), s = [dove(0, d), dove(1, d)]; STATO = s;
   [0, 1].forEach(function (p) {
-    giraVerso(p, a[p]);
-    $("ini" + p).textContent = nome(p).charAt(0).toUpperCase();
     var riga = $("riga" + p);
     if (!riga) {
       riga = el("div", "riga"); riga.id = "riga" + p;
@@ -218,6 +155,119 @@ function disegnaViaggio(riga, p) {
 }
 function ridisegna() { disegna(); }
 
+
+// ================= la casetta: chi è a casa si affaccia alla finestra, chi torna è sulla strada, chi è fuori ha il fumetto =================
+function geomCasa(i) {
+  var W = i.W, H = i.H, oriz = W > H;
+  var S = oriz ? Math.min(H * .46, W * .27) : Math.min(W * .6, H * .3);
+  var cx = oriz ? W * .74 : W * .55, gy = oriz ? H * .92 : H * .9;
+  return { S: S, cx: cx, gy: gy, muro: S * .56, tetto: S * .4, top: gy - S * .56, fin: [cx - S * .29, cx + S * .29], finY: gy - S * .42, finW: S * .2, finH: S * .2, portaW: S * .17, portaH: S * .3 };
+}
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function tono(rgb, L, k) { var a = Math.max(.12, L) * (k || 1); return "rgb(" + Math.round(8 + (rgb[0] - 8) * a) + "," + Math.round(10 + (rgb[1] - 10) * a) + "," + Math.round(20 + (rgb[2] - 20) * a) + ")"; }
+var FUMO = [];
+function disegnaCasa(g, i) {
+  if (!STATO) return;
+  var c = geomCasa(i), S = c.S, L = i.L, notte = L < .45, t = i.ora;
+  var col = ["#ff9a62", "#52d1c6"];
+  // il prato davanti e la stradina che arriva alla porta
+  var prato = g.createLinearGradient(0, c.gy - S * .05, 0, i.H); prato.addColorStop(0, tono([96, 140, 72], L)); prato.addColorStop(1, tono([60, 98, 52], L));
+  g.fillStyle = prato; g.beginPath(); g.moveTo(0, c.gy + S * .02); g.quadraticCurveTo(i.W * .5, c.gy - S * .06, i.W, c.gy + S * .02); g.lineTo(i.W, i.H); g.lineTo(0, i.H); g.fill();
+  var sy = c.gy + S * .1;
+  g.strokeStyle = tono([214, 196, 160], L); g.lineWidth = S * .1; g.lineCap = "round";
+  g.beginPath(); g.moveTo(-20, sy + S * .04); g.quadraticCurveTo(c.cx - S * .9, sy + S * .06, c.cx, c.gy + S * .02); g.stroke();
+  g.lineWidth = S * .1; g.beginPath(); g.moveTo(c.cx, c.gy + S * .02); g.quadraticCurveTo(c.cx + S * .9, sy + S * .06, i.W + 20, sy + S * .04); g.stroke();
+  // ombra a terra
+  g.fillStyle = "rgba(0,0,0,.22)"; g.beginPath(); g.ellipse(c.cx, c.gy + S * .01, S * .62, S * .06, 0, 0, 7); g.fill();
+  // il muro
+  var x0 = c.cx - S / 2;
+  g.fillStyle = tono([238, 214, 176], L); g.fillRect(x0, c.top, S, c.muro);
+  g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(x0 + S * .82, c.top, S * .18, c.muro);   // lato in ombra
+  g.fillStyle = tono([200, 170, 130], L); g.fillRect(x0 - S * .02, c.gy - S * .05, S * 1.04, S * .05);   // zoccolo
+  // il comignolo e il fumo (quando fa freddo e c'è qualcuno)
+  var qualcuno = STATO.some(function (x) { return x.posto === "casa"; });
+  g.fillStyle = tono([150, 70, 50], L); g.fillRect(c.cx + S * .2, c.top - c.tetto * .85, S * .09, c.tetto * .6);
+  g.fillStyle = tono([120, 56, 42], L); g.fillRect(c.cx + S * .19, c.top - c.tetto * .88, S * .11, S * .03);
+  if (qualcuno && i.temp !== null && i.temp < 15) {
+    if (Math.random() < .08) FUMO.push({ x: c.cx + S * .245, y: c.top - c.tetto * .9, r: S * .03, a: .5 });
+    FUMO = FUMO.filter(function (f) { f.y -= S * .12 * i.dt; f.x += S * .05 * i.dt; f.r += S * .03 * i.dt; f.a -= .12 * i.dt; return f.a > 0; });
+    FUMO.forEach(function (f) { g.fillStyle = "rgba(220,220,225," + (f.a * Math.max(.35, L)).toFixed(3) + ")"; g.beginPath(); g.arc(f.x, f.y, f.r, 0, 7); g.fill(); });
+  } else FUMO = [];
+  // il tetto di coppi
+  g.fillStyle = tono([178, 74, 52], L);
+  g.beginPath(); g.moveTo(x0 - S * .08, c.top + S * .02); g.lineTo(c.cx, c.top - c.tetto); g.lineTo(x0 + S * 1.08, c.top + S * .02); g.closePath(); g.fill();
+  g.strokeStyle = tono([140, 52, 38], L); g.lineWidth = Math.max(1, S * .008);
+  for (var k = 1; k < 5; k++) { var yy = c.top - c.tetto + c.tetto * k / 5, half = (S * .58) * k / 5; g.beginPath(); g.moveTo(c.cx - half, yy); g.lineTo(c.cx + half, yy); g.stroke(); }
+  // l'oblò col cuore nel timpano
+  var oy = c.top - c.tetto * .38, or = S * .07;
+  g.fillStyle = tono([238, 214, 176], L); g.beginPath(); g.arc(c.cx, oy, or * 1.25, 0, 7); g.fill();
+  g.fillStyle = notte ? "rgba(255,200,130,.9)" : tono([120, 160, 200], L); g.beginPath(); g.arc(c.cx, oy, or, 0, 7); g.fill();
+  g.fillStyle = "#e5484d"; g.beginPath(); var hx = c.cx, hy = oy + or * .35, hs = or * .55;
+  g.moveTo(hx, hy); g.bezierCurveTo(hx - hs * 1.6, hy - hs * .9, hx - hs * .6, hy - hs * 2.1, hx, hy - hs * 1.15); g.bezierCurveTo(hx + hs * .6, hy - hs * 2.1, hx + hs * 1.6, hy - hs * .9, hx, hy); g.fill();
+  // la porta (e la lampada accanto, la sera)
+  var px = c.cx - c.portaW / 2, py = c.gy - c.portaH - S * .05;
+  g.fillStyle = tono([110, 64, 40], L); rr(g, px, py, c.portaW, c.portaH, c.portaW * .45); g.fill();
+  g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(px + c.portaW * .48, py + c.portaH * .15, 1.2, c.portaH * .8);
+  g.fillStyle = "#e7c35c"; g.beginPath(); g.arc(px + c.portaW * .78, py + c.portaH * .6, Math.max(1.5, S * .012), 0, 7); g.fill();
+  if (notte) {
+    var lx = px + c.portaW + S * .06, ly = py + c.portaH * .25, al = g.createRadialGradient(lx, ly, 0, lx, ly, S * .3);
+    al.addColorStop(0, "rgba(255,200,120,.45)"); al.addColorStop(1, "rgba(255,200,120,0)"); g.fillStyle = al; g.fillRect(lx - S * .3, ly - S * .3, S * .6, S * .6);
+    g.fillStyle = "#ffd28a"; g.beginPath(); g.arc(lx, ly, S * .02, 0, 7); g.fill();
+  }
+  // le due finestre: una per persona
+  [0, 1].forEach(function (p) {
+    var st = STATO[p], a = st.posto === "casa", fx = c.fin[p] - c.finW / 2, fy = c.finY - c.finH / 2;
+    if (a && notte) { var gl = g.createRadialGradient(c.fin[p], c.finY, 0, c.fin[p], c.finY, S * .32); gl.addColorStop(0, "rgba(255,190,110,.45)"); gl.addColorStop(1, "rgba(255,190,110,0)"); g.fillStyle = gl; g.fillRect(c.fin[p] - S * .32, c.finY - S * .32, S * .64, S * .64); }
+    g.fillStyle = tono([90, 60, 40], L); g.fillRect(fx - S * .015, fy - S * .015, c.finW + S * .03, c.finH + S * .03);
+    var vetro = g.createLinearGradient(fx, fy, fx, fy + c.finH);
+    if (a) { vetro.addColorStop(0, notte ? "#ffd89a" : "#fff1d6"); vetro.addColorStop(1, notte ? "#f2a95a" : "#f5d9a8"); }
+    else { vetro.addColorStop(0, notte ? "#141a2c" : tono([150, 190, 225], L)); vetro.addColorStop(1, notte ? "#0b0f1c" : tono([100, 140, 185], L)); }
+    g.fillStyle = vetro; g.fillRect(fx, fy, c.finW, c.finH);
+    if (a) {   // chi è a casa, alla finestra: testa e spalle col suo colore e l'iniziale
+      g.save(); g.beginPath(); g.rect(fx, fy, c.finW, c.finH); g.clip();
+      var bx = c.fin[p] + Math.sin(t / 1400 + p * 2) * c.finW * .06, by = fy + c.finH;
+      g.fillStyle = col[p]; g.beginPath(); g.ellipse(bx, by, c.finW * .38, c.finH * .3, 0, Math.PI, 0); g.fill();
+      g.beginPath(); g.arc(bx, by - c.finH * .48, c.finW * .2, 0, 7); g.fill();
+      g.fillStyle = "#1a120c"; g.font = "600 " + Math.round(c.finW * .22) + "px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(nome(p).charAt(0).toUpperCase(), bx, by - c.finH * .47);
+      g.restore();
+    } else {   // tende chiuse a metà
+      g.fillStyle = notte ? "rgba(60,40,70,.6)" : "rgba(255,255,255,.35)";
+      g.fillRect(fx, fy, c.finW * .22, c.finH); g.fillRect(fx + c.finW * .78, fy, c.finW * .22, c.finH);
+    }
+    g.fillStyle = tono([90, 60, 40], L); g.fillRect(c.fin[p] - 1, fy, 2, c.finH); g.fillRect(fx, c.finY - 1, c.finW, 2);
+    g.fillStyle = tono([220, 200, 170], L); g.fillRect(fx - S * .03, fy + c.finH, c.finW + S * .06, S * .025);   // il davanzale
+    g.fillStyle = tono([200, 70, 90], L); for (var q = 0; q < 4; q++) { g.beginPath(); g.arc(fx + c.finW * (.12 + q * .25), fy + c.finH - S * .002, S * .016, 0, 7); g.fill(); }   // i fiori
+  });
+  // chi è per strada: verso casa o verso il lavoro
+  [0, 1].forEach(function (p) {
+    var st = STATO[p]; if (st.posto !== "viaggio") return;
+    var prog = Math.max(0, Math.min(1, st.prog || 0)), xa = -S * .1, porta = c.cx - S * .06, xb = i.W + S * .1, x, y;
+    if (st.verso === "casa") { x = xa + (porta - xa) * prog; } else { x = porta + (xb - porta) * prog; }
+    y = sy + S * .02 - Math.abs(Math.sin(t / 160)) * S * .015;
+    var r = S * .085;
+    g.fillStyle = "rgba(0,0,0,.25)"; g.beginPath(); g.ellipse(x, y + r * .12, r * .9, r * .22, 0, 0, 7); g.fill();
+    g.fillStyle = col[p]; g.beginPath(); g.arc(x, y - r, r, 0, 7); g.fill();
+    g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = Math.max(1.5, r * .12); g.stroke();
+    g.fillStyle = "#1a120c"; g.font = "600 " + Math.round(r * 1.05) + "px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(nome(p).charAt(0).toUpperCase(), x, y - r);
+    g.font = Math.round(r * 1.25) + "px sans-serif"; g.fillText(st.mezzo === "bici" ? "🚲" : st.mezzo === "auto" ? "🚗" : st.verso === "via" ? "💼" : "🚶", x + (st.verso === "casa" ? -r * 1.6 : r * 1.6), y - r * .6);
+  });
+  // chi è fuori o al lavoro: un fumetto sopra la casa, dalla sua parte
+  [0, 1].forEach(function (p) {
+    var st = STATO[p]; if (st.posto !== "fuori" && st.posto !== "lavoro") return;
+    var testo = st.posto === "lavoro" ? "💼 al lavoro" + (st.fino ? " fino alle " + st.fino : "") : "📍 " + (st.dove || "fuori");
+    var fs = Math.max(12, Math.round(S * .075)); g.font = "500 " + fs + "px Outfit, sans-serif";
+    var tw = g.measureText(nome(p) + ": ").width, tw2 = g.measureText(testo).width, bw = Math.max(tw, tw2) + fs * 1.4, bh = fs * 2.9;
+    var bx = c.fin[p] + (p ? S * .05 : -S * .05) - (p ? 0 : bw), by = c.top - c.tetto - bh - S * .06 + (p ? S * .02 : 0);
+    bx = Math.max(6, Math.min(i.W - bw - 6, bx));
+    g.fillStyle = "rgba(255,255,255,.93)"; rr(g, bx, by, bw, bh, fs * .6); g.fill();
+    var ax = Math.max(bx + fs, Math.min(bx + bw - fs, c.fin[p])); g.beginPath(); g.moveTo(ax - fs * .4, by + bh - 1); g.lineTo(ax, by + bh + fs * .7); g.lineTo(ax + fs * .4, by + bh - 1); g.fill();
+    g.fillStyle = col[p]; g.beginPath(); g.arc(bx + fs * .75, by + fs * .95, fs * .32, 0, 7); g.fill();
+    g.fillStyle = "#2a1d18"; g.textAlign = "left"; g.textBaseline = "middle";
+    g.font = "700 " + fs + "px Outfit, sans-serif"; g.fillText(nome(p), bx + fs * 1.25, by + fs * .95);
+    g.font = "400 " + fs + "px Outfit, sans-serif"; g.fillText(testo, bx + fs * .7, by + fs * 2.05);
+  });
+}
 // ================= schermo: sempre acceso, a tutto schermo, e un leggero spostamento contro i segni sullo schermo =================
 var DENTRO = window.parent !== window;
 if (DENTRO) document.documentElement.classList.add("dentro");
@@ -232,268 +282,14 @@ setInterval(function () {   // contro i segni sullo schermo
   var t = "translate(" + Math.round(Math.random() * 8 - 4) + "px," + Math.round(Math.random() * 8 - 4) + "px)"; $("tutto").style.transform = t; $("testo").style.transform = t;
 }, 120000);
 
-// ================= il cielo di Bologna, dal vivo, con il meteo vero (Open-Meteo) =================
-(function () {
-var prova = new URLSearchParams(location.search);   // ?prova=pioggia|neve|temporale|nebbia|sereno|nuvoloso&ora=21:30 per vederlo subito
-function adesso() {
-  var d = new Date(), o = prova.get("ora");
-  if (o && /^\d{1,2}:\d{2}$/.test(o)) { var p = o.split(":"); d.setHours(+p[0], +p[1]); }
-  return d;
-}
-
-// ================= sole e luna: dove sono davvero =================
-function posSole(d) {   // altezza e azimut in gradi (formula NOAA)
-  var rad = Math.PI / 180, n = (d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5, ora = d.getUTCHours() + d.getUTCMinutes() / 60;
-  var g = 2 * Math.PI / 365 * (n - 1 + (ora - 12) / 24);
-  var eq = 229.18 * (.000075 + .001868 * Math.cos(g) - .032077 * Math.sin(g) - .014615 * Math.cos(2 * g) - .040849 * Math.sin(2 * g));
-  var dec = .006918 - .399912 * Math.cos(g) + .070257 * Math.sin(g) - .006758 * Math.cos(2 * g) + .000907 * Math.sin(2 * g) - .002697 * Math.cos(3 * g) + .00148 * Math.sin(3 * g);
-  var tst = ora * 60 + eq + 4 * LON, ha = (tst / 4 - 180) * rad, lat = LAT * rad;
-  var cz = Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha), z = Math.acos(Math.max(-1, Math.min(1, cz)));
-  var az = Math.acos(Math.max(-1, Math.min(1, (Math.sin(lat) * Math.cos(z) - Math.sin(dec)) / (Math.cos(lat) * Math.sin(z))))) / rad;
-  az = ha > 0 ? (az + 180) % 360 : (540 - az) % 360;
-  return { alt: 90 - z / rad, az: az };
-}
-function etaLuna(d) { var s = 29.530588853, x = ((d - Date.UTC(2000, 0, 6, 18, 14)) / 864e5) % s; return (x + s) % s / s; }   // 0 nuova · .5 piena
-function posLuna(d) { return posSole(new Date(d.getTime() - etaLuna(d) * 864e5 * 1.0347)); }   // la luna "ritarda" sul sole di circa un giorno al mese
-
-// ================= meteo =================
-var M = null;   // { t, codice, nuvole 0..1, mm, vento km/h, verso (gradi), giorno, j }
-function tipo(c) {
-  return c >= 95 ? "temporale" : (c >= 71 && c <= 77) || c === 85 || c === 86 ? "neve" : (c >= 51 && c <= 67) || (c >= 80 && c <= 82) ? "pioggia" : c === 45 || c === 48 ? "nebbia" : c === 3 ? "coperto" : c >= 1 ? "nuvoloso" : "sereno";
-}
-function descrizione(c) {
-  return { 0: "Sereno", 1: "Quasi sereno", 2: "Poco nuvoloso", 3: "Coperto", 45: "Nebbia", 48: "Nebbia gelata", 51: "Pioggerella", 53: "Pioggerella", 55: "Pioggerella fitta", 56: "Pioggerella gelata", 57: "Pioggerella gelata",
-    61: "Pioggia debole", 63: "Pioggia", 65: "Pioggia forte", 66: "Pioggia gelata", 67: "Pioggia gelata", 71: "Neve debole", 73: "Neve", 75: "Neve forte", 77: "Nevischio",
-    80: "Rovesci", 81: "Rovesci", 82: "Rovesci forti", 85: "Rovesci di neve", 86: "Rovesci di neve", 95: "Temporale", 96: "Temporale con grandine", 99: "Temporale con grandine" }[c] || "";
-}
-function leggiMeteo() {
-  var finti = { pioggia: [63, .95, 2.5, 18], neve: [73, .95, 1.2, 8], temporale: [95, 1, 6, 30], nebbia: [45, .6, 0, 4], sereno: [0, 0, 0, 6], nuvoloso: [2, .5, 0, 12] }, f = finti[prova.get("prova")];
-  if (f) { M = { t: 9, codice: f[0], nuvole: f[1], mm: f[2], vento: f[3], verso: 250, j: null }; aggiornaTesto(); preparaSfondo(); preparaNuvole(); preparaParticelle(); return; }
-  fetch("https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
-    "&current=temperature_2m,weather_code,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m&hourly=precipitation_probability,precipitation,weather_code&timezone=Europe%2FRome&forecast_days=2")
-    .then(function (r) { return r.json(); }).then(function (j) {
-      var c = j.current;
-      M = { t: c.temperature_2m, codice: c.weather_code, nuvole: (c.cloud_cover || 0) / 100, mm: c.precipitation || 0, vento: c.wind_speed_10m || 0, verso: c.wind_direction_10m || 0, j: j };
-      aggiornaTesto(); preparaSfondo(); preparaNuvole(); preparaParticelle();
-    }, function () {});
-}
-function prossimaPioggia() {   // "Stasera piove verso le 19" / "Smette verso le 16"
-  var j = M && M.j; if (!j || !j.hourly) return "";
-  var h = j.hourly, d = adesso(), ora = d.getFullYear() + "-" + due(d.getMonth() + 1) + "-" + due(d.getDate()) + "T" + due(d.getHours()) + ":00", i0 = h.time.indexOf(ora);
-  if (i0 < 0) return "";
-  var bagnato = function (i) { return h.precipitation[i] >= .2 || h.precipitation_probability[i] >= 55; };
-  var neve = function (i) { var c = h.weather_code[i]; return (c >= 71 && c <= 77) || c === 85 || c === 86; };
-  var quando = function (i) {
-    var t = new Date(h.time[i]), oggi = t.getDate() === d.getDate(), o = t.getHours();
-    return [oggi ? (o < 12 ? "stamattina" : o < 18 ? "oggi pomeriggio" : o < 22 ? "stasera" : "stanotte") : (o < 6 ? "stanotte" : o < 12 ? "domani mattina" : o < 18 ? "domani pomeriggio" : "domani sera"), o === 0 ? "verso mezzanotte" : o === 1 ? "verso l'una" : "verso le " + o];
-  };
-  var su = function (x) { return x.charAt(0).toUpperCase() + x.slice(1); };
-  var t0 = tipo(M.codice), oraPiove = t0 === "pioggia" || t0 === "temporale" || t0 === "neve" || M.mm >= .1;
-  for (var i = i0 + 1; i < Math.min(h.time.length, i0 + 25); i++) {
-    if (oraPiove && !bagnato(i)) { var q = quando(i); return (t0 === "neve" ? "Smette di nevicare " : "Smette ") + q[0] + " " + q[1]; }   // "Smette stasera verso le 19"
-    if (!oraPiove && bagnato(i)) { var x = quando(i); return su(x[0]) + (neve(i) ? " nevica " : " piove ") + x[1]; }       // "Stasera piove verso le 19"
-  }
-  return oraPiove ? (t0 === "neve" ? "Nevica per tutto il giorno" : "Piove per tutto il giorno") : "Niente pioggia nelle prossime 24 ore";
-}
-function aggiornaTesto() {
-  if (!M) return;
-  document.getElementById("temp").innerHTML = Math.round(M.t) + "<small>°</small>";
-  document.getElementById("descr").textContent = descrizione(M.codice);
-  document.getElementById("pioggia").textContent = prossimaPioggia();
-}
-function aggiornaOra() { var d = adesso(); document.getElementById("q-ora").textContent = d.getHours() + ":" + due(d.getMinutes()) + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
-
-// ================= colori del cielo secondo l'altezza del sole =================
-function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
-function mix(a, b, t) { t = Math.max(0, Math.min(1, t)); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
-function css(c, a) { return "rgba(" + Math.round(c[0]) + "," + Math.round(c[1]) + "," + Math.round(c[2]) + "," + (a === undefined ? 1 : a) + ")"; }
-var TAPPE = [   // altezza del sole → [alto, basso (orizzonte)]
-  [-18, "#04060f", "#0a1128"], [-9, "#0a1030", "#1d2350"], [-4, "#1a1d4a", "#7a4a6e"], [0, "#2c3570", "#e0805a"], [5, "#3f62a6", "#f2b27a"], [14, "#3b78c4", "#a9cdee"], [40, "#2f6fc0", "#9fcaf0"]
-];
-function cielo(alt) {
-  for (var i = 1; i < TAPPE.length; i++) if (alt < TAPPE[i][0] || i === TAPPE.length - 1) {
-    var a = TAPPE[i - 1], b = TAPPE[i], t = (alt - a[0]) / (b[0] - a[0]);
-    return [mix(hex(a[1]), hex(b[1]), t), mix(hex(a[2]), hex(b[2]), t)];
-  }
-}
-function grigiore(t, cop) { return t === "pioggia" || t === "temporale" || t === "neve" ? .75 : t === "nebbia" ? .6 : t === "coperto" ? .55 : cop * .35; }
-function coloriCielo(s) {   // [alto, orizzonte] tenendo conto delle nuvole
-  var col = cielo(s.alt), L = luce(s.alt), gr = grigiore(M ? tipo(M.codice) : "", M ? M.nuvole : .3);
-  return [mix(col[0], mix([120, 128, 140], [16, 20, 30], 1 - L), gr), mix(col[1], mix([165, 172, 182], [26, 30, 40], 1 - L), gr)];
-}
-function luce(alt) { return Math.max(.08, Math.min(1, (alt + 10) / 22)); }   // quanto è illuminata la scena (0 notte · 1 giorno)
-
-// ================= scena =================
-var tela = document.getElementById("tela"), g = tela.getContext("2d"), W = 0, H = 0, DPR = 1, ORIZ = 0;
-var sfondo = document.createElement("canvas"), sprite = [], NUV = [], GOCCE = [], STELLE = [], lampo = 0, prossimoLampo = 0;
-function rnd(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }   // casuale ma sempre uguale
-function ridimensiona() {
-  DPR = Math.min(1.5, devicePixelRatio || 1); var sc = document.getElementById("scena"); W = sc.clientWidth; H = sc.clientHeight; ORIZ = H * (W > H ? .7 : .74);
-  tela.width = W * DPR; tela.height = H * DPR; sfondo.width = W * DPR; sfondo.height = H * DPR;
-  STELLE = []; for (var i = 0; i < 160; i++) STELLE.push([rnd(i) * W, rnd(i + 500) * ORIZ * .92, rnd(i + 900) * 1.2 + .25, rnd(i + 1300) * 6]);
-  preparaSfondo(); preparaNuvole(); preparaParticelle();
-}
-function profiloColli(x, sem) { return Math.sin(x * .0042 + sem) * 18 + Math.sin(x * .011 + sem * 2) * 9 + Math.sin(x * .027 + sem * 3) * 4; }
-function preparaSfondo() {   // colli, San Luca, tetti e torri: si ridisegnano solo quando cambia la luce
-  var d = adesso(), s = posSole(d), L = luce(s.alt), col = coloriCielo(s), c = sfondo.getContext("2d");
-  c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, W, H);
-  var scuro = function (k) { return css(mix([6, 8, 16], col[1], k * L)); };
-  // colli lontani (più chiari, nella foschia) con San Luca
-  c.fillStyle = scuro(.55); c.beginPath(); c.moveTo(0, H);
-  for (var x = 0; x <= W; x += 6) c.lineTo(x, ORIZ - 26 - profiloColli(x, 1.3) * (H / 700));
-  c.lineTo(W, H); c.fill();
-  var sx = W * .7, sy = ORIZ - 26 - profiloColli(sx, 1.3) * (H / 700) - 4, k = Math.max(.7, H / 800);
-  c.beginPath(); c.arc(sx, sy - 9 * k, 7 * k, Math.PI, 0); c.fill();             // la cupola
-  c.fillRect(sx - 9 * k, sy - 9 * k, 18 * k, 9 * k); c.fillRect(sx - 1 * k, sy - 22 * k, 2 * k, 7 * k);
-  c.fillRect(sx + 9 * k, sy - 13 * k, 3 * k, 13 * k);                              // il campanile
-  c.strokeStyle = scuro(.55); c.lineWidth = 1.2 * k; c.beginPath();                // il portico che scende
-  for (var p = 0; p <= 1; p += .02) { var px = sx - 12 * k - p * W * .16; c.lineTo(px, ORIZ - 26 - profiloColli(px, 1.3) * (H / 700) + p * 14); }
-  c.stroke();
-  // colli vicini
-  c.fillStyle = scuro(.33); c.beginPath(); c.moveTo(0, H);
-  for (x = 0; x <= W; x += 6) c.lineTo(x, ORIZ - 4 - profiloColli(x, 4.1) * .55 * (H / 700));
-  c.lineTo(W, H); c.fill();
-  // tetti di Bologna, con le due torri
-  var base = H * (W > H ? .86 : .88), tetti = [], i = 0;
-  c.fillStyle = scuro(.12); c.beginPath(); c.moveTo(0, H);
-  for (x = -10; x < W + 40; i++) {
-    var k2 = Math.min(W, H) / 420, lw = (26 + rnd(i) * 54) * k2, lh = (10 + rnd(i + 40) * 30) * k2, punta = rnd(i + 80) > .35;
-    c.lineTo(x, base - lh);
-    if (punta) c.lineTo(x + lw / 2, base - lh - lw * .22); else if (rnd(i + 120) > .5) { c.lineTo(x + lw * .3, base - lh); c.lineTo(x + lw * .3, base - lh - 9); c.lineTo(x + lw * .36, base - lh - 9); c.lineTo(x + lw * .36, base - lh); }
-    c.lineTo(x + lw, base - lh); tetti.push([x, lw, base - lh]); x += lw;
-  }
-  c.lineTo(W + 40, H); c.fill();
-  var tx = W * (W > H ? .38 : .8), tw = Math.max(9, Math.min(W, H) * .03), th = Math.min(tw * 12, H * .34);   // 97 metri per 8: dodici volte più alta che larga   // Asinelli e Garisenda (che pende)
-  c.fillRect(tx, base - th, tw, th); c.fillRect(tx - tw * .18, base - th - tw * .5, tw * 1.36, tw * .5); c.fillRect(tx + tw * .3, base - th - tw * 1.1, tw * .4, tw * .6);
-  c.save(); c.translate(tx + tw * 2.1, base); c.rotate(-.06); c.fillRect(0, -th * .46, tw * 1.15, th * .46); c.restore();
-  // finestre accese quando fa buio
-  if (L < .55) {
-    c.fillStyle = "rgba(255,196,120," + (.75 * (1 - L / .55)).toFixed(2) + ")";
-    tetti.forEach(function (t, n) { for (var w = 0; w < 3; w++) if (rnd(n * 7 + w) > .62) c.fillRect(t[0] + 6 + rnd(n * 3 + w) * (t[1] - 14), t[2] + 8 + rnd(n * 5 + w) * (H - t[2] - 40) * .4, 4, 6); });
-    if (rnd(d.getHours()) > .2) c.fillRect(tx + tw * .4, base - th * .55, 3, 4);
-  }
-}
-function preparaNuvole() {   // nuvole fatte di sbuffi morbidi, colorate dalla luce del momento
-  if (!W) return;
-  var s = posSole(adesso()), L = luce(s.alt), col = cielo(s.alt), cop = M ? M.nuvole : .3, t = M ? tipo(M.codice) : "";
-  var grigio = t === "pioggia" || t === "temporale" || t === "neve" ? .55 : t === "coperto" ? .3 : 0;
-  var chiaro = mix(mix([255, 255, 255], col[1], .25), [120, 128, 140], grigio), base = mix(chiaro, [12, 16, 28], 1 - L);
-  var tramonto = s.alt > -6 && s.alt < 8 ? mix([255, 160, 120], [255, 255, 255], (s.alt + 6) / 14) : null;
-  sprite = [];
-  for (var k = 0; k < 4; k++) {
-    var cv = document.createElement("canvas"), w = 420, h = 200; cv.width = w; cv.height = h; var c = cv.getContext("2d");
-    for (var b = 0; b < 26; b++) {
-      var q = rnd(k * 40 + b), bx = w * (.12 + q * .76), alto = 1 - Math.abs(q - .5) * 1.6, r = h * (.09 + rnd(k * 40 + b + 33) * .13) * (.7 + alto * .6);
-      var by = h * .66 - alto * h * .22 * rnd(k * 40 + b + 17) - r * .2;
-      var gr = c.createRadialGradient(bx, by - r * .3, 0, bx, by, r), sopra = tramonto && L > .2 ? mix(base, tramonto, .5) : base;
-      gr.addColorStop(0, css(sopra, .9)); gr.addColorStop(.6, css(base, .55)); gr.addColorStop(1, css(base, 0));
-      c.fillStyle = gr; c.beginPath(); c.arc(bx, by, r, 0, 7); c.fill();
-    }
-    c.globalCompositeOperation = "destination-out";   // base piatta, come le nuvole vere
-    var tg = c.createLinearGradient(0, h * .64, 0, h * .8); tg.addColorStop(0, "rgba(0,0,0,0)"); tg.addColorStop(1, "rgba(0,0,0,1)");
-    c.fillStyle = tg; c.fillRect(0, h * .64, w, h * .36); c.globalCompositeOperation = "source-over";
-    sprite.push(cv);
-  }
-  var n = Math.round(cop < .08 ? 0 : 1 + cop * 18), prima = NUV;
-  NUV = [];
-  for (var i = 0; i < n; i++) NUV.push(prima[i] || { x: rnd(i * 9 + 1) * W * 1.4 - W * .2, y: ORIZ * (.04 + rnd(i * 9 + 2) * (cop > .8 ? .6 : .48)), s: (.6 + rnd(i * 9 + 3) * 1.1) * Math.max(1, W / 700), k: i % 4, a: .55 + rnd(i * 9 + 4) * .4 });
-}
-function preparaParticelle() {
-  GOCCE = []; if (!M || !W) return;
-  var t = tipo(M.codice), n = t === "neve" ? Math.round(90 + M.mm * 70) : t === "pioggia" || t === "temporale" ? Math.round(80 + M.mm * 110) : 0;
-  for (var i = 0; i < Math.min(n, 480); i++) GOCCE.push({ x: Math.random() * W, y: Math.random() * H, v: .6 + Math.random() * .8, r: Math.random() });
-}
-function ventoX() { if (!M) return 0; var vx = -Math.sin(M.verso * Math.PI / 180) * M.vento; return Math.max(-30, Math.min(30, vx)); }   // da dove soffia → verso dove va
-
-var ultimo = 0, ultimoSfondo = 0;
-function frame(ora) {
-  requestAnimationFrame(frame);
-  if (ora - ultimo < 33) return;
-  if (window.parent !== window && !window.parent.paginaDove) return;   // nel tablet: solo quando sei sulla pagina 5   // circa 30 al secondo: basta e avanza, e il telefono vecchio non scalda
-  var dt = Math.min(100, ora - ultimo) / 1000; ultimo = ora;
-  if (ora - ultimoSfondo > 300000) { ultimoSfondo = ora; preparaSfondo(); preparaNuvole(); }
-  var d = adesso(), s = posSole(d), L = luce(s.alt), col = cielo(s.alt), t = M ? tipo(M.codice) : "", cop = M ? M.nuvole : .3;
-  var grigio = grigiore(t, cop), cc = coloriCielo(s), sopra = cc[0], sotto = cc[1];
-  g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  var gr = g.createLinearGradient(0, 0, 0, ORIZ); gr.addColorStop(0, css(sopra)); gr.addColorStop(1, css(sotto));
-  g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  // stelle
-  var vis = Math.max(0, Math.min(1, (-s.alt - 6) / 8)) * (1 - Math.min(1, cop * 1.3));
-  if (vis > .02) STELLE.forEach(function (st) { g.fillStyle = "rgba(255,255,255," + (vis * (.35 + .65 * Math.abs(Math.sin(ora / 2400 + st[3])))).toFixed(3) + ")"; g.beginPath(); g.arc(st[0], st[1], st[2], 0, 7); g.fill(); });
-  // sole o luna, dove sono (guardando verso sud: est a sinistra, ovest a destra)
-  var cx = function (az) { return W * (az - 90) / 180; }, cy = function (alt) { return ORIZ - alt / 62 * ORIZ * .92; };
-  var velo = Math.max(0, 1 - grigio * 1.3);   // con il cielo coperto sole e luna non si vedono
-  if (s.alt > -3) {
-    var sx = cx(s.az), sy = cy(s.alt), rr = Math.max(14, Math.min(W, H) * .035);
-    var al = g.createRadialGradient(sx, sy, 0, sx, sy, rr * 9); al.addColorStop(0, css(s.alt < 8 ? [255, 190, 120] : [255, 244, 214], .55 * velo)); al.addColorStop(1, "rgba(255,220,170,0)");
-    g.fillStyle = al; g.fillRect(0, 0, W, H);
-    g.fillStyle = css(s.alt < 6 ? [255, 196, 140] : [255, 250, 232], .95 * velo); g.beginPath(); g.arc(sx, sy, rr, 0, 7); g.fill();
-  }
-  var lu = posLuna(d), fase = etaLuna(d);
-  if (lu.alt > -2 && s.alt < 6) {
-    var mx = cx(lu.az), my = cy(lu.alt), mr = Math.max(10, Math.min(W, H) * .026), vl = velo * (s.alt < -4 ? 1 : .5);
-    var ml = g.createRadialGradient(mx, my, 0, mx, my, mr * 7); ml.addColorStop(0, "rgba(220,228,255," + (.22 * vl).toFixed(3) + ")"); ml.addColorStop(1, "rgba(220,228,255,0)");
-    g.fillStyle = ml; g.fillRect(mx - mr * 7, my - mr * 7, mr * 14, mr * 14);
-    g.save(); g.beginPath(); g.arc(mx, my, mr, 0, 7); g.clip();
-    g.fillStyle = css(mix(sopra, [0, 0, 0], .3), vl); g.fillRect(mx - mr, my - mr, mr * 2, mr * 2);   // la parte in ombra
-    g.fillStyle = "rgba(240,242,250," + (.95 * vl).toFixed(3) + ")"; g.beginPath();               // la parte illuminata
-    var cr = Math.cos(fase * 2 * Math.PI), dx = fase < .5 ? 1 : -1;
-    g.arc(mx, my, mr, -Math.PI / 2, Math.PI / 2, dx < 0); g.ellipse(mx, my, Math.abs(cr) * mr, mr, 0, Math.PI / 2, -Math.PI / 2, (cr > 0) === (dx > 0)); g.fill();
-    g.restore();
-  }
-  // nuvole che passano col vento
-  var vx = ventoX();
-  NUV.forEach(function (n) {
-    n.x += (4 + Math.abs(vx) * .9) * (vx < 0 ? -1 : 1) * dt * (.6 + n.s * .3);
-    var w = 420 * n.s, h = 200 * n.s;
-    if (n.x > W + 40) n.x = -w; if (n.x < -w - 40) n.x = W;
-    g.globalAlpha = n.a * Math.min(1, .35 + cop); if (sprite[n.k]) g.drawImage(sprite[n.k], n.x, n.y, w, h);
-  });
-  g.globalAlpha = 1;
-  // lampi
-  if (t === "temporale") {
-    if (ora > prossimoLampo) { lampo = 1; prossimoLampo = ora + 5000 + Math.random() * 14000; }
-    if (lampo > .01) { g.fillStyle = "rgba(225,230,255," + (lampo * .55).toFixed(3) + ")"; g.fillRect(0, 0, W, H); lampo *= .82; }
-  }
-  // colli, tetti e torri
-  g.drawImage(sfondo, 0, 0, W, H);
-  // nebbia: veli che scivolano bassi
-  if (t === "nebbia" || (t === "coperto" && s.alt < 5 && cop > .9)) {
-    for (var f = 0; f < 4; f++) {
-      var fy = ORIZ - 40 + f * (H - ORIZ) * .3, fx = Math.sin(ora / (9000 + f * 2600) + f) * W * .15;
-      var nb = g.createLinearGradient(0, fy - 90, 0, fy + 90); var nc = mix([200, 206, 214], [40, 46, 60], 1 - L);
-      nb.addColorStop(0, css(nc, 0)); nb.addColorStop(.5, css(nc, t === "nebbia" ? .42 : .18)); nb.addColorStop(1, css(nc, 0));
-      g.fillStyle = nb; g.fillRect(fx - W * .2, fy - 90, W * 1.4, 180);
-    }
-  }
-  // pioggia e neve
-  if (GOCCE.length) {
-    var neve = t === "neve";
-    g.strokeStyle = css(mix([200, 214, 236], [120, 135, 160], 1 - L), .42); g.lineWidth = 1.1; g.fillStyle = css(mix([255, 255, 255], [170, 180, 200], 1 - L), .85);
-    if (!neve) g.beginPath();
-    GOCCE.forEach(function (p) {
-      if (neve) {
-        p.y += (28 + p.v * 30) * dt; p.x += (vx * 1.2 + Math.sin(ora / 900 + p.r * 9) * 14) * dt;
-        g.beginPath(); g.arc(p.x, p.y, 1 + p.r * 2.2, 0, 7); g.fill();
-      } else {
-        var vy = 620 + p.v * 380, sp = vx * 9; p.y += vy * dt; p.x += sp * dt;
-        g.moveTo(p.x, p.y); g.lineTo(p.x - sp * .028, p.y - (12 + p.v * 12));
-      }
-      if (p.y > H + 20) { p.y = -20 - Math.random() * 60; p.x = Math.random() * (W + 200) - 100; }
-      if (p.x > W + 120) p.x -= W + 200; if (p.x < -120) p.x += W + 200;
-    });
-    if (!neve) g.stroke();
-  }
-}
-
-addEventListener("resize", function () { clearTimeout(ridimensiona.t); ridimensiona.t = setTimeout(ridimensiona, 200); });
-addEventListener("scena", function () { clearTimeout(ridimensiona.t); ridimensiona.t = setTimeout(ridimensiona, 50); });
-ridimensiona(); aggiornaOra(); leggiMeteo();
-setInterval(aggiornaOra, 15000);
-setInterval(function () { leggiMeteo(); }, 15 * 60000);
-setInterval(aggiornaTesto, 5 * 60000);
-requestAnimationFrame(frame);
-})();
+PAESAGGIO.avvia({
+  tela: $("tela"), scena: $("scena"),
+  attivo: function () { return window.parent === window || !!window.parent.paginaDove; },   // nel tablet: solo quando sei sulla pagina 5
+  testo: function (i) { $("temp").innerHTML = Math.round(i.temp) + "<small>°</small>"; $("descr").textContent = i.descr; $("pioggia").textContent = i.pioggia; },
+  primoPiano: function (g, i) { if (window.disegnaCasa) disegnaCasa(g, i); }
+});
+function aggiornaOra() { var d = PAESAGGIO.adesso(); $("q-ora").textContent = d.getHours() + ":" + due(d.getMinutes()) + " · " + GIORNI[d.getDay()] + " " + d.getDate() + " " + MESI[d.getMonth()]; }
+aggiornaOra(); setInterval(aggiornaOra, 15000);
 
 // ================= girare lo schermo anche con la rotazione automatica spenta =================
 // ⟳ automatico (come il telefono) · ▭ orizzontale · ▭ orizzontale al contrario · ▯ verticale
@@ -516,7 +312,7 @@ $("b-ruota").onclick = function (e) {
 addEventListener("resize", applicaVerso);
 applicaVerso();
 
-costruisci(); disegna();
+disegna();
 setInterval(disegna, 15000);
 tieniAcceso();
 if (DENTRO) {   // dentro il tablet (pagina 5): i dati li tiene aggiornati il tablet, qui si leggono e basta

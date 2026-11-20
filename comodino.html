@@ -25,7 +25,13 @@
   body { background: linear-gradient(170deg, var(--c1), var(--c2)); color: var(--ink); font: 400 16px/1.3 "Outfit", -apple-system, Roboto, sans-serif;
          user-select: none; -webkit-user-select: none; transition: background 3s; }
   button { font: inherit; color: inherit; cursor: pointer; }
-  #cielo { position: fixed; inset: 0; pointer-events: none; }
+  #cielo { display: none; }
+  /* il paesaggio di Bologna dietro (lo stesso di "Dove siete?"), velato perché orologio e testi si leggano */
+  #fondo { position: fixed; inset: 0; pointer-events: none; transition: opacity 2s; }
+  #fondo canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,6,13,0) 45%, rgba(5,6,13,.45) 100%), linear-gradient(90deg, rgba(5,6,13,.62) 0%, rgba(5,6,13,.3) 46%, rgba(5,6,13,.62) 100%); }
+  @media (orientation: portrait) { #velo { background: linear-gradient(180deg, rgba(5,6,13,.55) 0%, rgba(5,6,13,.35) 30%, rgba(5,6,13,.7) 100%); } }
+  body.notte #fondo { opacity: .3; } body.buio #fondo { opacity: 0; }
   #bagliore { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 115%, var(--glow), transparent 65%); transition: background 3s; }
   /* ---------------- disposizione: orizzontale (orologio a sinistra) e verticale (orologio sopra) */
   #pag { position: absolute; inset: 0; display: grid; grid-template-columns: 1.15fr 1fr; gap: 4vmin; align-items: center;
@@ -126,6 +132,7 @@
 </head>
 <body>
 <canvas id="cielo"></canvas>
+<div id="fondo"><canvas id="paesaggio"></canvas><div id="velo"></div></div>
 <div id="bagliore"></div>
 <div id="alba"></div>
 
@@ -167,10 +174,11 @@
   <button type="button" class="bott pieno-b" id="sv-chiudi">Fatto</button>
 </div></div>
 
-<script src="comune.js?v=97"></script>
-<script src="suoni.js?v=97"></script>
-<script src="telecomando.js?v=97"></script>
-<script src="compleanni.js?v=97"></script>
+<script src="comune.js?v=98"></script>
+<script src="suoni.js?v=98"></script>
+<script src="telecomando.js?v=98"></script>
+<script src="compleanni.js?v=98"></script>
+<script src="paesaggio.js?v=98"></script>
 <script>
 // ================= chi dorme qui =================
 var io = leggi("telefono_io", null);
@@ -536,7 +544,8 @@ applicaFase(); applicaLuce(); controllaSveglia(); disegna(); leggiMeteo(); appli
 setInterval(function () { controllaSveglia(); applicaLuce(); if (new Date().getSeconds() % 15 === 0) disegna(); else disegnaOra(); }, 1000);
 setInterval(applicaFase, 60000);
 setInterval(leggiMeteo, 30 * 60000);
-setInterval(function () { if (!document.body.classList.contains("buio")) disegnaCielo(performance.now()); }, 100);
+PAESAGGIO.avvia({ tela: $("paesaggio"), scena: $("fondo"), ms: 66,   // 15 al secondo: è uno sfondo, e il telefono resta acceso tutta la notte
+  attivo: function () { var b = document.body.classList; if (b.contains("buio")) return false; if (b.contains("notte")) return Date.now() - (PAESAGGIO.ultimaNotte || 0) > 1000 ? (PAESAGGIO.ultimaNotte = Date.now(), true) : false; return true; } });
 tieniAcceso();
 avviaSync();
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
