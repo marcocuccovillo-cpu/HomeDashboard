@@ -928,21 +928,21 @@
   </div>
 </div>
 
-<script src="comune.js?v=85"></script>
-<script src="rete.js?v=85"></script>
-<script src="radio.js?v=85"></script>
-<script src="forza4.js?v=85"></script>
+<script src="comune.js?v=86"></script>
+<script src="rete.js?v=86"></script>
+<script src="radio.js?v=86"></script>
+<script src="forza4.js?v=86"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=85"></script>
-<script src="bus.js?v=85"></script>
-<script src="spesa.js?v=85"></script>
-<script src="giochi.js?v=85"></script>
-<script src="calendario.js?v=85"></script>
-<script src="compleanni.js?v=85"></script>
-<script src="suoni.js?v=85"></script>
-<script src="telecomando.js?v=85"></script>
-<script src="gattodisegno.js?v=85"></script>
-<script src="gatto.js?v=85"></script>
+<script src="tragitti.js?v=86"></script>
+<script src="bus.js?v=86"></script>
+<script src="spesa.js?v=86"></script>
+<script src="giochi.js?v=86"></script>
+<script src="calendario.js?v=86"></script>
+<script src="compleanni.js?v=86"></script>
+<script src="suoni.js?v=86"></script>
+<script src="telecomando.js?v=86"></script>
+<script src="gattodisegno.js?v=86"></script>
+<script src="gatto.js?v=86"></script>
 <script>
 
 // ================= orologio =================
@@ -1602,7 +1602,7 @@ function aggiornaPunti() {
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
   window.paginaDove = i === 4;   // la pagina 5 si anima solo quando si vede
-  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=85";
+  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=86";
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });

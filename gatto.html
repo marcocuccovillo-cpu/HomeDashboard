@@ -29,7 +29,7 @@
              box-shadow: 0 1vmin 3vmin rgba(0,0,0,.25); -webkit-transform: translate(-50%, -100%); transform: translate(-50%, -100%); pointer-events: none; transition: opacity .3s; }
   #fumetto::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -1.4vmin; border: 1.4vmin solid transparent; border-top-color: #fff; }
   #fumetto.via { opacity: 0; }
-  #info { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 1.6vmin 3vmin max(1.6vmin, env(safe-area-inset-bottom)); display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline;
+  #info { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 1.6vmin 3vmin; padding-bottom: max(1.6vmin, env(safe-area-inset-bottom)); display: -webkit-flex; display: flex; -webkit-align-items: baseline; align-items: baseline;
           background: linear-gradient(transparent, rgba(20,12,10,.6)); font-size: 2.8vmin; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
   #ora { font-size: 4.6vmin; font-weight: 300; margin-right: 2.4vmin; } #noi { color: var(--muted); -webkit-flex: 1; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   #noi b { color: var(--ink); font-weight: 600; }
@@ -47,10 +47,11 @@
   <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
 </div>
 
-<script src="comune.js?v=85"></script>
-<script src="telecomando.js?v=85"></script>
-<script src="compleanni.js?v=85"></script>
-<script src="gattodisegno.js?v=85"></script>
+<script src="vecchi.js?v=86"></script>
+<script src="comune.js?v=86"></script>
+<script src="telecomando.js?v=86"></script>
+<script src="compleanni.js?v=86"></script>
+<script src="gattodisegno.js?v=86"></script>
 <script>
 // ================= la stanza: coordinate "logiche" 1000×600, disegnate a piena risoluzione =================
 var LW = 1000, LH = 600, MURO = 448, PAV = 520;   // dove finisce il muro, dove poggia il gatto

@@ -382,6 +382,8 @@ function cartella() { return location.origin + location.pathname.replace(/[^/]*$
 if (/^#collega=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search);   // vecchi link: non servono più
 
 function avviaSync() {   // da chiamare dopo aver disegnato la pagina
+  // browser troppo vecchio per la cifratura (es. iPad con iOS 9): la pagina gira da sola, senza i dati di casa
+  if (!(window.crypto && crypto.subtle && window.TextEncoder)) { window.senzaCifratura = true; return; }
   salva("cucina_spesa", spesa);
   avviaRegistro();
   pulisciEccezioni(); salvaCfg();
