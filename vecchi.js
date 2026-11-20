@@ -34,7 +34,7 @@
              text: function () { return Promise.resolve(testo); },
              json: function () { return new Promise(function (s, r) { try { s(JSON.parse(testo)); } catch (e) { r(e); } }); } });
       };
-      x.onerror = function () { ko(new TypeError("Rete non raggiungibile")); };
+      x.onerror = function () { ko(new TypeError("connessione rifiutata (certificato o rete)")); };
       x.ontimeout = x.onerror;
       x.send(o.body == null ? null : o.body);
     });

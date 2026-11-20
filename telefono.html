@@ -499,6 +499,21 @@
 </style>
 </head>
 <body>
+<script>
+// dispositivi troppo vecchi (es. iPad con iOS 9): la bacheca completa non può girare, offre le pagine che funzionano
+(function () {
+  if (window.crypto && crypto.subtle && window.TextEncoder && window.fetch) return;
+  var d = document.createElement("div");
+  d.setAttribute("style", "position:fixed;left:0;top:0;right:0;bottom:0;z-index:1000;background:#1b1c26;color:#fff;font:18px/1.45 -apple-system,Helvetica,sans-serif;text-align:center;padding:12vh 8vw;overflow:auto");
+  d.innerHTML = '<div style="font-size:54px">📺</div><h1 style="font-weight:600;font-size:28px;margin:10px 0">Questo dispositivo è un po’ vecchio</h1>' +
+    '<p style="color:#b9bccb;margin:0 0 28px">La bacheca completa ha bisogno di un browser più recente (per i dati cifrati di casa).<br>Qui funzionano:</p>' +
+    '<a href="tv.html" style="display:block;max-width:420px;margin:0 auto 14px;padding:18px;border-radius:16px;background:#ff4d5e;color:#fff;text-decoration:none;font-size:22px;font-weight:600">Guida TV</a>' +
+    '<a href="gatto.html" style="display:block;max-width:420px;margin:0 auto;padding:18px;border-radius:16px;background:#2c2e3d;color:#fff;text-decoration:none;font-size:22px;font-weight:600">La stanza del gatto 🐱</a>';
+  function metti() { document.body.appendChild(d); }
+  if (document.body) metti(); else document.addEventListener("DOMContentLoaded", metti);
+})();
+</script>
+
 <header>
   <span class="logo"><svg viewBox="120 130 272 272"><path d="M146 252 L256 158 L366 252 V362 a18 18 0 0 1 -18 18 H164 a18 18 0 0 1 -18 -18 Z" fill="none" stroke="#fff" stroke-width="30" stroke-linejoin="round"/><path d="M256 342 C222 318 202 298 202 276 C202 258 215 246 231 246 C243 246 251 252 256 261 C261 252 269 246 281 246 C297 246 310 258 310 276 C310 298 290 318 256 342 Z" fill="#fff"/></svg></span>
   <h1>Home<span class="due">2</span>Love</h1>
@@ -746,23 +761,23 @@
   </div>
 </div>
 
-<script src="comune.js?v=86"></script>
-<script src="forza4.js?v=86"></script>
-<script src="giochi.js?v=86"></script>
-<script src="rete.js?v=86"></script>
-<script src="tragitti.js?v=86"></script>
-<script src="suoni.js?v=86"></script>
-<script src="telecomando.js?v=86"></script>
-<script src="spesa.js?v=86"></script>
-<script src="coppia.js?v=86"></script>
-<script src="occhiata.js?v=86"></script>
-<script src="chatplus.js?v=86"></script>
-<script src="giochi2.js?v=86"></script>
-<script src="scacchi.js?v=86"></script>
-<script src="eroefoto.js?v=86"></script>
-<script src="compleanni.js?v=86"></script>
-<script src="gattodisegno.js?v=86"></script>
-<script src="gattino.js?v=86"></script>
+<script src="comune.js?v=87"></script>
+<script src="forza4.js?v=87"></script>
+<script src="giochi.js?v=87"></script>
+<script src="rete.js?v=87"></script>
+<script src="tragitti.js?v=87"></script>
+<script src="suoni.js?v=87"></script>
+<script src="telecomando.js?v=87"></script>
+<script src="spesa.js?v=87"></script>
+<script src="coppia.js?v=87"></script>
+<script src="occhiata.js?v=87"></script>
+<script src="chatplus.js?v=87"></script>
+<script src="giochi2.js?v=87"></script>
+<script src="scacchi.js?v=87"></script>
+<script src="eroefoto.js?v=87"></script>
+<script src="compleanni.js?v=87"></script>
+<script src="gattodisegno.js?v=87"></script>
+<script src="gattino.js?v=87"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi

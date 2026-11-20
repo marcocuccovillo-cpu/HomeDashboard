@@ -88,7 +88,7 @@
   </div></div>
 </div>
 
-<script src="vecchi.js?v=86"></script>
+<script src="vecchi.js?v=87"></script>
 <script>
 var FONTE = "https://raw.githubusercontent.com/marcocuccovillo-cpu/HomeDashboard/palinsesto/palinsesto.json";
 var GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"], MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
@@ -103,9 +103,23 @@ function sicuro(s) { var d = document.createElement("div"); d.textContent = s ==
 var P = null, vista = leggi("tv_vista", "adesso"), scelti = leggi("tv_canali", PREDEFINITI).filter(function (n) { return n !== 7 && n !== 32; });   // LA7 e QVC tolti
 
 // ================= dati =================
-function carica() {
-  fetch(FONTE + "?t=" + Math.floor(Date.now() / 600000), { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (j) { P = j; salva("tv_copia", j); disegna(); }, function () { if (!P) { P = leggi("tv_copia", null); disegna(); } });
+function carica() {   // prima la fonte su GitHub, poi una copia accanto alla pagina; se va male, dice perché e riprova
+  var fonti = [FONTE + "?t=" + Math.floor(Date.now() / 600000), "palinsesto.json?t=" + Math.floor(Date.now() / 600000)], errori = [];
+  function prova(i) {
+    if (i >= fonti.length) {
+      if (!P) { P = leggi("tv_copia", null); }
+      if (!P) $("lista").innerHTML = '<div class="vuoto">Non riesco a scaricare il palinsesto.<br><small>' + sicuro(errori.join(" · ")) + '</small><br><small>Riprovo tra un minuto…</small></div>';
+      else disegna();
+      clearTimeout(carica.t); carica.t = setTimeout(carica, 60000);
+      return;
+    }
+    try {
+      fetch(fonti[i], { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (j) { if (!j || !j.canali) throw new Error("dati vuoti"); P = j; salva("tv_copia", j); disegna(); },
+              function (e) { errori.push((i ? "copia: " : "GitHub: ") + (e && e.message || e)); prova(i + 1); });
+    } catch (e) { errori.push("browser: " + (e && e.message || e)); prova(i + 1); }
+  }
+  prova(0);
 }
 
 // ================= viste =================
