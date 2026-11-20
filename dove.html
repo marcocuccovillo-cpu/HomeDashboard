@@ -77,9 +77,10 @@
 </div>
 </div>
 
-<script src="comune.js?v=98"></script>
-<script src="telecomando.js?v=98"></script>
-<script src="paesaggio.js?v=98"></script>
+<script src="comune.js?v=99"></script>
+<script src="telecomando.js?v=99"></script>
+<script src="paesaggio.js?v=99"></script>
+<script src="gattodisegno.js?v=99"></script>
 <script>
 var VIAGGIO = 30;   // minuti di strada stimati prima e dopo un turno (se non c'è "Sto tornando")
 // ================= dove si trova ognuno =================
@@ -161,83 +162,162 @@ function geomCasa(i) {
   var W = i.W, H = i.H, oriz = W > H;
   var S = oriz ? Math.min(H * .46, W * .27) : Math.min(W * .6, H * .3);
   var cx = oriz ? W * .74 : W * .55, gy = oriz ? H * .92 : H * .9;
-  return { S: S, cx: cx, gy: gy, muro: S * .56, tetto: S * .4, top: gy - S * .56, fin: [cx - S * .29, cx + S * .29], finY: gy - S * .42, finW: S * .2, finH: S * .2, portaW: S * .17, portaH: S * .3 };
+  return { S: S, cx: cx, gy: gy, muro: S * .56, tetto: S * .4, top: gy - S * .56, fin: [cx - S * .29, cx + S * .29], finY: gy - S * .4, finW: S * .19, finH: S * .22, portaW: S * .17, portaH: S * .3 };
 }
 function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function tono(rgb, L, k) { var a = Math.max(.12, L) * (k || 1); return "rgb(" + Math.round(8 + (rgb[0] - 8) * a) + "," + Math.round(10 + (rgb[1] - 10) * a) + "," + Math.round(20 + (rgb[2] - 20) * a) + ")"; }
+function tonoA(rgb, L, al) { var a = Math.max(.12, L); return "rgba(" + Math.round(8 + (rgb[0] - 8) * a) + "," + Math.round(10 + (rgb[1] - 10) * a) + "," + Math.round(20 + (rgb[2] - 20) * a) + "," + al + ")"; }
 var FUMO = [];
 function disegnaCasa(g, i) {
   if (!STATO) return;
-  var c = geomCasa(i), S = c.S, L = i.L, notte = L < .45, t = i.ora;
-  var col = ["#ff9a62", "#52d1c6"];
-  // il prato davanti e la stradina che arriva alla porta
-  var prato = g.createLinearGradient(0, c.gy - S * .05, 0, i.H); prato.addColorStop(0, tono([96, 140, 72], L)); prato.addColorStop(1, tono([60, 98, 52], L));
+  var c = geomCasa(i), S = c.S, L = i.L, notte = L < .45, t = i.ora, lw = Math.max(1, S * .006);
+  var col = ["#ff9a62", "#52d1c6"], qualcuno = STATO.some(function (x) { return x.posto === "casa"; });
+  var ora = new Date().getHours() + new Date().getMinutes() / 60, solex = ora < 13 ? -1 : 1;   // il sole al mattino da sinistra, il pomeriggio da destra
+  var x0 = c.cx - S / 2, x1 = c.cx + S / 2;
+  // ---- il prato, la siepe e la stradina
+  var prato = g.createLinearGradient(0, c.gy - S * .05, 0, i.H); prato.addColorStop(0, tono([104, 150, 76], L)); prato.addColorStop(1, tono([56, 94, 48], L));
   g.fillStyle = prato; g.beginPath(); g.moveTo(0, c.gy + S * .02); g.quadraticCurveTo(i.W * .5, c.gy - S * .06, i.W, c.gy + S * .02); g.lineTo(i.W, i.H); g.lineTo(0, i.H); g.fill();
   var sy = c.gy + S * .1;
-  g.strokeStyle = tono([214, 196, 160], L); g.lineWidth = S * .1; g.lineCap = "round";
-  g.beginPath(); g.moveTo(-20, sy + S * .04); g.quadraticCurveTo(c.cx - S * .9, sy + S * .06, c.cx, c.gy + S * .02); g.stroke();
-  g.lineWidth = S * .1; g.beginPath(); g.moveTo(c.cx, c.gy + S * .02); g.quadraticCurveTo(c.cx + S * .9, sy + S * .06, i.W + 20, sy + S * .04); g.stroke();
+  g.lineCap = "round";
+  [[S * .12, [196, 178, 146]], [S * .095, [222, 206, 172]]].forEach(function (st) {
+    g.strokeStyle = tono(st[1], L); g.lineWidth = st[0];
+    g.beginPath(); g.moveTo(-20, sy + S * .04); g.quadraticCurveTo(c.cx - S * .9, sy + S * .06, c.cx - S * .2, sy + S * .03); g.lineTo(c.cx + S * .2, sy + S * .03); g.quadraticCurveTo(c.cx + S * .9, sy + S * .06, i.W + 20, sy + S * .04); g.stroke();
+  });
+  // il vialetto di pietre fino alla porta
+  for (var k = 0; k < 4; k++) { var pyk = c.gy + S * (.012 + k * .03), pw = S * (.13 + k * .02); g.fillStyle = tono(k % 2 ? [176, 168, 156] : [192, 184, 170], L); rr(g, c.cx - pw / 2, pyk, pw, S * .022, S * .01); g.fill(); }
+  // siepe ai lati
+  [[x0 - S * .42, x0 - S * .06], [x1 + S * .06, x1 + S * .42]].forEach(function (sp, n) {
+    for (var b = sp[0]; b < sp[1]; b += S * .05) {
+      var r = S * (.045 + .015 * Math.sin(b * .7 + n));
+      g.fillStyle = tono([58, 108, 56], L); g.beginPath(); g.arc(b, c.gy - r * .5, r, 0, 7); g.fill();
+      g.fillStyle = tonoA([120, 170, 90], L, .5); g.beginPath(); g.arc(b - r * .3 * -solex, c.gy - r * .8, r * .45, 0, 7); g.fill();
+    }
+  });
   // ombra a terra
-  g.fillStyle = "rgba(0,0,0,.22)"; g.beginPath(); g.ellipse(c.cx, c.gy + S * .01, S * .62, S * .06, 0, 0, 7); g.fill();
-  // il muro
-  var x0 = c.cx - S / 2;
-  g.fillStyle = tono([238, 214, 176], L); g.fillRect(x0, c.top, S, c.muro);
-  g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(x0 + S * .82, c.top, S * .18, c.muro);   // lato in ombra
-  g.fillStyle = tono([200, 170, 130], L); g.fillRect(x0 - S * .02, c.gy - S * .05, S * 1.04, S * .05);   // zoccolo
-  // il comignolo e il fumo (quando fa freddo e c'è qualcuno)
-  var qualcuno = STATO.some(function (x) { return x.posto === "casa"; });
-  g.fillStyle = tono([150, 70, 50], L); g.fillRect(c.cx + S * .2, c.top - c.tetto * .85, S * .09, c.tetto * .6);
-  g.fillStyle = tono([120, 56, 42], L); g.fillRect(c.cx + S * .19, c.top - c.tetto * .88, S * .11, S * .03);
+  g.fillStyle = "rgba(0,0,0,.22)"; g.beginPath(); g.ellipse(c.cx + solex * -S * .06, c.gy + S * .012, S * .64, S * .055, 0, 0, 7); g.fill();
+  // ---- il muro: intonaco caldo, luce dal lato del sole, cantonali in pietra, marcapiano
+  var muro = g.createLinearGradient(x0, 0, x1, 0);
+  muro.addColorStop(0, tono(solex < 0 ? [246, 222, 182] : [222, 194, 152], L)); muro.addColorStop(1, tono(solex < 0 ? [222, 194, 152] : [246, 222, 182], L));
+  g.fillStyle = muro; g.fillRect(x0, c.top, S, c.muro);
+  var gr = g.createLinearGradient(0, c.top, 0, c.top + S * .1); gr.addColorStop(0, "rgba(40,20,10,.35)"); gr.addColorStop(1, "rgba(40,20,10,0)");
+  g.fillStyle = gr; g.fillRect(x0, c.top, S, S * .1);   // l'ombra sotto la gronda
+  for (var q = 0; q < 7; q++) {   // cantonali
+    var qy = c.top + S * .05 + q * S * .07, qw = q % 2 ? S * .05 : S * .07;
+    g.fillStyle = tono([214, 200, 178], L); g.fillRect(x0, qy, qw, S * .06); g.fillRect(x1 - qw, qy, qw, S * .06);
+    g.fillStyle = "rgba(0,0,0,.1)"; g.fillRect(x0, qy + S * .055, qw, S * .005); g.fillRect(x1 - qw, qy + S * .055, qw, S * .005);
+  }
+  g.fillStyle = tono([214, 196, 166], L); g.fillRect(x0, c.finY - c.finH / 2 - S * .06, S, S * .02);   // marcapiano
+  g.fillStyle = tono([170, 140, 110], L); g.fillRect(x0 - S * .02, c.gy - S * .05, S * 1.04, S * .05);   // zoccolo
+  g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(x0 - S * .02, c.gy - S * .05, S * 1.04, S * .006);
+  // ---- il comignolo coi mattoni, e il fumo quando fa freddo
+  var chx = c.cx + S * .2, chy = c.top - c.tetto * .85, chw = S * .09, chh = c.tetto * .62;
+  g.fillStyle = tono([164, 78, 56], L); g.fillRect(chx, chy, chw, chh);
+  g.strokeStyle = tonoA([110, 46, 32], L, .7); g.lineWidth = lw * .8;
+  for (var m = 1; m < 6; m++) { g.beginPath(); g.moveTo(chx, chy + chh * m / 6); g.lineTo(chx + chw, chy + chh * m / 6); g.stroke(); }
+  g.fillStyle = tono([120, 56, 42], L); g.fillRect(chx - S * .012, chy - S * .02, chw + S * .024, S * .03);
   if (qualcuno && i.temp !== null && i.temp < 15) {
-    if (Math.random() < .08) FUMO.push({ x: c.cx + S * .245, y: c.top - c.tetto * .9, r: S * .03, a: .5 });
+    if (Math.random() < .08) FUMO.push({ x: chx + chw / 2, y: chy - S * .03, r: S * .03, a: .5 });
     FUMO = FUMO.filter(function (f) { f.y -= S * .12 * i.dt; f.x += S * .05 * i.dt; f.r += S * .03 * i.dt; f.a -= .12 * i.dt; return f.a > 0; });
     FUMO.forEach(function (f) { g.fillStyle = "rgba(220,220,225," + (f.a * Math.max(.35, L)).toFixed(3) + ")"; g.beginPath(); g.arc(f.x, f.y, f.r, 0, 7); g.fill(); });
   } else FUMO = [];
-  // il tetto di coppi
-  g.fillStyle = tono([178, 74, 52], L);
-  g.beginPath(); g.moveTo(x0 - S * .08, c.top + S * .02); g.lineTo(c.cx, c.top - c.tetto); g.lineTo(x0 + S * 1.08, c.top + S * .02); g.closePath(); g.fill();
-  g.strokeStyle = tono([140, 52, 38], L); g.lineWidth = Math.max(1, S * .008);
-  for (var k = 1; k < 5; k++) { var yy = c.top - c.tetto + c.tetto * k / 5, half = (S * .58) * k / 5; g.beginPath(); g.moveTo(c.cx - half, yy); g.lineTo(c.cx + half, yy); g.stroke(); }
-  // l'oblò col cuore nel timpano
-  var oy = c.top - c.tetto * .38, or = S * .07;
-  g.fillStyle = tono([238, 214, 176], L); g.beginPath(); g.arc(c.cx, oy, or * 1.25, 0, 7); g.fill();
-  g.fillStyle = notte ? "rgba(255,200,130,.9)" : tono([120, 160, 200], L); g.beginPath(); g.arc(c.cx, oy, or, 0, 7); g.fill();
-  g.fillStyle = "#e5484d"; g.beginPath(); var hx = c.cx, hy = oy + or * .35, hs = or * .55;
-  g.moveTo(hx, hy); g.bezierCurveTo(hx - hs * 1.6, hy - hs * .9, hx - hs * .6, hy - hs * 2.1, hx, hy - hs * 1.15); g.bezierCurveTo(hx + hs * .6, hy - hs * 2.1, hx + hs * 1.6, hy - hs * .9, hx, hy); g.fill();
-  // la porta (e la lampada accanto, la sera)
-  var px = c.cx - c.portaW / 2, py = c.gy - c.portaH - S * .05;
-  g.fillStyle = tono([110, 64, 40], L); rr(g, px, py, c.portaW, c.portaH, c.portaW * .45); g.fill();
-  g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(px + c.portaW * .48, py + c.portaH * .15, 1.2, c.portaH * .8);
-  g.fillStyle = "#e7c35c"; g.beginPath(); g.arc(px + c.portaW * .78, py + c.portaH * .6, Math.max(1.5, S * .012), 0, 7); g.fill();
-  if (notte) {
-    var lx = px + c.portaW + S * .06, ly = py + c.portaH * .25, al = g.createRadialGradient(lx, ly, 0, lx, ly, S * .3);
-    al.addColorStop(0, "rgba(255,200,120,.45)"); al.addColorStop(1, "rgba(255,200,120,0)"); g.fillStyle = al; g.fillRect(lx - S * .3, ly - S * .3, S * .6, S * .6);
-    g.fillStyle = "#ffd28a"; g.beginPath(); g.arc(lx, ly, S * .02, 0, 7); g.fill();
-  }
-  // le due finestre: una per persona
-  [0, 1].forEach(function (p) {
-    var st = STATO[p], a = st.posto === "casa", fx = c.fin[p] - c.finW / 2, fy = c.finY - c.finH / 2;
-    if (a && notte) { var gl = g.createRadialGradient(c.fin[p], c.finY, 0, c.fin[p], c.finY, S * .32); gl.addColorStop(0, "rgba(255,190,110,.45)"); gl.addColorStop(1, "rgba(255,190,110,0)"); g.fillStyle = gl; g.fillRect(c.fin[p] - S * .32, c.finY - S * .32, S * .64, S * .64); }
-    g.fillStyle = tono([90, 60, 40], L); g.fillRect(fx - S * .015, fy - S * .015, c.finW + S * .03, c.finH + S * .03);
-    var vetro = g.createLinearGradient(fx, fy, fx, fy + c.finH);
-    if (a) { vetro.addColorStop(0, notte ? "#ffd89a" : "#fff1d6"); vetro.addColorStop(1, notte ? "#f2a95a" : "#f5d9a8"); }
-    else { vetro.addColorStop(0, notte ? "#141a2c" : tono([150, 190, 225], L)); vetro.addColorStop(1, notte ? "#0b0f1c" : tono([100, 140, 185], L)); }
-    g.fillStyle = vetro; g.fillRect(fx, fy, c.finW, c.finH);
-    if (a) {   // chi è a casa, alla finestra: testa e spalle col suo colore e l'iniziale
-      g.save(); g.beginPath(); g.rect(fx, fy, c.finW, c.finH); g.clip();
-      var bx = c.fin[p] + Math.sin(t / 1400 + p * 2) * c.finW * .06, by = fy + c.finH;
-      g.fillStyle = col[p]; g.beginPath(); g.ellipse(bx, by, c.finW * .38, c.finH * .3, 0, Math.PI, 0); g.fill();
-      g.beginPath(); g.arc(bx, by - c.finH * .48, c.finW * .2, 0, 7); g.fill();
-      g.fillStyle = "#1a120c"; g.font = "600 " + Math.round(c.finW * .22) + "px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillText(nome(p).charAt(0).toUpperCase(), bx, by - c.finH * .47);
-      g.restore();
-    } else {   // tende chiuse a metà
-      g.fillStyle = notte ? "rgba(60,40,70,.6)" : "rgba(255,255,255,.35)";
-      g.fillRect(fx, fy, c.finW * .22, c.finH); g.fillRect(fx + c.finW * .78, fy, c.finW * .22, c.finH);
+  // ---- il tetto di coppi: falde con le file di tegole e la gronda che sporge
+  var ex = S * .1, ty = c.top + S * .015, apice = c.top - c.tetto;
+  g.save(); g.beginPath(); g.moveTo(x0 - ex, ty); g.lineTo(c.cx, apice); g.lineTo(x1 + ex, ty); g.closePath(); g.clip();
+  var tg = g.createLinearGradient(0, apice, 0, ty); tg.addColorStop(0, tono([196, 86, 58], L)); tg.addColorStop(1, tono([168, 70, 48], L));
+  g.fillStyle = tg; g.fillRect(x0 - ex, apice, S + ex * 2, ty - apice);
+  var file = 7, cop = S * .05;
+  for (var f = 0; f < file; f++) {
+    var yy = apice + (ty - apice) * (f + 1) / file;
+    g.fillStyle = tonoA([120, 44, 30], L, .45); g.fillRect(x0 - ex, yy - S * .008, S + ex * 2, S * .008);
+    for (var xx = x0 - ex + (f % 2) * cop / 2; xx < x1 + ex; xx += cop) {
+      g.fillStyle = tonoA([226, 120, 80], L, .35); g.beginPath(); g.ellipse(xx + cop / 2, yy - S * .02, cop * .32, S * .012, 0, Math.PI, 0); g.fill();
     }
-    g.fillStyle = tono([90, 60, 40], L); g.fillRect(c.fin[p] - 1, fy, 2, c.finH); g.fillRect(fx, c.finY - 1, c.finW, 2);
-    g.fillStyle = tono([220, 200, 170], L); g.fillRect(fx - S * .03, fy + c.finH, c.finW + S * .06, S * .025);   // il davanzale
-    g.fillStyle = tono([200, 70, 90], L); for (var q = 0; q < 4; q++) { g.beginPath(); g.arc(fx + c.finW * (.12 + q * .25), fy + c.finH - S * .002, S * .016, 0, 7); g.fill(); }   // i fiori
+  }
+  var lato = g.createLinearGradient(x0, 0, x1, 0); lato.addColorStop(0, solex < 0 ? "rgba(255,230,190,.08)" : "rgba(0,0,0,.18)"); lato.addColorStop(.5, "rgba(0,0,0,0)"); lato.addColorStop(1, solex < 0 ? "rgba(0,0,0,.18)" : "rgba(255,230,190,.08)");
+  g.fillStyle = lato; g.fillRect(x0 - ex, apice, S + ex * 2, ty - apice);
+  g.restore();
+  g.strokeStyle = tono([130, 52, 36], L); g.lineWidth = S * .022; g.lineJoin = "round";   // il colmo e i bordi
+  g.beginPath(); g.moveTo(x0 - ex, ty); g.lineTo(c.cx, apice); g.lineTo(x1 + ex, ty); g.stroke();
+  g.fillStyle = tono([96, 66, 46], L); g.fillRect(x0 - ex, ty, S + ex * 2, S * .018);   // la gronda
+  // l'oblò col cuore nel timpano
+  var oy = c.top - c.tetto * .36, or = S * .062;
+  g.fillStyle = tono([236, 214, 178], L); g.beginPath(); g.arc(c.cx, oy, or * 1.32, 0, 7); g.fill();
+  g.strokeStyle = tono([150, 110, 80], L); g.lineWidth = lw; g.stroke();
+  g.fillStyle = notte && qualcuno ? "rgba(255,200,130,.95)" : tono([126, 168, 206], L); g.beginPath(); g.arc(c.cx, oy, or, 0, 7); g.fill();
+  g.fillStyle = "#e5484d"; g.beginPath(); var hx = c.cx, hy = oy + or * .38, hs = or * .55, bat = 1 + Math.max(0, Math.sin(t / 380)) * .08;
+  hs *= bat; g.moveTo(hx, hy); g.bezierCurveTo(hx - hs * 1.6, hy - hs * .9, hx - hs * .6, hy - hs * 2.1, hx, hy - hs * 1.15); g.bezierCurveTo(hx + hs * .6, hy - hs * 2.1, hx + hs * 1.6, hy - hs * .9, hx, hy); g.fill();
+  // ---- la porta: arco in mattoni, assi di legno, numero, gradino, zerbino
+  var pw = c.portaW, ph = c.portaH, px = c.cx - pw / 2, py = c.gy - ph - S * .05;
+  g.fillStyle = tono([168, 96, 70], L); rr(g, px - S * .025, py - S * .025, pw + S * .05, ph + S * .03, pw * .55); g.fill();   // l'arco in mattoni
+  g.fillStyle = tono([96, 54, 32], L); rr(g, px, py, pw, ph, pw * .48); g.fill();
+  g.save(); rr(g, px, py, pw, ph, pw * .48); g.clip();
+  g.strokeStyle = "rgba(0,0,0,.22)"; g.lineWidth = lw; for (var a2 = 1; a2 < 4; a2++) { g.beginPath(); g.moveTo(px + pw * a2 / 4, py); g.lineTo(px + pw * a2 / 4, py + ph); g.stroke(); }
+  g.fillStyle = "rgba(255,255,255,.08)"; g.fillRect(px, py, pw * .25, ph);
+  if (notte && qualcuno) { g.fillStyle = "rgba(255,200,120,.55)"; g.beginPath(); g.arc(c.cx, py + pw * .5, pw * .22, Math.PI, 0); g.fill(); }   // la lunetta accesa
+  g.restore();
+  g.fillStyle = "#e7c35c"; g.beginPath(); g.arc(px + pw * .8, py + ph * .58, Math.max(1.5, S * .011), 0, 7); g.fill();
+  g.fillStyle = tono([236, 230, 214], L); rr(g, c.cx + pw * .62, py + ph * .2, S * .045, S * .03, S * .006); g.fill();   // il numero civico
+  g.fillStyle = tono([40, 60, 120], L); g.font = "700 " + Math.round(S * .022) + "px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("2", c.cx + pw * .62 + S * .0225, py + ph * .2 + S * .016);
+  g.fillStyle = tono([200, 190, 176], L); g.fillRect(px - S * .04, c.gy - S * .05, pw + S * .08, S * .025);   // il gradino
+  g.fillStyle = tono([170, 54, 70], L); rr(g, px - S * .01, c.gy - S * .028, pw + S * .02, S * .02, S * .006); g.fill();   // lo zerbino
+  // il lampione a muro (si accende la sera)
+  var lx = px - S * .07, ly = py + ph * .18;
+  g.strokeStyle = tono([40, 40, 46], L); g.lineWidth = lw * 1.4; g.beginPath(); g.moveTo(lx + S * .03, ly + S * .02); g.lineTo(lx, ly + S * .02); g.lineTo(lx, ly); g.stroke();
+  g.fillStyle = tono([40, 40, 46], L); g.beginPath(); g.moveTo(lx - S * .018, ly); g.lineTo(lx + S * .018, ly); g.lineTo(lx + S * .012, ly - S * .035); g.lineTo(lx - S * .012, ly - S * .035); g.closePath(); g.fill();
+  if (notte) {
+    var al = g.createRadialGradient(lx, ly - S * .015, 0, lx, ly - S * .015, S * .34); al.addColorStop(0, "rgba(255,200,120,.5)"); al.addColorStop(1, "rgba(255,200,120,0)");
+    g.fillStyle = al; g.fillRect(lx - S * .34, ly - S * .36, S * .68, S * .68);
+    g.fillStyle = "#ffd28a"; g.fillRect(lx - S * .01, ly - S * .03, S * .02, S * .025);
+  }
+  // i vasi col limone ai lati della porta
+  [-1, 1].forEach(function (lato) {
+    var vx = c.cx + lato * (pw * .5 + S * .085), vy = c.gy - S * .05;
+    g.fillStyle = tono([186, 96, 62], L); g.beginPath(); g.moveTo(vx - S * .03, vy - S * .055); g.lineTo(vx + S * .03, vy - S * .055); g.lineTo(vx + S * .022, vy); g.lineTo(vx - S * .022, vy); g.closePath(); g.fill();
+    g.fillStyle = tono([66, 120, 60], L); g.beginPath(); g.arc(vx, vy - S * .09, S * .04, 0, 7); g.fill();
+    g.fillStyle = tono([240, 210, 70], L); [[-.015, -.1], [.018, -.085], [0, -.07]].forEach(function (l) { g.beginPath(); g.arc(vx + S * l[0], vy + S * l[1], S * .008, 0, 7); g.fill(); });
+  });
+  // il gatto sul gradino, quando c'è qualcuno in casa
+  if (qualcuno && window.GATTO_VET) { g.save(); g.translate(c.cx + pw * .5 + S * .2, c.gy - S * .035); g.scale(S * .0011, S * .0011); GATTO_VET.disegna(g, 0, 0, notte ? "dorme" : "seduto", t, -1, { blink: (t % 4000) < 150 }); g.restore(); }
+  // ---- le finestre: persiane verdi aperte se quella persona è in casa, chiuse se è fuori
+  [0, 1].forEach(function (p) {
+    var st = STATO[p], a = st.posto === "casa", fw = c.finW, fh = c.finH, fx = c.fin[p] - fw / 2, fy = c.finY - fh / 2;
+    if (a && notte) { var gl = g.createRadialGradient(c.fin[p], c.finY, 0, c.fin[p], c.finY, S * .34); gl.addColorStop(0, "rgba(255,190,110,.45)"); gl.addColorStop(1, "rgba(255,190,110,0)"); g.fillStyle = gl; g.fillRect(c.fin[p] - S * .34, c.finY - S * .34, S * .68, S * .68); }
+    g.fillStyle = tono([214, 200, 178], L); g.fillRect(fx - S * .022, fy - S * .03, fw + S * .044, S * .03);   // l'architrave in pietra
+    g.fillStyle = tono([120, 86, 60], L); g.fillRect(fx - S * .012, fy - S * .006, fw + S * .024, fh + S * .012);
+    var vetro = g.createLinearGradient(fx, fy, fx, fy + fh);
+    if (a) { vetro.addColorStop(0, notte ? "#ffd89a" : "#fff4dc"); vetro.addColorStop(1, notte ? "#f2a95a" : "#f3d7a4"); }
+    else { vetro.addColorStop(0, notte ? "#121828" : tono([150, 190, 225], L)); vetro.addColorStop(1, notte ? "#0a0e1a" : tono([96, 136, 182], L)); }
+    g.fillStyle = vetro; g.fillRect(fx, fy, fw, fh);
+    if (a) {   // chi è a casa, alla finestra, che ogni tanto saluta
+      g.save(); g.beginPath(); g.rect(fx, fy, fw, fh); g.clip();
+      g.fillStyle = "rgba(255,255,255,.35)"; g.beginPath(); g.moveTo(fx, fy); g.quadraticCurveTo(fx + fw * .2, fy + fh * .5, fx, fy + fh); g.fill(); g.beginPath(); g.moveTo(fx + fw, fy); g.quadraticCurveTo(fx + fw * .8, fy + fh * .5, fx + fw, fy + fh); g.fill();   // tendine
+      var bx = c.fin[p] + Math.sin(t / 1400 + p * 2) * fw * .06, by = fy + fh;
+      g.fillStyle = col[p]; g.beginPath(); g.ellipse(bx, by, fw * .36, fh * .28, 0, Math.PI, 0); g.fill();
+      g.beginPath(); g.arc(bx, by - fh * .46, fw * .19, 0, 7); g.fill();
+      var saluta = Math.sin(t / 3000 + p * 3) > .75;
+      if (saluta) { var mx = bx + fw * .26, my = by - fh * .38 + Math.sin(t / 120) * fh * .05; g.strokeStyle = col[p]; g.lineWidth = fw * .1; g.beginPath(); g.moveTo(bx + fw * .2, by - fh * .1); g.lineTo(mx, my); g.stroke(); g.beginPath(); g.arc(mx, my, fw * .07, 0, 7); g.fill(); }
+      g.fillStyle = "#1a120c"; g.font = "600 " + Math.round(fw * .2) + "px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(nome(p).charAt(0).toUpperCase(), bx, by - fh * .45);
+      g.restore();
+    }
+    g.fillStyle = tono([120, 86, 60], L); g.fillRect(c.fin[p] - lw, fy, lw * 2, fh); g.fillRect(fx, c.finY - lw, fw, lw * 2);   // la croce dei vetri
+    var verde = [62, 104, 74], gw = fw * .52;
+    if (a) {   // persiane aperte, ai lati
+      [fx - gw - S * .008, fx + fw + S * .008].forEach(function (sx) {
+        g.fillStyle = tono(verde, L); g.fillRect(sx, fy - S * .004, gw, fh + S * .008);
+        g.strokeStyle = tonoA([30, 60, 40], L, .6); g.lineWidth = lw * .8;
+        for (var s2 = 1; s2 < 8; s2++) { g.beginPath(); g.moveTo(sx + gw * .12, fy + fh * s2 / 8); g.lineTo(sx + gw * .88, fy + fh * s2 / 8); g.stroke(); }
+      });
+    } else {   // persiane chiuse
+      g.fillStyle = tono(verde, L); g.fillRect(fx, fy - S * .004, fw, fh + S * .008);
+      g.strokeStyle = tonoA([30, 60, 40], L, .6); g.lineWidth = lw * .8;
+      for (var s3 = 1; s3 < 10; s3++) { g.beginPath(); g.moveTo(fx + fw * .06, fy + fh * s3 / 10); g.lineTo(fx + fw * .94, fy + fh * s3 / 10); g.stroke(); }
+      g.strokeStyle = tonoA([20, 40, 30], L, .8); g.lineWidth = lw * 1.2; g.beginPath(); g.moveTo(c.fin[p], fy); g.lineTo(c.fin[p], fy + fh); g.stroke();
+    }
+    g.fillStyle = tono([214, 200, 178], L); g.fillRect(fx - S * .03, fy + fh, fw + S * .06, S * .022);   // il davanzale
+    g.fillStyle = tono([186, 96, 62], L); g.fillRect(fx - S * .012, fy + fh - S * .03, fw + S * .024, S * .03);   // la fioriera
+    for (var q2 = 0; q2 < 6; q2++) { g.fillStyle = tono(q2 % 2 ? [226, 70, 96] : [250, 160, 190], L); g.beginPath(); g.arc(fx + fw * (.05 + q2 * .18), fy + fh - S * .034, S * .014, 0, 7); g.fill(); }
+    g.fillStyle = tono([70, 120, 60], L); for (var q3 = 0; q3 < 5; q3++) { g.beginPath(); g.arc(fx + fw * (.14 + q3 * .18), fy + fh - S * .03, S * .01, 0, 7); g.fill(); }
   });
   // chi è per strada: verso casa o verso il lavoro
   [0, 1].forEach(function (p) {
