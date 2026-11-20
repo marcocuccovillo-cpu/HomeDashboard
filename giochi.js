@@ -3,7 +3,7 @@
 // ognuno muove dal proprio telefono quando tocca a lui. 2048 e Snake: si gioca da soli, i record vanno in classifica.
 
 var GIOCO = leggi("telefono_gioco", "tris");
-if (["forza4", "tris", "dama", "scacchi", "navale", "parole", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
+if (["forza4", "tris", "dama", "scacchi", "navale", "parole", "carte", "2048", "snake"].indexOf(GIOCO) < 0) GIOCO = "tris";   // la console non c'è più
 
 function chiSono() { return window.io === null || window.io === undefined ? null : io; }
 // Sul tablet (pagina 3, sala giochi) chi è davanti allo schermo muove per chi è di turno, come in Forza 4.
@@ -336,6 +336,7 @@ function disegnaGiochi() {
   else if (GIOCO === "scacchi" && window.disegnaScacchi) disegnaScacchi(box);
   else if (GIOCO === "navale" && window.disegnaNavale) disegnaNavale(box);
   else if (GIOCO === "parole" && window.disegnaParole) disegnaParole(box);
+  else if (GIOCO === "carte" && window.disegnaCarte) disegnaCarte(box);
   else if (GIOCO === "2048") disegna2048(box);
   else disegnaSnake(box);
 }
