@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home2Love · Prova dispositivo</title>
+<style>
+  /* Home2Love — prova per dispositivi vecchi: quali siti raggiunge e cosa sa fare il browser. Solo ES5, nessun dato privato. */
+  body { margin: 0; padding: 28px 24px; background: #1b1c26; color: #fff; font: 19px/1.45 -apple-system, Helvetica, Arial, sans-serif; }
+  h1 { font-size: 26px; margin: 0 0 6px; } p { color: #b9bccb; margin: 0 0 20px; }
+  .riga { display: block; padding: 12px 14px; margin-bottom: 8px; border-radius: 12px; background: #2c2e3d; }
+  .riga b { display: inline-block; min-width: 34px; } .ok { color: #6fdc8c; } .no { color: #ff7a85; } .att { color: #f2c94c; }
+  small { color: #b9bccb; display: block; margin-top: 2px; font-size: 14px; word-break: break-all; }
+</style>
+</head>
+<body>
+<h1>Prova del dispositivo</h1>
+<p>Aspetta qualche secondo, poi manda una foto di questa pagina.</p>
+<div id="lista"></div>
+<script>
+var PROVE = [
+  ["Questo sito (github.io)", "palinsesto-assente-prova.json", true],
+  ["GitHub API (dati di casa)", "https://api.github.com/zen", false],
+  ["GitHub raw (palinsesto e dati)", "https://raw.githubusercontent.com/marcocuccovillo-cpu/HomeDashboard/main/sw.js", false],
+  ["Meteo (open-meteo)", "https://api.open-meteo.com/v1/forecast?latitude=44.5&longitude=11.3&current=weather_code", false]
+];
+function riga(nome) { var d = document.createElement("div"); d.className = "riga"; d.innerHTML = '<b class="att">…</b> ' + nome + '<small></small>'; document.getElementById("lista").appendChild(d); return d; }
+function esito(d, ok, testo) { var b = d.getElementsByTagName("b")[0]; b.className = ok ? "ok" : "no"; b.innerHTML = ok ? "✓" : "✗"; d.getElementsByTagName("small")[0].innerHTML = testo; }
+PROVE.forEach(function (p) {
+  var d = riga(p[0]), x = new XMLHttpRequest(), fatto = false;
+  try {
+    x.open("GET", p[1] + (p[1].indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(), true);
+    x.timeout = 15000;
+    x.onload = function () { fatto = true; esito(d, p[2] ? x.status > 0 : x.status >= 200 && x.status < 400, "risponde (" + x.status + ")"); };
+    x.onerror = function () { if (!fatto) { fatto = true; esito(d, false, "rifiutato: certificato non accettato o rete bloccata"); } };
+    x.ontimeout = function () { if (!fatto) { fatto = true; esito(d, false, "nessuna risposta in 15 secondi"); } };
+    x.send();
+  } catch (e) { esito(d, false, "errore: " + e.message); }
+});
+var c = window.crypto || window.msCrypto;
+esito(riga("Cifratura del browser (crypto.subtle)"), !!(c && c.subtle), c && c.subtle ? "presente" : c && c.webkitSubtle ? "solo la versione vecchia (webkitSubtle)" : "assente");
+esito(riga("Numeri casuali sicuri"), !!(c && c.getRandomValues), c && c.getRandomValues ? "presenti" : "assenti");
+esito(riga("Promise"), !!window.Promise, window.Promise ? "presenti" : "assenti");
+var info = riga("Browser"); esito(info, true, navigator.userAgent);
+</script>
+</body>
+</html>
