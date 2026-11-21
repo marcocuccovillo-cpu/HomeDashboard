@@ -3,7 +3,7 @@
 // GATTO_VET.disegna(ctx, x, y, posa, t, verso, opz): (x, y) = dove poggiano le zampe; misure "logiche"
 // (seduto è alto circa 160, in piedi largo circa 200: scala il contesto prima di chiamarlo).
 // Pose: seduto, cammina, in piedi, mangia, dorme, preso (appeso per la collottola: (x, y) = collottola).
-// opz: { blink: occhi chiusi un attimo, fusa: occhi chiusi beati, cappello: cappellino della festa }
+// opz: { blink: occhi chiusi un attimo, fusa: occhi chiusi beati, cappello: cappellino della festa, collare: colore del collare }
 var GATTO_VET = (function () {
 var c = null, O = {};
 function rr(x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
@@ -49,6 +49,14 @@ function testa(x, y, r, profilo, t, chiusi, sorpreso) {
     ell(hx + r * .05, hy - r * 1.12, r * .12, r * .12); c.fill();
   }
 }
+function collare(x, y, rx, ry, rot) {   // il collare col campanellino (opz.collare = colore)
+  if (!O.collare) return;
+  c.save(); c.translate(x, y); c.rotate(rot || 0);
+  c.strokeStyle = O.collare; c.lineWidth = 7; c.beginPath(); c.ellipse(0, 0, rx, ry, 0, .15, Math.PI - .15); c.stroke();
+  c.fillStyle = "#f2c94c"; c.beginPath(); c.arc(0, ry + 5, 5.5, 0, 7); c.fill();
+  c.fillStyle = "rgba(0,0,0,.35)"; c.fillRect(-.8, ry + 6, 1.6, 3.5);
+  c.restore();
+}
 function coda(punti, sp) { c.strokeStyle = PELO; c.lineWidth = sp; c.lineCap = "round"; c.beginPath(); c.moveTo(punti[0], punti[1]); c.bezierCurveTo(punti[2], punti[3], punti[4], punti[5], punti[6], punti[7]); c.stroke();
   c.strokeStyle = SCURO; c.lineWidth = sp * .9; c.setLineDash([sp * .5, sp * 1.1]); c.stroke(); c.setLineDash([]); }
 function disegna(ctx, x, y, posa, t, verso, opz) {
@@ -73,6 +81,7 @@ function disegna(ctx, x, y, posa, t, verso, opz) {
     c.fillStyle = PELO; rr(-12, -40, 15, 40, 7); c.fill(); rr(10, -40, 15, 40, 7); c.fill();
     c.fillStyle = CHIARO; ell(-4, -3, 10, 6); c.fill(); ell(18, -3, 10, 6); c.fill();
     testa(4, -118 + resp * 40, 36, false, t, O.fusa);
+    collare(4, -86 + resp * 30, 18, 5);
   } else {   // cammina / mangia (di profilo, verso destra)
     var mangia = posa === "mangia", ferma = mangia || posa === "in piedi", ph = ferma ? 0 : t / 110, sw = ferma ? 0 : 1;
     var cs2 = Math.sin(t / 400) * 10;
@@ -84,6 +93,7 @@ function disegna(ctx, x, y, posa, t, verso, opz) {
     c.fillStyle = rad(-10, -70, 10, 90, [[0, "#f6a656"], [1, PELO]]); ell(0, -62, 64, 30); c.fill();
     c.fillStyle = CHIARO; ell(18, -44, 34, 12); c.fill();
     c.strokeStyle = SCURO; c.lineWidth = 6; c.lineCap = "round"; [-40, -20, 0].forEach(function (k) { c.beginPath(); c.moveTo(k, -90); c.quadraticCurveTo(k + 6, -76, k + 2, -64); c.stroke(); });
+    collare(mangia ? 50 : 52, mangia ? -56 : -76, 7, 18, mangia ? -.9 : -.35);
     if (mangia) testa(66, -38 + Math.abs(Math.sin(t / 220)) * 4, 28, true, t, true);
     else testa(70, -96 + Math.sin(ph * 2) * 1.5, 30, true, t, false);
   }
@@ -102,5 +112,6 @@ function preso(x, y, t) {   // appeso per la collottola: zampe a penzoloni, coda
   testa(0, 30, 34, false, t, false, true);
   c.restore();
 }
-return { disegna: disegna };
+function collareDiCasa() { var e = window.reg && reg["gatto.collare"]; return e && !e.d && e.v && e.v.colore ? e.v.colore : ""; }   // scelto nella stanza del gatto
+return { disegna: disegna, collare: collareDiCasa };
 })();

@@ -35,7 +35,10 @@
   #ora { font-size: 4.6vmin; font-weight: 300; margin-right: 2.4vmin; } #noi { color: var(--muted); -webkit-flex: 1; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   #noi b { color: var(--ink); font-weight: 600; }
   #b-ruota { position: absolute; z-index: 4; right: 1.6vmin; top: 1.6vmin; width: 8vmin; height: 8vmin; max-width: 46px; max-height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.18); color: rgba(255,255,255,.65); font-size: 20px; cursor: pointer; }
-  #giochi { position: absolute; z-index: 4; left: 1.6vmin; top: 1.6vmin; display: -webkit-flex; display: flex; }
+  #giochi { position: absolute; z-index: 4; left: 1.6vmin; top: 1.6vmin; right: 12vmin; display: -webkit-flex; display: flex; overflow-x: auto; scrollbar-width: none; padding: .4vmin 0 1.2vmin .4vmin; }
+  #giochi::-webkit-scrollbar { display: none; }
+  #giochi button { flex: none; }
+  #felice { color: #ff7d93; letter-spacing: .1em; margin-left: 2vmin; white-space: nowrap; }
   #giochi button { width: 8vmin; height: 8vmin; max-width: 46px; max-height: 46px; min-width: 34px; min-height: 34px; margin-right: 1.2vmin; border: 0; border-radius: 50%;
                    background: rgba(255,255,255,.55); font-size: min(4.2vmin, 22px); line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 .6vmin 1.6vmin rgba(0,0,0,.18); }
   #giochi button.on { background: #ffcf5a; box-shadow: 0 0 0 .6vmin rgba(255,207,90,.45); }
@@ -48,7 +51,7 @@
 <div id="scena">
   <canvas id="tela"></canvas>
   <div id="fumetto" class="via"></div>
-  <div id="info"><span id="ora"></span><span id="noi"></span></div>
+  <div id="info"><span id="ora"></span><span id="noi"></span><span id="felice"></span></div>
   <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
   <div id="giochi">
     <button type="button" data-g="snack" title="Dagli uno snack">🍗</button>
@@ -56,17 +59,21 @@
     <button type="button" data-g="laser" title="Puntatore laser: muovilo col dito">🔴</button>
     <button type="button" data-g="spazzola" title="Spazzolalo: passa il dito sul gatto">🪮</button>
     <button type="button" data-g="scatola" title="Una scatola di cartone">📦</button>
+    <button type="button" data-g="topo" title="Topolino a molla">🐭</button>
+    <button type="button" data-g="erba" title="Erba gatta">🌿</button>
+    <button type="button" data-g="nanna" title="Ninna nanna">🎶</button>
+    <button type="button" data-g="collare" title="Il collare: tocca per cambiare colore">🎀</button>
     <button type="button" data-g="foto" title="Scatta una foto">📸</button>
     <button type="button" data-g="nome" title="Il nome sulla ciotola">✏️</button>
   </div>
 </div>
 
-<script src="vecchi.js?v=103"></script>
-<script src="comune.js?v=103"></script>
-<script src="stato.js?v=103"></script>
-<script src="telecomando.js?v=103"></script>
-<script src="compleanni.js?v=103"></script>
-<script src="gattodisegno.js?v=103"></script>
+<script src="vecchi.js?v=104"></script>
+<script src="comune.js?v=104"></script>
+<script src="stato.js?v=104"></script>
+<script src="telecomando.js?v=104"></script>
+<script src="compleanni.js?v=104"></script>
+<script src="gattodisegno.js?v=104"></script>
 <script>
 // ================= la stanza: coordinate "logiche" 1000×600, disegnate a piena risoluzione =================
 var LW = 1000, LH = 600, MURO = 448, PAV = 520;   // dove finisce il muro, dove poggia il gatto
@@ -216,12 +223,22 @@ function cielo(t, m) {
 
 // ---------------- il nome del gatto (condiviso: registro cifrato "gatto.nome"; sull'iPad senza dati resta solo qui)
 function nomeGatto() { var e = window.reg && reg["gatto.nome"]; return e && !e.d && e.v && e.v.nome ? e.v.nome : leggi("gatto_nome", ""); }
+function salvaGatto(k, v) {   // nome e collare: condivisi tra i dispositivi (nella scheda del telefono scrive il telefono)
+  var dove = DENTRO && window.parent.reg ? window.parent : window, ora = Date.now();
+  if (dove.reg) { dove.reg[k] = v ? { v: v, t: ora } : { d: 1, t: ora }; dove.salva("cucina_registro", dove.reg); if (dove.sincronizza) dove.sincronizza(); }
+  if (window.reg && dove !== window) reg[k] = dove.reg[k];
+}
 function salvaNomeGatto(n) {
   n = (n || "").replace(/\s+/g, " ").trim().slice(0, 14); salva("gatto_nome", n);
-  var dove = DENTRO && window.parent.reg ? window.parent : window, ora = Date.now();   // nella scheda del telefono scrive il telefono
-  if (dove.reg) { dove.reg["gatto.nome"] = n ? { v: { nome: n, t: ora }, t: ora } : { d: 1, t: ora }; dove.salva("cucina_registro", dove.reg); if (dove.sincronizza) dove.sincronizza(); }
-  if (window.reg && dove !== window) reg["gatto.nome"] = dove.reg["gatto.nome"];
+  salvaGatto("gatto.nome", n ? { nome: n, t: Date.now() } : null);
 }
+var COLLARI = ["#e5484d", "#3e6fe0", "#ff8fb8", "#2f9e5f", "#9b59d0", ""], NOMI_COLLARI = ["rosso", "blu", "rosa", "verde", "viola", ""];
+function collareGatto() { return GATTO_VET.collare() || leggi("gatto_collare", ""); }
+// ---------------- la felicità: sale giocando, scende piano col tempo (resta su questo dispositivo)
+var FEL = leggi("gatto_felicita", { v: 60, t: Date.now() });
+FEL.v = Math.max(0, FEL.v - (Date.now() - FEL.t) / 3600000 * 3); FEL.t = Date.now();
+function felice(n) { FEL.v = Math.max(0, Math.min(100, FEL.v + n)); FEL.t = Date.now(); salva("gatto_felicita", FEL); disegnaFelicita(); }
+function disegnaFelicita() { var c = Math.round(FEL.v / 20); $("felice").textContent = (nomeGatto() ? nomeGatto() + " " : "") + "♥♥♥♥♥".slice(0, c) + "♡♡♡♡♡".slice(0, 5 - c); }
 // ---------------- ciotole, gomitolo
 function ciotola(x, tipo, livello) {
   g.fillStyle = "rgba(0,0,0,.18)"; ell(x, PAV + 6, 36, 7); g.fill();
@@ -265,7 +282,25 @@ function scatola(t, davanti) {   // dietro: l'interno; davanti: la parete col ga
   g.fillStyle = "rgba(255,255,255,.5)"; g.fillRect(x - 6, y, 12, h);   // il nastro adesivo
   g.fillStyle = "rgba(90,50,20,.5)"; g.font = "700 12px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillText("FRAGILE", x - 38, y + 40);
 }
+function topolino(t) {
+  var m = GIOCO.topo; if (!m) return;
+  g.save(); g.translate(m.x, PAV - 2); g.scale(m.v > 0 ? 1 : -1, 1);
+  g.fillStyle = "rgba(0,0,0,.18)"; ell(0, 4, 22, 4); g.fill();
+  g.strokeStyle = "#e7a0a8"; g.lineWidth = 2; g.beginPath(); g.moveTo(-20, -4); g.quadraticCurveTo(-40, -16 + Math.sin(t / 90) * 6, -52, -6); g.stroke();
+  g.fillStyle = "#9a9aa6"; g.beginPath(); g.moveTo(-22, 0); g.quadraticCurveTo(-18, -24, 6, -20); g.quadraticCurveTo(22, -14, 26, 0); g.closePath(); g.fill();
+  g.fillStyle = "#f4a6ae"; ell(4, -20, 6, 6); g.fill(); g.fillStyle = "#2b1d14"; ell(16, -10, 2, 2); g.fill(); g.fillStyle = "#e57f8f"; ell(26, -2, 2.5, 2.5); g.fill();
+  g.fillStyle = "#c9a14a"; g.fillRect(-6, -26, 3, 6); g.fillRect(-10, -29, 11, 3);   // la chiavetta della molla
+  g.restore();
+}
+function erbaGatta() {
+  var e = GIOCO.erba; if (!e) return;
+  var x = e.x; g.fillStyle = "rgba(0,0,0,.16)"; ell(x, PAV + 4, 26, 5); g.fill();
+  g.fillStyle = "#c8693f"; g.beginPath(); g.moveTo(x - 22, PAV - 26); g.lineTo(x + 22, PAV - 26); g.lineTo(x + 16, PAV + 2); g.lineTo(x - 16, PAV + 2); g.closePath(); g.fill();
+  g.strokeStyle = "#5fb34f"; g.lineWidth = 2.4; g.lineCap = "round";
+  for (var k = -18; k <= 18; k += 4) { g.beginPath(); g.moveTo(x + k * .8, PAV - 26); g.quadraticCurveTo(x + k * 1.1, PAV - 44, x + k * 1.4 + Math.sin(k) * 4, PAV - 58 - Math.abs(k % 7) * 2); g.stroke(); }
+}
 function giocattoli(t) {
+  topolino(t); erbaGatta();
   var T = GIOCO.T; if (!T || !GIOCO.modo) return;
   if (GIOCO.modo === "piuma") {   // la bacchetta scende dall'alto, la piuma dondola
     var dx = Math.sin(t / 260) * 6;
@@ -309,7 +344,7 @@ function disegna(t) {
   var su = GIOCO.salto ? Math.sin(Math.min(1, (Date.now() - GIOCO.salto) / 650) * Math.PI) * GIOCO.altezza : 0;
   if (GIOCO.salto && Date.now() - GIOCO.salto > 650) GIOCO.salto = 0;
   g.save(); if (dorme) g.translate(0, -12); g.translate(0, -su);
-  GATTO_VET.disegna(g, ST.x, PAV, ST.posa, t, ST.verso, { blink: ST.occhi > 0, fusa: ST.fusa > 0, cappello: ST.cappello }); g.restore();
+  GATTO_VET.disegna(g, ST.x, PAV, ST.posa, t, ST.verso, { blink: ST.occhi > 0, fusa: ST.fusa > 0, cappello: ST.cappello, collare: collareGatto() }); g.restore();
   if (dorme) gomitolo(ST.palla.x);
   if (nellaScatola) scatola(t, true);
   giocattoli(t);
@@ -354,8 +389,29 @@ function passoGioco() {   // true se il gatto è impegnato in un gioco
     if (Math.abs(dx) > 4) { ST.verso = dx > 0 ? 1 : -1; ST.x += ST.verso * 4.2; ST.posa = "cammina"; return true; }
     ST.verso = c.x > ST.x ? 1 : -1; ST.posa = "mangia";
     if (!c.inizio) c.inizio = ora;
-    if (ora - c.inizio > 2200) { c.preso = true; cuori(4); ST.fusa = 60; dici(["Gnam! 😋", "Buonissimo!", "Ancora? 🥺", "Prrr…"][Math.floor(Math.random() * 4)], 2200); ST.fare = "seduto"; ST.fino = ora + 6000; }
+    if (ora - c.inizio > 2200) { c.preso = true; cuori(4); felice(6); ST.fusa = 60; dici(["Gnam! 😋", "Buonissimo!", "Ancora? 🥺", "Prrr…"][Math.floor(Math.random() * 4)], 2200); ST.fare = "seduto"; ST.fino = ora + 6000; }
     return true;
+  }
+  if (GIOCO.topo) {   // il topolino corre a zig-zag, il gatto lo caccia
+    var m = GIOCO.topo; m.x += m.v; if (Math.random() < .02) m.v = -m.v * (1 + Math.random() * .3);
+    if (m.x < 80 || m.x > LW - 80) m.v = -m.v; m.v = Math.max(-7, Math.min(7, m.v));
+    var dm = m.x - ST.x - (m.x > ST.x ? 50 : -50);
+    if (Math.abs(dm) > 12) { ST.verso = m.x > ST.x ? 1 : -1; ST.x += Math.sign(dm) * 5; ST.posa = "cammina"; }
+    else if (!GIOCO.salto) { GIOCO.salto = ora; GIOCO.altezza = 45; if (ora - m.inizio > 4000 && Math.random() < .5) { GIOCO.topo = null; cuori(5); felice(8); dici("Preso! 🐭", 2500); ST.fare = "seduto"; ST.posa = "seduto"; ST.fino = ora + 5000; } }
+    if (GIOCO.topo && ora - m.inizio > 20000) { GIOCO.topo = null; dici("È scappato… 😾", 2500); }
+    ST.x = Math.max(60, Math.min(LW - 60, ST.x)); return true;
+  }
+  if (GIOCO.erba) {   // annusa l'erba gatta, poi gli parte la pazzia
+    var e = GIOCO.erba, de = e.x - 70 * (e.x > ST.x ? 1 : -1) - ST.x;
+    if (!e.annusa) { if (Math.abs(de) > 4) { ST.verso = de > 0 ? 1 : -1; ST.x += ST.verso * 3.5; ST.posa = "cammina"; return true; } e.annusa = ora; ST.verso = e.x > ST.x ? 1 : -1; ST.posa = "mangia"; dici("Sniff sniff… 🌿", 1800); return true; }
+    if (ora - e.annusa < 2500) { ST.posa = "mangia"; return true; }
+    if (ora - e.annusa < 14000) {   // corse avanti e indietro, con salti
+      if (!e.meta || Math.abs(e.meta - ST.x) < 10) { e.meta = 100 + Math.random() * (LW - 200); if (Math.random() < .4) { GIOCO.salto = ora; GIOCO.altezza = 50 + Math.random() * 70; } }
+      ST.verso = e.meta > ST.x ? 1 : -1; ST.x += ST.verso * 7; ST.posa = "cammina";
+      if (Math.random() < .01) dici(["Wiiii! 🌀", "Mrrraow!", "Non mi ferma nessuno!"][Math.floor(Math.random() * 3)], 1500);
+      return true;
+    }
+    GIOCO.erba = null; felice(5); vai("cuccia", "dorme", 30000); dici("Che stanchezza… 😵‍💫", 2500); return true;
   }
   if ((GIOCO.modo === "piuma" || GIOCO.modo === "laser") && GIOCO.T) {
     if (ora - GIOCO.tocco > 20000) { fineGioco(); return false; }   // dopo 20 secondi senza muoverla, il gioco finisce
@@ -364,7 +420,7 @@ function passoGioco() {   // true se il gatto è impegnato in un gioco
     else {
       ST.posa = "seduto";
       if (!GIOCO.salto && Math.random() < (laser ? .05 : .04)) {   // l'agguato: un salto verso la preda
-        GIOCO.salto = ora; GIOCO.altezza = laser ? 40 : Math.max(30, Math.min(170, PAV - T.y - 60));
+        felice(1); GIOCO.salto = ora; GIOCO.altezza = laser ? 40 : Math.max(30, Math.min(170, PAV - T.y - 60));
         if (Math.random() < .25) dici(laser ? ["Ti prendo!", "Dov'è andato?!", "Grrr…"][Math.floor(Math.random() * 3)] : ["Ciuff! 🪶", "Quasi!", "Ancora!"][Math.floor(Math.random() * 3)], 1800);
       }
     }
@@ -426,7 +482,7 @@ function dito(e) {   // piuma, laser e spazzola seguono il dito
   var p = logico(e); p.y = Math.min(PAV - 4, p.y); GIOCO.T = p; GIOCO.tocco = Date.now();
   if (GIOCO.modo === "spazzola" && Math.abs(p.x - ST.x) < 80 && p.y > testaY() - 10 && p.y < PAV) {
     GIOCO.spazzola++; ST.fusa = 50;
-    if (GIOCO.spazzola % 25 === 0) { cuori(3); if (navigator.vibrate) navigator.vibrate(15); }
+    if (GIOCO.spazzola % 25 === 0) { cuori(3); felice(3); if (navigator.vibrate) navigator.vibrate(15); }
     if (GIOCO.spazzola === 120) { dici("Che pelo lucido! ✨", 3000); GIOCO.spazzola = 0; }
   }
 }
@@ -437,12 +493,12 @@ tela.addEventListener("click", function (e) {
   if (GIOCO.modo && GIOCO.modo !== "snack") return;
   var q = logico(e), x = q.x, y = q.y;
   if (y > PAV - 40 && y < PAV + 12) {
-    if (Math.abs(x - POSTI.cibo) < 40) { CIOT.cibo = 100; salva("gatto_stanza", CIOT); dici("Gnam! Grazie 🐟", 2500); return; }
-    if (Math.abs(x - POSTI.acqua) < 40) { CIOT.acqua = 100; salva("gatto_stanza", CIOT); dici("Acqua fresca 💧", 2500); return; }
+    if (Math.abs(x - POSTI.cibo) < 40) { CIOT.cibo = 100; felice(4); salva("gatto_stanza", CIOT); dici("Gnam! Grazie 🐟", 2500); return; }
+    if (Math.abs(x - POSTI.acqua) < 40) { CIOT.acqua = 100; felice(3); salva("gatto_stanza", CIOT); dici("Acqua fresca 💧", 2500); return; }
   }
   if (Math.abs(x - ST.x) < 90 && y > testaY() - 20 && y < PAV + 12) {
     if (navigator.vibrate) navigator.vibrate([10, 30, 10, 30, 10]);
-    ST.fusa = 120; cuori(5); dici(ST.posa === "dorme" ? "Mmh… prrr" : "Prrr… ♥", 2500);
+    ST.fusa = 120; cuori(5); felice(3); dici(ST.posa === "dorme" ? "Mmh… prrr" : "Prrr… ♥", 2500);
     if (ST.fare !== "va") ST.fino = Math.max(ST.fino, Date.now() + 5000);
   }
 });
@@ -460,6 +516,17 @@ $("giochi").onclick = function (e) {
   }
   if (gg === "scatola") { GIOCO.scatola = !GIOCO.scatola; salva("gatto_scatola", GIOCO.scatola); if (GIOCO.scatola) { vai("scatola", "seduto", 25000); dici("Una scatola! 📦", 2000); } else if (ST.dove === "scatola") scegli(); return; }
   if (gg === "foto") { fotoStanza(); return; }
+  if (gg === "topo") { fineGioco(); var da = ST.x > LW / 2 ? 120 : LW - 120; GIOCO.topo = { x: da, v: (da < LW / 2 ? 1 : -1) * 5, inizio: ora }; dici("Un topo!!! 🐭", 1500); return; }
+  if (gg === "erba") {
+    var ultima = leggi("gatto_erba", 0); if (ora - ultima < 2 * 3600000) { dici("Per oggi basta erba gatta 😵‍💫", 2500); return; }
+    salva("gatto_erba", ora); fineGioco(); GIOCO.erba = { x: Math.max(140, Math.min(LW - 140, ST.x + ST.verso * 150)) }; return;
+  }
+  if (gg === "nanna") { ninnaNanna(); fineGioco(); vai("cuccia", "dorme", 90000); dici("Mmh… nanna 😴", 3000); felice(2); return; }
+  if (gg === "collare") {
+    var i = (COLLARI.indexOf(collareGatto()) + 1) % COLLARI.length, col = COLLARI[i]; salva("gatto_collare", col);
+    salvaGatto("gatto.collare", col ? { colore: col, t: ora } : null);
+    dici(col ? "Collare " + NOMI_COLLARI[i] + "! 🔔" : "Senza collare", 2000); return;
+  }
   if (gg === "nome") {
     var n = prompt("Come si chiama il gatto? (lo scrivo sulla ciotola)", nomeGatto());
     if (n !== null) { salvaNomeGatto(n); dici(n.trim() ? "Miao! Sono " + n.trim() + " 😺" : "Miao?", 3000); }
@@ -472,6 +539,15 @@ $("giochi").onclick = function (e) {
   if (gg === "spazzola") GIOCO.T = { x: ST.x, y: PAV - 90 };
   dici(gg === "piuma" ? "Muovi la piuma col dito! 🪶" : gg === "laser" ? "Un puntino rosso!! 🔴" : "Passa il dito sul gatto 🪮", 2500);
 };
+function ninnaNanna() {   // carillon lento, sei note
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; var ac = ninnaNanna.ac || (ninnaNanna.ac = new AC()), t0 = ac.currentTime + .05;
+    [[523, 0], [440, .7], [392, 1.4], [440, 2.1], [349, 2.8], [392, 3.8]].forEach(function (n) {
+      var o = ac.createOscillator(), v = ac.createGain(); o.type = "sine"; o.frequency.value = n[0]; o.connect(v); v.connect(ac.destination);
+      v.gain.setValueAtTime(0, t0 + n[1]); v.gain.linearRampToValueAtTime(.18, t0 + n[1] + .03); v.gain.exponentialRampToValueAtTime(.001, t0 + n[1] + 1.2); o.start(t0 + n[1]); o.stop(t0 + n[1] + 1.3);
+    });
+  } catch (e) {}
+}
 function fotoStanza() {   // una foto della stanza: si condivide (o si scarica)
   tela.toBlob(function (bl) {
     if (!bl) return;
@@ -552,6 +628,12 @@ document.addEventListener("dblclick", function () { var e = document.documentEle
 })();
 applicaVerso(); disegnaInfo(); leggiMeteo(); scegli(); tieniAcceso(); requestAnimationFrame(frame);
 setInterval(controllaCasa, 5000);
+disegnaFelicita();
+setInterval(function () {
+  felice(-.25);   // circa 3 cuori di meno ogni ora, se nessuno lo considera
+  var h = new Date().getHours();
+  if (FEL.v < 30 && h >= 8 && h < 22 && Math.random() < .25 && ST.posa !== "dorme") dici((nomeGatto() || "Il gatto") + " si annoia… giochi con me? 🥺", 4000);
+}, 5 * 60000);
 setInterval(function () { CIOT.t = Date.now(); salva("gatto_stanza", CIOT); }, 60000);
 setInterval(leggiMeteo, 30 * 60000);
 var DENTRO = window.parent !== window;   // dentro il telefono (scheda Gatto): i dati li sincronizza il telefono, qui si leggono e basta

@@ -19,7 +19,7 @@ function disegnaGatto(g, posa, f) {   // il gatto disegnato (gattodisegno.js), n
   if (posa === "preso") { g.setTransform(DPR * .33, 0, 0, DPR * .33, DPR * w / 2, DPR * h * .11); GATTO_VET.disegna(g, 0, 0, "preso", t, 1, {}); return; }
   var k = DPR * .52;
   g.setTransform(k, 0, 0, k, DPR * w / 2, DPR * (h - 3));
-  GATTO_VET.disegna(g, 0, 0, posa, t, 1, { blink: f % 60 < 2, fusa: G.coccole > Date.now(), cappello: cappelloOggi() });
+  GATTO_VET.disegna(g, 0, 0, posa, t, 1, { blink: f % 60 < 2, fusa: G.coccole > Date.now(), cappello: cappelloOggi(), collare: GATTO_VET.collare() });
 }
 
 // ---------------------------------------------------------------- umore: da ora, turni, meteo

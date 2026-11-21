@@ -23,7 +23,7 @@ var GATTINO = (function () {
       disegna.cap = fe.some(function (x) { return x.festivo || x.regalo; }) || co.length > 0; }
     g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
     g.setTransform(DPR * .42, 0, 0, DPR * .42, DPR * W * S / 2, DPR * (H * S - 3));
-    GATTO_VET.disegna(g, 0, 0, posa, t, 1, { blink: s.f % 150 < 5, fusa: s.fusa, cappello: disegna.cap });
+    GATTO_VET.disegna(g, 0, 0, posa, t, 1, { blink: s.f % 150 < 5, fusa: s.fusa, cappello: disegna.cap, collare: GATTO_VET.collare() });
   }
   function attivo() { try { return JSON.parse(localStorage.getItem("gattino_si") || "true"); } catch (e) { return true; } }
   function frase() {   // cosa dice: dipende dal momento

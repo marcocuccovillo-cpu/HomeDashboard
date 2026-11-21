@@ -783,25 +783,25 @@
   </div>
 </div>
 
-<script src="comune.js?v=103"></script>
-<script src="stato.js?v=103"></script>
-<script src="forza4.js?v=103"></script>
-<script src="giochi.js?v=103"></script>
-<script src="rete.js?v=103"></script>
-<script src="tragitti.js?v=103"></script>
-<script src="suoni.js?v=103"></script>
-<script src="telecomando.js?v=103"></script>
-<script src="spesa.js?v=103"></script>
-<script src="coppia.js?v=103"></script>
-<script src="occhiata.js?v=103"></script>
-<script src="chatplus.js?v=103"></script>
-<script src="giochi2.js?v=103"></script>
-<script src="scacchi.js?v=103"></script>
-<script src="carte.js?v=103"></script>
-<script src="eroefoto.js?v=103"></script>
-<script src="compleanni.js?v=103"></script>
-<script src="gattodisegno.js?v=103"></script>
-<script src="gattino.js?v=103"></script>
+<script src="comune.js?v=104"></script>
+<script src="stato.js?v=104"></script>
+<script src="forza4.js?v=104"></script>
+<script src="giochi.js?v=104"></script>
+<script src="rete.js?v=104"></script>
+<script src="tragitti.js?v=104"></script>
+<script src="suoni.js?v=104"></script>
+<script src="telecomando.js?v=104"></script>
+<script src="spesa.js?v=104"></script>
+<script src="coppia.js?v=104"></script>
+<script src="occhiata.js?v=104"></script>
+<script src="chatplus.js?v=104"></script>
+<script src="giochi2.js?v=104"></script>
+<script src="scacchi.js?v=104"></script>
+<script src="carte.js?v=104"></script>
+<script src="eroefoto.js?v=104"></script>
+<script src="compleanni.js?v=104"></script>
+<script src="gattodisegno.js?v=104"></script>
+<script src="gattino.js?v=104"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -815,7 +815,7 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=103";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=104";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");
