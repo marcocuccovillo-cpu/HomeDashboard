@@ -142,6 +142,8 @@ function aggiornaCiotole() {   // si riempiono da sole quando scendono sotto un 
 function scriviStatoCuccia() {
   var a = G.attivita, s = $("cuccia-stato");
   if (!s) return;
+  var tit = s.parentNode && s.parentNode.firstChild, ng = window.reg && reg["gatto.nome"] && !reg["gatto.nome"].d && reg["gatto.nome"].v ? reg["gatto.nome"].v.nome : "";
+  if (tit && tit.nodeType === 3) tit.nodeValue = (ng ? "L'angolo di " + ng : "L'angolo del gatto") + " ";   // il nome scelto sul telefono
   s.textContent = $("gatto-strato").hidden ? "il gatto è spento" : G.stato === "dorme" && a === "cuccia" ? "dorme nella cuccia" :
     a === "cibo" && G.stato === "mangia" ? "sta mangiando" : a === "acqua" && G.stato === "mangia" ? "sta bevendo" :
     a === "gioco" && G.stato === "in piedi" ? "gioca col gomitolo" : a && G.stato === "cammina" ? "arriva…" :

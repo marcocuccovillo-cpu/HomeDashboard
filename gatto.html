@@ -19,7 +19,8 @@
      e una finestra con il cielo e il tempo veri di Bologna. La luce cambia con l'ora (sole dalla finestra,
      sera calda, notte con la lampada). Il gatto segue la casa: aspetta alla porta chi ha premuto "Sto tornando",
      fa i cuori quando vi pensate, dorme di notte o quando siete fuori, cappellino a feste e compleanni.
-     Toccalo per le coccole; tocca le ciotole per riempirle. */
+     Toccalo per le coccole; tocca le ciotole per riempirle. In alto i giochi: snack, piuma e laser da muovere col dito,
+     spazzola, scatola di cartone, foto della stanza e il nome del gatto, che si legge sulla ciotola (condiviso tra i dispositivi). */
   :root { --ink: #fff5ec; --muted: rgba(255,245,236,.7); }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #2a1d18; color: var(--ink); font-family: Outfit, -apple-system, system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
@@ -34,6 +35,10 @@
   #ora { font-size: 4.6vmin; font-weight: 300; margin-right: 2.4vmin; } #noi { color: var(--muted); -webkit-flex: 1; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   #noi b { color: var(--ink); font-weight: 600; }
   #b-ruota { position: absolute; z-index: 4; right: 1.6vmin; top: 1.6vmin; width: 8vmin; height: 8vmin; max-width: 46px; max-height: 46px; border: 0; border-radius: 50%; background: rgba(0,0,0,.18); color: rgba(255,255,255,.65); font-size: 20px; cursor: pointer; }
+  #giochi { position: absolute; z-index: 4; left: 1.6vmin; top: 1.6vmin; display: -webkit-flex; display: flex; }
+  #giochi button { width: 8vmin; height: 8vmin; max-width: 46px; max-height: 46px; min-width: 34px; min-height: 34px; margin-right: 1.2vmin; border: 0; border-radius: 50%;
+                   background: rgba(255,255,255,.55); font-size: min(4.2vmin, 22px); line-height: 1; padding: 0; cursor: pointer; box-shadow: 0 .6vmin 1.6vmin rgba(0,0,0,.18); }
+  #giochi button.on { background: #ffcf5a; box-shadow: 0 0 0 .6vmin rgba(255,207,90,.45); }
   .cuore { position: absolute; z-index: 3; color: #ff5468; font-size: 4.4vmin; pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.2); -webkit-animation: sale 1.6s ease-out forwards; animation: sale 1.6s ease-out forwards; }
   @-webkit-keyframes sale { from { opacity: 1; -webkit-transform: translate(-50%, 0) scale(.8); } to { opacity: 0; -webkit-transform: translate(-50%, -14vmin) scale(1.3); } }
   @keyframes sale { from { opacity: 1; transform: translate(-50%, 0) scale(.8); } to { opacity: 0; transform: translate(-50%, -14vmin) scale(1.3); } }
@@ -45,19 +50,29 @@
   <div id="fumetto" class="via"></div>
   <div id="info"><span id="ora"></span><span id="noi"></span></div>
   <button id="b-ruota" type="button" aria-label="Gira lo schermo">⟳</button>
+  <div id="giochi">
+    <button type="button" data-g="snack" title="Dagli uno snack">🍗</button>
+    <button type="button" data-g="piuma" title="Bacchetta con la piuma: muovila col dito">🪶</button>
+    <button type="button" data-g="laser" title="Puntatore laser: muovilo col dito">🔴</button>
+    <button type="button" data-g="spazzola" title="Spazzolalo: passa il dito sul gatto">🪮</button>
+    <button type="button" data-g="scatola" title="Una scatola di cartone">📦</button>
+    <button type="button" data-g="foto" title="Scatta una foto">📸</button>
+    <button type="button" data-g="nome" title="Il nome sulla ciotola">✏️</button>
+  </div>
 </div>
 
-<script src="vecchi.js?v=102"></script>
-<script src="comune.js?v=102"></script>
-<script src="stato.js?v=102"></script>
-<script src="telecomando.js?v=102"></script>
-<script src="compleanni.js?v=102"></script>
-<script src="gattodisegno.js?v=102"></script>
+<script src="vecchi.js?v=103"></script>
+<script src="comune.js?v=103"></script>
+<script src="stato.js?v=103"></script>
+<script src="telecomando.js?v=103"></script>
+<script src="compleanni.js?v=103"></script>
+<script src="gattodisegno.js?v=103"></script>
 <script>
 // ================= la stanza: coordinate "logiche" 1000×600, disegnate a piena risoluzione =================
 var LW = 1000, LH = 600, MURO = 448, PAV = 520;   // dove finisce il muro, dove poggia il gatto
 var tela = $("tela"), g = tela.getContext("2d"), DPR = 1, SCALA = 1, OFX = 0, OFY = 0, SW = 0, SH = 0, VERT = false;
-var POSTI = { cuccia: 205, cibo: 330, acqua: 415, finestra: 505, centro: 580, porta: 880 };
+var POSTI = { cuccia: 205, cibo: 330, acqua: 415, finestra: 505, centro: 580, porta: 880, scatola: 770 };
+var GIOCO = { modo: null, T: null, tocco: 0, snack: [], scatola: leggi("gatto_scatola", false), spazzola: 0, salto: 0, ultimoSnack: leggi("gatto_snack", []) };
 var ST = { x: 580, verso: 1, meta: 580, fare: "seduto", fino: 0, posa: "seduto", f: 0, palla: { x: 650, v: 0, giro: 0 }, cappello: false, fusa: 0, occhi: 0 };
 var CIOT = leggi("gatto_stanza", { cibo: 80, acqua: 80, t: Date.now() });
 var METEO = { tipo: "sereno" }, GOCCE = [], NUVOLE = [], STELLE = [];
@@ -199,12 +214,27 @@ function cielo(t, m) {
   g.restore();
 }
 
+// ---------------- il nome del gatto (condiviso: registro cifrato "gatto.nome"; sull'iPad senza dati resta solo qui)
+function nomeGatto() { var e = window.reg && reg["gatto.nome"]; return e && !e.d && e.v && e.v.nome ? e.v.nome : leggi("gatto_nome", ""); }
+function salvaNomeGatto(n) {
+  n = (n || "").replace(/\s+/g, " ").trim().slice(0, 14); salva("gatto_nome", n);
+  var dove = DENTRO && window.parent.reg ? window.parent : window, ora = Date.now();   // nella scheda del telefono scrive il telefono
+  if (dove.reg) { dove.reg["gatto.nome"] = n ? { v: { nome: n, t: ora }, t: ora } : { d: 1, t: ora }; dove.salva("cucina_registro", dove.reg); if (dove.sincronizza) dove.sincronizza(); }
+  if (window.reg && dove !== window) reg["gatto.nome"] = dove.reg["gatto.nome"];
+}
 // ---------------- ciotole, gomitolo
 function ciotola(x, tipo, livello) {
   g.fillStyle = "rgba(0,0,0,.18)"; ell(x, PAV + 6, 36, 7); g.fill();
   g.fillStyle = lin(x - 34, 0, x + 34, 0, [[0, "#d8dde6"], [.5, "#ffffff"], [1, "#c9cfda"]]); g.beginPath(); g.moveTo(x - 34, PAV - 22); g.lineTo(x + 34, PAV - 22); g.lineTo(x + 26, PAV + 2); g.lineTo(x - 26, PAV + 2); g.closePath(); g.fill();
   g.fillStyle = tipo === "cibo" ? "#e89b5a" : "#6fb8e8"; g.fillRect(x - 30, PAV - 14, 60, 5);
   g.fillStyle = "#eef1f5"; ell(x, PAV - 22, 34, 8); g.fill(); g.fillStyle = "#c9cfda"; ell(x, PAV - 22, 28, 5.5); g.fill();
+  var nn = tipo === "cibo" ? nomeGatto() : "";
+  if (nn) {   // il nome scritto sulla ciotola
+    var fs = 13; g.font = "800 " + fs + "px Outfit, sans-serif"; var tw = g.measureText(nn.toUpperCase()).width;
+    if (tw > 52) { fs = Math.max(7, fs * 52 / tw); g.font = "800 " + fs.toFixed(1) + "px Outfit, sans-serif"; }
+    g.fillStyle = "#e89b5a"; g.fillRect(x - 30, PAV - 15, 60, 12);
+    g.fillStyle = "#fff"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(nn.toUpperCase(), x, PAV - 8.6);
+  }
   var l = Math.max(0, Math.min(100, livello)) / 100;
   if (l > .02) {
     if (tipo === "cibo") { for (var i = 0; i < Math.round(14 * l); i++) { g.fillStyle = i % 2 ? "#9b5a2e" : "#b56d3a"; ell(x - 20 + (i * 37 % 40), PAV - 23 - (i % 3) - l * 3, 4, 3); g.fill(); } }
@@ -218,6 +248,42 @@ function gomitolo(x) {
   g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 1.4; for (var k = -8; k <= 8; k += 4) { g.beginPath(); g.ellipse(0, 0, 13, Math.abs(k) + 3, .6, 0, Math.PI); g.stroke(); }
   g.restore();
   g.strokeStyle = "#3aa79a"; g.lineWidth = 1.6; g.beginPath(); g.moveTo(x - 6, PAV - 2); g.quadraticCurveTo(x - 30, PAV + 6, x - 52, PAV + 1); g.stroke();
+}
+
+// ---------------- i giochi: scatola, piuma, laser, spazzola
+function scatola(t, davanti) {   // dietro: l'interno; davanti: la parete col gatto "dentro"
+  var x = POSTI.scatola, w = 150, h = 74, y = PAV - h + 4;
+  if (!davanti) {
+    g.fillStyle = "rgba(0,0,0,.18)"; ell(x, PAV + 6, w * .58, 9); g.fill();
+    g.fillStyle = "#a87a4c"; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x - w / 2 + 16, y - 16); g.lineTo(x + w / 2 + 16, y - 16); g.lineTo(x + w / 2, y); g.closePath(); g.fill();   // l'interno
+    g.fillStyle = "#c9975e"; g.beginPath(); g.moveTo(x - w / 2, y); g.lineTo(x - w / 2 - 24, y - 30); g.lineTo(x - w / 2 + 6, y - 32); g.lineTo(x - w / 2 + 16, y - 16); g.closePath(); g.fill();   // le alette
+    g.beginPath(); g.moveTo(x + w / 2 + 16, y - 16); g.lineTo(x + w / 2 + 44, y - 38); g.lineTo(x + w / 2 + 30, y - 4); g.lineTo(x + w / 2, y); g.closePath(); g.fill();
+    return;
+  }
+  g.fillStyle = lin(x - w / 2, 0, x + w / 2, 0, [[0, "#d9a96c"], [1, "#c48f55"]]); g.fillRect(x - w / 2, y, w, h);
+  g.fillStyle = "#b27f48"; g.beginPath(); g.moveTo(x + w / 2, y); g.lineTo(x + w / 2 + 16, y - 16); g.lineTo(x + w / 2 + 16, y + h - 16); g.lineTo(x + w / 2, y + h); g.closePath(); g.fill();   // il fianco
+  g.fillStyle = "rgba(255,255,255,.5)"; g.fillRect(x - 6, y, 12, h);   // il nastro adesivo
+  g.fillStyle = "rgba(90,50,20,.5)"; g.font = "700 12px Outfit, sans-serif"; g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillText("FRAGILE", x - 38, y + 40);
+}
+function giocattoli(t) {
+  var T = GIOCO.T; if (!T || !GIOCO.modo) return;
+  if (GIOCO.modo === "piuma") {   // la bacchetta scende dall'alto, la piuma dondola
+    var dx = Math.sin(t / 260) * 6;
+    g.strokeStyle = "#6b4a2c"; g.lineWidth = 3; g.beginPath(); g.moveTo(T.x + 140, T.y - 260); g.quadraticCurveTo(T.x + 90, T.y - 150, T.x + 30, T.y - 70); g.stroke();
+    g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = 1; g.beginPath(); g.moveTo(T.x + 30, T.y - 70); g.quadraticCurveTo(T.x + 10 + dx, T.y - 30, T.x + dx, T.y); g.stroke();
+    g.save(); g.translate(T.x + dx, T.y); g.rotate(.4 + Math.sin(t / 200) * .25);
+    g.fillStyle = lin(0, -10, 0, 50, [[0, "#ff6f91"], [.5, "#ffb36b"], [1, "#ffe07a"]]); ell(0, 22, 10, 26); g.fill();
+    g.strokeStyle = "rgba(120,40,40,.5)"; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, -4); g.lineTo(0, 48); g.stroke(); g.restore();
+  } else if (GIOCO.modo === "laser") {
+    g.fillStyle = rad(T.x, T.y, 0, 18, [[0, "rgba(255,40,40,.9)"], [.35, "rgba(255,40,40,.45)"], [1, "rgba(255,40,40,0)"]]); g.fillRect(T.x - 18, T.y - 18, 36, 36);
+    g.fillStyle = "#fff"; ell(T.x, T.y, 2.2, 2.2); g.fill();
+  } else if (GIOCO.modo === "spazzola") {
+    g.save(); g.translate(T.x, T.y); g.rotate(-.5);
+    g.fillStyle = "#8b5a3c"; rr(-8, 0, 16, 46, 7); g.fill();
+    g.fillStyle = "#d8b07a"; rr(-22, -26, 44, 28, 8); g.fill();
+    g.strokeStyle = "#5a3b22"; g.lineWidth = 1.4; for (var k = -16; k <= 16; k += 5) { g.beginPath(); g.moveTo(k, -26); g.lineTo(k, -34); g.stroke(); }
+    g.restore();
+  }
 }
 
 // ---------------- un fotogramma
@@ -237,9 +303,16 @@ function disegna(t) {
   }
   var dorme = ST.posa === "dorme" && Math.abs(ST.x - POSTI.cuccia) < 4;
   if (!dorme) gomitolo(ST.palla.x);
-  g.save(); if (dorme) g.translate(0, -12);
+  var nellaScatola = GIOCO.scatola && Math.abs(ST.x - POSTI.scatola) < 30 && ST.fare !== "va" && !GIOCO.salto;
+  if (GIOCO.scatola) { scatola(t, false); if (!nellaScatola) scatola(t, true); }
+  GIOCO.snack.forEach(function (c) { g.fillStyle = "#8a4a22"; ell(c.x, c.y, 7, 5); g.fill(); g.fillStyle = "#c9773a"; ell(c.x - 2, c.y - 1.5, 3, 2); g.fill(); });
+  var su = GIOCO.salto ? Math.sin(Math.min(1, (Date.now() - GIOCO.salto) / 650) * Math.PI) * GIOCO.altezza : 0;
+  if (GIOCO.salto && Date.now() - GIOCO.salto > 650) GIOCO.salto = 0;
+  g.save(); if (dorme) g.translate(0, -12); g.translate(0, -su);
   GATTO_VET.disegna(g, ST.x, PAV, ST.posa, t, ST.verso, { blink: ST.occhi > 0, fusa: ST.fusa > 0, cappello: ST.cappello }); g.restore();
   if (dorme) gomitolo(ST.palla.x);
+  if (nellaScatola) scatola(t, true);
+  giocattoli(t);
   // luce dell'ora: sera calda, notte buia con la lampada
   var x0 = -OFX / SCALA, x1 = (SW - OFX) / SCALA, y0 = -OFY / SCALA, y1 = (SH - OFY) / SCALA;
   if (m.caldo) { g.fillStyle = "rgba(255,150,70," + m.caldo + ")"; g.fillRect(x0, y0, x1 - x0, y1 - y0); }
@@ -264,6 +337,7 @@ function scegli() {
   if (h >= 23 || h < 7) { vai("cuccia", "dorme", 120000); return; }
   if (tuttiFuori()) { if (Math.random() < .7) vai("cuccia", "dorme", 90000); else vai("finestra", "seduto", 40000); return; }
   var r = Math.random();
+  if (GIOCO.scatola && Math.random() < .35) { vai("scatola", "seduto", 25000); if (Math.random() < .5) setTimeout(function () { if (ST.dove === "scatola") dici("Se ci sto, ci entro 📦", 3500); }, 3000); return; }
   if (CIOT.cibo > 5 && r < .2) vai("cibo", "mangia", 9000);
   else if (CIOT.acqua > 5 && r < .32) vai("acqua", "mangia", 6000);
   else if (r < .5) { vai("finestra", "seduto", 20000); if (Math.random() < .5) setTimeout(function () { if (ST.dove === "finestra") dici(METEO.tipo === "pioggia" ? "Piove… 🌧️" : METEO.tipo === "neve" ? "Nevica! ❄️" : "Che bel cielo ☀️", 4000); }, 4000); }
@@ -271,11 +345,45 @@ function scegli() {
   else if (r < .85) vai("cuccia", "dorme", 30000);
   else vai("centro", "seduto", 15000);
 }
+function passoGioco() {   // true se il gatto è impegnato in un gioco
+  var ora = Date.now();
+  GIOCO.snack = GIOCO.snack.filter(function (c) { if (c.y < PAV - 4) { c.vy += .9; c.y = Math.min(PAV - 4, c.y + c.vy); } return !c.preso; });
+  if (GIOCO.snack.length) {   // corre allo snack e lo mangia
+    var c = GIOCO.snack[0], dx = c.x - 66 * (c.x > ST.x ? 1 : -1) - ST.x;
+    if (c.y < PAV - 6) { ST.posa = "seduto"; return true; }
+    if (Math.abs(dx) > 4) { ST.verso = dx > 0 ? 1 : -1; ST.x += ST.verso * 4.2; ST.posa = "cammina"; return true; }
+    ST.verso = c.x > ST.x ? 1 : -1; ST.posa = "mangia";
+    if (!c.inizio) c.inizio = ora;
+    if (ora - c.inizio > 2200) { c.preso = true; cuori(4); ST.fusa = 60; dici(["Gnam! 😋", "Buonissimo!", "Ancora? 🥺", "Prrr…"][Math.floor(Math.random() * 4)], 2200); ST.fare = "seduto"; ST.fino = ora + 6000; }
+    return true;
+  }
+  if ((GIOCO.modo === "piuma" || GIOCO.modo === "laser") && GIOCO.T) {
+    if (ora - GIOCO.tocco > 20000) { fineGioco(); return false; }   // dopo 20 secondi senza muoverla, il gioco finisce
+    var T = GIOCO.T, laser = GIOCO.modo === "laser", d = T.x - ST.x - ST.verso * (laser ? 55 : 40), v = laser ? 5.2 : 3.8;
+    if (Math.abs(d) > 10) { ST.verso = T.x > ST.x ? 1 : -1; ST.x += Math.sign(d) * Math.min(v, Math.abs(d)); ST.posa = "cammina"; }
+    else {
+      ST.posa = "seduto";
+      if (!GIOCO.salto && Math.random() < (laser ? .05 : .04)) {   // l'agguato: un salto verso la preda
+        GIOCO.salto = ora; GIOCO.altezza = laser ? 40 : Math.max(30, Math.min(170, PAV - T.y - 60));
+        if (Math.random() < .25) dici(laser ? ["Ti prendo!", "Dov'è andato?!", "Grrr…"][Math.floor(Math.random() * 3)] : ["Ciuff! 🪶", "Quasi!", "Ancora!"][Math.floor(Math.random() * 3)], 1800);
+      }
+    }
+    ST.x = Math.max(60, Math.min(LW - 60, ST.x)); ST.fare = "gioco"; return true;
+  }
+  if (GIOCO.modo === "spazzola") { if (ora - GIOCO.tocco > 20000) { fineGioco(); return false; } if (ST.fare === "va" || ST.posa === "cammina") { ST.fare = "seduto"; ST.posa = "seduto"; ST.fino = ora + 20000; } return true; }
+  return false;
+}
+function fineGioco() {
+  GIOCO.modo = null; GIOCO.T = null; GIOCO.salto = 0;
+  [].forEach.call($("giochi").children, function (b) { b.classList.remove("on"); });
+  ST.fare = "seduto"; ST.fino = Date.now() + 3000;
+}
 function vai(dove, poi, ms) { ST.meta = POSTI[dove]; ST.dove = dove; ST.poi = poi; ST.ms = ms; ST.fare = "va"; }
 function passo() {
   ST.f++;
   if (ST.fusa > 0) ST.fusa--;
   if (ST.occhi > 0) ST.occhi--; else if (Math.random() < .012) ST.occhi = 3;   // sbatte le palpebre
+  if (passoGioco()) return;
   var off = { cibo: -72, acqua: -72 }[ST.dove] || 0;   // a mangiare si mette con la testa sopra la ciotola
   if (ST.fare === "va") {
     var meta = ST.meta + (ST.poi === "mangia" ? off : 0), dx = meta - ST.x;
@@ -307,10 +415,27 @@ function cuori(n) {
 }
 
 // ================= tocchi: coccole e ciotole =================
-tela.addEventListener("click", function (e) {
+function logico(e) {   // dal tocco sullo schermo alle coordinate della stanza
   var r = $("scena").getBoundingClientRect(), x = (e.clientX - r.left - OFX) / SCALA, y = (e.clientY - r.top - OFY) / SCALA;
   if (VERT || verso !== "auto") { var sx = e.clientX, sy = e.clientY, w = innerWidth, h = innerHeight, giro = (verso === "dx" || verso === "sx") && h > w ? (verso === "dx" ? 90 : -90) : verso === "vert" && w > h ? 90 : 0;
     if (giro === 90) { x = (sy - OFX) / SCALA; y = (w - sx - OFY) / SCALA; } else if (giro === -90) { x = (h - sy - OFX) / SCALA; y = (sx - OFY) / SCALA; } }
+  return { x: x, y: y };
+}
+function dito(e) {   // piuma, laser e spazzola seguono il dito
+  if (!GIOCO.modo || GIOCO.modo === "snack") return;
+  var p = logico(e); p.y = Math.min(PAV - 4, p.y); GIOCO.T = p; GIOCO.tocco = Date.now();
+  if (GIOCO.modo === "spazzola" && Math.abs(p.x - ST.x) < 80 && p.y > testaY() - 10 && p.y < PAV) {
+    GIOCO.spazzola++; ST.fusa = 50;
+    if (GIOCO.spazzola % 25 === 0) { cuori(3); if (navigator.vibrate) navigator.vibrate(15); }
+    if (GIOCO.spazzola === 120) { dici("Che pelo lucido! ✨", 3000); GIOCO.spazzola = 0; }
+  }
+}
+tela.addEventListener("pointerdown", function (e) { if (GIOCO.modo && GIOCO.modo !== "snack") { e.preventDefault(); dito(e); } });
+tela.addEventListener("pointermove", function (e) { if (GIOCO.modo && GIOCO.modo !== "snack" && (e.buttons || e.pointerType !== "mouse" || GIOCO.modo === "laser")) dito(e); });
+tela.style.touchAction = "none";
+tela.addEventListener("click", function (e) {
+  if (GIOCO.modo && GIOCO.modo !== "snack") return;
+  var q = logico(e), x = q.x, y = q.y;
   if (y > PAV - 40 && y < PAV + 12) {
     if (Math.abs(x - POSTI.cibo) < 40) { CIOT.cibo = 100; salva("gatto_stanza", CIOT); dici("Gnam! Grazie 🐟", 2500); return; }
     if (Math.abs(x - POSTI.acqua) < 40) { CIOT.acqua = 100; salva("gatto_stanza", CIOT); dici("Acqua fresca 💧", 2500); return; }
@@ -321,6 +446,43 @@ tela.addEventListener("click", function (e) {
     if (ST.fare !== "va") ST.fino = Math.max(ST.fino, Date.now() + 5000);
   }
 });
+
+// ================= la barra dei giochi =================
+$("giochi").onclick = function (e) {
+  var b = e.target.closest("button"); if (!b) return; e.stopPropagation();
+  var gg = b.getAttribute("data-g"), ora = Date.now();
+  if (gg === "snack") {
+    GIOCO.ultimoSnack = GIOCO.ultimoSnack.filter(function (t) { return ora - t < 3600000; });
+    if (GIOCO.ultimoSnack.length >= 5) { dici("Basta snack per ora 😼", 2500); return; }
+    GIOCO.ultimoSnack.push(ora); salva("gatto_snack", GIOCO.ultimoSnack);
+    var sx = Math.max(120, Math.min(LW - 120, ST.x + (Math.random() < .5 ? -1 : 1) * (120 + Math.random() * 120)));
+    GIOCO.snack.push({ x: sx, y: 200, vy: 0 }); dici("Uno snack?! 😻", 1500); return;
+  }
+  if (gg === "scatola") { GIOCO.scatola = !GIOCO.scatola; salva("gatto_scatola", GIOCO.scatola); if (GIOCO.scatola) { vai("scatola", "seduto", 25000); dici("Una scatola! 📦", 2000); } else if (ST.dove === "scatola") scegli(); return; }
+  if (gg === "foto") { fotoStanza(); return; }
+  if (gg === "nome") {
+    var n = prompt("Come si chiama il gatto? (lo scrivo sulla ciotola)", nomeGatto());
+    if (n !== null) { salvaNomeGatto(n); dici(n.trim() ? "Miao! Sono " + n.trim() + " 😺" : "Miao?", 3000); }
+    return;
+  }
+  var gia = GIOCO.modo === gg;
+  fineGioco(); if (gia) return;
+  GIOCO.modo = gg; GIOCO.tocco = ora; b.classList.add("on");
+  GIOCO.T = { x: Math.max(80, Math.min(LW - 80, ST.x + ST.verso * 160)), y: gg === "piuma" ? PAV - 150 : PAV - 6 };
+  if (gg === "spazzola") GIOCO.T = { x: ST.x, y: PAV - 90 };
+  dici(gg === "piuma" ? "Muovi la piuma col dito! 🪶" : gg === "laser" ? "Un puntino rosso!! 🔴" : "Passa il dito sul gatto 🪮", 2500);
+};
+function fotoStanza() {   // una foto della stanza: si condivide (o si scarica)
+  tela.toBlob(function (bl) {
+    if (!bl) return;
+    var nome = "gatto-" + new Date().toISOString().slice(0, 10) + ".png", f = window.File ? new File([bl], nome, { type: "image/png" }) : null;
+    if (f && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: nomeGatto() || "Il nostro gatto" }).catch(function () {}); return; }
+    var a = document.createElement("a"); a.href = URL.createObjectURL(bl); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+  });
+  var fl = document.createElement("div"); fl.style.cssText = "position:absolute;inset:0;background:#fff;z-index:9;opacity:.85;transition:opacity .5s"; $("scena").appendChild(fl);
+  setTimeout(function () { fl.style.opacity = "0"; }, 60); setTimeout(function () { fl.remove(); }, 700);
+  dici("Cheese! 📸", 2000);
+}
 
 // ================= la casa: pensieri, rientri, feste, meteo =================
 function controllaCasa() {
