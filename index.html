@@ -280,6 +280,12 @@
 
   /* --- lista della spesa (pagina 2) --- */
   #card-spesa { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  /* due pulsanti "pensa a…": dal tablet ognuno manda il suo cuore all'altro */
+  #card-pensieri { flex: none; display: flex; gap: 1vw; padding: 1.2vh 1vw; }
+  #card-pensieri button { flex: 1; border: 0; border-radius: 1.6vh; padding: 1.5vh .6vw; font-family: inherit; font-weight: 600; font-size: 1.9vh; line-height: 1.2; color: #fff; cursor: pointer; transition: transform .15s; }
+  #card-pensieri button:active { transform: scale(.96); }
+  #pens-0 { background: linear-gradient(135deg, #ff9a62, #e8643c); } #pens-1 { background: linear-gradient(135deg, #52d1c6, #2a9d93); }
+  #card-pensieri button.inviato { background: #fff; color: #d9466f; box-shadow: inset 0 0 0 2px #ffb3c4; }
   .sp-testa { display: flex; align-items: baseline; justify-content: space-between; }
   .sp-testa h2 { margin: 0 0 .8vh; }
   .sp-conta { font-size: 1.7vh; color: var(--muted); }
@@ -721,6 +727,7 @@
     </div>
     <div class="col-cielo">
       <section class="card spesa-box" id="card-spesa"></section>
+      <section class="card" id="card-pensieri"><button type="button" id="pens-0"></button><button type="button" id="pens-1"></button></section>
       <section class="card" id="card-radio">
       <div class="radio-testa">Radio <span id="radio-stato" class="pillola">spenta</span></div>
       <div class="radio-ora">
@@ -944,22 +951,22 @@
   </div>
 </div>
 
-<script src="comune.js?v=104"></script>
-<script src="stato.js?v=104"></script>
-<script src="rete.js?v=104"></script>
-<script src="radio.js?v=104"></script>
-<script src="forza4.js?v=104"></script>
+<script src="comune.js?v=105"></script>
+<script src="stato.js?v=105"></script>
+<script src="rete.js?v=105"></script>
+<script src="radio.js?v=105"></script>
+<script src="forza4.js?v=105"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="tragitti.js?v=104"></script>
-<script src="bus.js?v=104"></script>
-<script src="spesa.js?v=104"></script>
-<script src="giochi.js?v=104"></script>
-<script src="calendario.js?v=104"></script>
-<script src="compleanni.js?v=104"></script>
-<script src="suoni.js?v=104"></script>
-<script src="telecomando.js?v=104"></script>
-<script src="gattodisegno.js?v=104"></script>
-<script src="gatto.js?v=104"></script>
+<script src="tragitti.js?v=105"></script>
+<script src="bus.js?v=105"></script>
+<script src="spesa.js?v=105"></script>
+<script src="giochi.js?v=105"></script>
+<script src="calendario.js?v=105"></script>
+<script src="compleanni.js?v=105"></script>
+<script src="suoni.js?v=105"></script>
+<script src="telecomando.js?v=105"></script>
+<script src="gattodisegno.js?v=105"></script>
+<script src="gatto.js?v=105"></script>
 <script>
 
 // ================= orologio =================
@@ -1619,7 +1626,7 @@ function aggiornaPunti() {
   [].forEach.call($("punti").children, function (b, k) { b.classList.toggle("on", k === i); });
   if (i === 1) reteVisibile();
   window.paginaDove = i === 4;   // la pagina 5 si anima solo quando si vede
-  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=104";
+  if (i === 4 && !$("dove-frame").getAttribute("src")) $("dove-frame").src = "dove.html?v=105";
 }
 var tPagine = null;
 $("pagine").addEventListener("scroll", function () { clearTimeout(tPagine); tPagine = setTimeout(aggiornaPunti, 80); });
@@ -1629,6 +1636,20 @@ window.addEventListener("resize", function () { $("pagine").scrollLeft = paginaA
 // ================= avvio =================
 function ridisegna() { ridisegnaSpesa(); disegnaSala(); if (window.CAL && !CAL.giorno) disegnaCalendario(); disegnaTurni(); disegnaNote(); f4Disegna($("f4-griglia"), $("f4-info")); if (window.trAggiorna) trAggiorna(false); }
 function occupato() { return !!(trascinata && trascinata.mossa); }
+(function () {   // "Marco pensa a Roberta" / "Roberta pensa a Marco"
+  function nomeBreve(p) { return (cfg.nomi[p] || (p ? "Lei" : "Lui")).split(" ")[0]; }
+  function scrivi() { [0, 1].forEach(function (p) { var b = $("pens-" + p); if (!b.classList.contains("inviato")) b.textContent = "💗 " + nomeBreve(p) + " pensa a " + nomeBreve(1 - p); }); }
+  [0, 1].forEach(function (p) {
+    $("pens-" + p).onclick = function () {
+      var b = this; if (b.classList.contains("inviato")) return;
+      if (!mandaPensiero(p)) { b.textContent = "Prima sblocca con la password"; setTimeout(scrivi, 2500); return; }
+      salva("pensieri_visti_tablet", Date.now());   // il cuore l'ho mandato io: niente festa qui
+      b.classList.add("inviato"); b.textContent = "♥ Inviato a " + nomeBreve(1 - p);
+      setTimeout(function () { b.classList.remove("inviato"); scrivi(); }, 3000);
+    };
+  });
+  scrivi(); setInterval(scrivi, 30000);
+})();
 tieniAcceso(); avviaCarosello(); avviaRete(); avviaRadio(); avviaGatto(); avviaTragitti(); avviaBus(); avviaTelecomando(); avviaSpesa(); avviaSala(); avviaCalendario(); f4Disegna($("f4-griglia"), $("f4-info")); aggiornaPunti();
 orologio(); meteo(); disegnaTurni(); disegnaNote(); disegnaTimer(); caricaChiavi();
 avviaSync();

@@ -336,6 +336,8 @@
   .oggi-persona b em { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 1px 6px; }
   .oggi-persona .or { display: block; font-size: 22px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; font-variant-numeric: tabular-nums; margin-top: 1px; overflow-wrap: anywhere; }
   .oggi-persona .or.libero { font-weight: 500; color: var(--muted); }
+  .oggi-persona .ritorno { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .oggi-persona .ritorno.coda { color: #c2410c; font-weight: 600; }
   .oggi-persona small { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-top: 3px; min-width: 0; }
   .oggi-persona small span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .oggi-persona small i { width: 8px; height: 8px; border-radius: 50%; background: var(--done); flex: none; }
@@ -783,25 +785,25 @@
   </div>
 </div>
 
-<script src="comune.js?v=104"></script>
-<script src="stato.js?v=104"></script>
-<script src="forza4.js?v=104"></script>
-<script src="giochi.js?v=104"></script>
-<script src="rete.js?v=104"></script>
-<script src="tragitti.js?v=104"></script>
-<script src="suoni.js?v=104"></script>
-<script src="telecomando.js?v=104"></script>
-<script src="spesa.js?v=104"></script>
-<script src="coppia.js?v=104"></script>
-<script src="occhiata.js?v=104"></script>
-<script src="chatplus.js?v=104"></script>
-<script src="giochi2.js?v=104"></script>
-<script src="scacchi.js?v=104"></script>
-<script src="carte.js?v=104"></script>
-<script src="eroefoto.js?v=104"></script>
-<script src="compleanni.js?v=104"></script>
-<script src="gattodisegno.js?v=104"></script>
-<script src="gattino.js?v=104"></script>
+<script src="comune.js?v=105"></script>
+<script src="stato.js?v=105"></script>
+<script src="forza4.js?v=105"></script>
+<script src="giochi.js?v=105"></script>
+<script src="rete.js?v=105"></script>
+<script src="tragitti.js?v=105"></script>
+<script src="suoni.js?v=105"></script>
+<script src="telecomando.js?v=105"></script>
+<script src="spesa.js?v=105"></script>
+<script src="coppia.js?v=105"></script>
+<script src="occhiata.js?v=105"></script>
+<script src="chatplus.js?v=105"></script>
+<script src="giochi2.js?v=105"></script>
+<script src="scacchi.js?v=105"></script>
+<script src="carte.js?v=105"></script>
+<script src="eroefoto.js?v=105"></script>
+<script src="compleanni.js?v=105"></script>
+<script src="gattodisegno.js?v=105"></script>
+<script src="gattino.js?v=105"></script>
 <script>
 // ================= schede =================
 var scheda = "oggi";   // all'apertura si vede sempre Oggi
@@ -815,7 +817,7 @@ function mostraScheda(n) {
   if (n === "giochi") disegnaGiochi(); else if (window.snFerma) snFerma();   // lo snake si ferma se cambi scheda
   ["tv", "gatto"].forEach(function (k) {   // la pagina vera si carica la prima volta che apri la scheda; fuori vista il gatto si ferma
     var f = document.querySelector("#s-" + k + " iframe");
-    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=104";
+    if (n === k && !f.src) f.src = f.getAttribute("data-src") + "?v=105";
     try { if (f.contentWindow) f.contentWindow.inPausa = n !== k; } catch (e) {}
   });
   if (window.GATTINO) GATTINO.nascondi(n === "gatto");
@@ -1140,6 +1142,8 @@ function disegnaOggi() {
     r.querySelector("small span").textContent = cosa.charAt(0).toUpperCase() + cosa.slice(1);
     r.querySelector(".or").textContent = v ? breve(v).replace(/\n/g, " · ").replace(/–/g, " – ") : "Riposo";
     if (!v) r.querySelector(".or").classList.add("libero");
+    var rit = st.stato === "lavoro" ? ritornoOra(p) : null;   // al lavoro: quanto ci vuole adesso per tornare a casa, col traffico
+    if (rit) { var rr = el("span", "ritorno" + (rit.ritardo >= 300 ? " coda" : "")); rr.textContent = rit.testo; r.querySelector(".tx").appendChild(rr); }
     var linea = r.querySelector(".linea"), bar = barraGiorno(oggi0, p, true);
     var passato = el("u"); passato.style.width = (mOra / 14.4) + "%"; bar.insertBefore(passato, bar.firstChild);   // la parte di giornata già passata
     linea.appendChild(bar);
@@ -1169,6 +1173,20 @@ function disegnaOggi() {
   });
   if (window.disegnaCoppia) disegnaCoppia();
   if (window.disegnaOcchiata) disegnaOcchiata();
+}
+
+// ================= al lavoro: quanto ci vuole adesso per tornare a casa =================
+var RITORNO = {};
+function ritornoOra(p) {   // ricalcola ogni 10 minuti (TomTom col traffico se c'è la chiave, altrimenti OpenStreetMap)
+  var t = trCfg(), da = t.lavoro[p], c = RITORNO[p];
+  if (!t.casa || !da) return null;
+  if (!c || Date.now() - c.t > 10 * 60000) {
+    RITORNO[p] = c = { t: Date.now(), r: c && c.r };
+    percorso(da, t.casa, t.mezzo[p] || "auto").then(function (r) { RITORNO[p].r = r; if (window.disegnaOggi) disegnaOggi(); }, function () {});
+  }
+  if (!c.r) return null;
+  var m = Math.max(1, Math.round(c.r.sec / 60)), ico = (t.mezzo[p] || "auto") === "bici" ? "🚲" : "🚗", rit = c.r.ritardo || 0;
+  return { ritardo: rit, testo: ico + " Per tornare a casa adesso: " + m + " min" + (rit >= 60 ? " · +" + Math.round(rit / 60) + " di traffico" : c.r.traffico ? " · strade libere" : "") };
 }
 
 // ================= promemoria =================
